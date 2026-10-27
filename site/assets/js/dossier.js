@@ -360,7 +360,7 @@ App.ready.then(async user => {
   const songUrl = d.song.url || '';
   const ytId = (songUrl.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/|live\/)([\w-]{11})/) || [])[1];
   const isAudio = /^https?:\/\/.+\.(mp3|ogg|m4a|wav|aac)(\?.*)?$/i.test(songUrl);
-  let yt = null, ytReady = false, audio = null, playing = false;
+  let yt = null, ytReady = false, audio = null, playing = false, userPaused = false;
   const fmt = s => { s = Math.max(0, s || 0); return Math.floor(s / 60) + ':' + pad2(Math.floor(s % 60)); };
   const setPlaying = p => {
     playing = p; stage.classList.toggle('playing', p);
@@ -370,17 +370,28 @@ App.ready.then(async user => {
     window.onYouTubeIframeAPIReady = () => {
       yt = new YT.Player('yt', {
         videoId: ytId, playerVars: { playsinline: 1, controls: 0, disablekb: 1 },
-        events: { onReady: () => { ytReady = true; }, onStateChange: e => setPlaying(e.data === 1) }
+        events: { onReady: () => { ytReady = true; autoStart(); }, onStateChange: e => setPlaying(e.data === 1) }
       });
     };
     const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s);
   } else if (isAudio) {
     audio = new Audio(songUrl); audio.preload = 'metadata';
     ['play', 'pause', 'ended'].forEach(ev => audio.addEventListener(ev, () => setPlaying(!audio.paused && !audio.ended)));
+    autoStart();
+  }
+  // 테마곡 자동 재생: 열자마자 한 번 시도하고, 브라우저가 막으면(크롬은 화면을 누르기 전엔 소리를 막아요) 처음 누르는 순간 재생
+  // (▶ 버튼을 직접 누른 경우 · 직접 멈춘 뒤에는 건드리지 않아요)
+  function autoStart() {
+    const go = () => { if (playing || userPaused) return; if (yt && ytReady) yt.playVideo(); else if (audio) audio.play().catch(() => {}); };
+    go();
+    const once = e => { if (e.target.closest && e.target.closest('#pp')) return; go(); };
+    addEventListener('pointerdown', once, { once: true, capture: true });
+    addEventListener('keydown', once, { once: true, capture: true });
   }
   const waveBars = $$('#bar i');
   const times = () => yt && ytReady ? [yt.getCurrentTime(), yt.getDuration()] : audio ? [audio.currentTime, audio.duration || 0] : [0, 0];
   $('#pp').onclick = () => {
+    userPaused = playing;   // 재생 중에 눌러서 멈추면 그 뒤로는 자동 재생 안 해요
     if (yt) { if (!ytReady) return toast('플레이어를 불러오는 중이에요…'); playing ? yt.pauseVideo() : yt.playVideo(); }
     else if (audio) audio.paused ? audio.play().catch(() => toast('재생할 수 없는 주소예요.', 'err')) : audio.pause();
     else if (safeUrl(songUrl)) open(songUrl, '_blank', 'noopener');
