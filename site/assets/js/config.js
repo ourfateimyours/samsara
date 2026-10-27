@@ -4,7 +4,7 @@ window.SITE_CONFIG = {
   siteNameKo: '삼사라',
   siteMotto: 'Archive of Crimson Talismans',
 
-  supabaseUrl: 'https://aumebrsaukblljpvkcta.supabase.co/rest/v1/',
+  supabaseUrl: 'https://aumebrsaukblljpvkcta.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1bWVicnNhdWtibGxqcHZrY3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMDA4MjgsImV4cCI6MjEwODY3NjgyOH0.pf6kP81cRJ7l_2J9o0559sMgbIJ709EtdB8v_lAQGk8',
   dossierTalismans: true,
 
