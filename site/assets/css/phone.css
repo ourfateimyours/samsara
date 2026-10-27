@@ -1,0 +1,186 @@
+/* ================================================================
+   관계 휴대폰 — 검정 케이스 · 잠금 화면 알림 · 은색 키링
+   ================================================================ */
+.ph-back { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(ellipse 50% 60% at 50% 55%, color-mix(in srgb, var(--c, #e8e5de) 20%, transparent), rgba(3, 2, 2, .92) 70%);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fade .35s; }
+.ph-back.out { animation: phBackOut .5s var(--ez) forwards; }
+@keyframes phBackOut { to { opacity: 0; } }
+.ph-x { position: absolute; top: 18px; right: 22px; z-index: 3; background: none; border: 1px solid var(--line-2); color: var(--text); font: 600 10px var(--mono); letter-spacing: .2em; padding: 8px 14px; }
+.ph-x:hover { border-color: var(--red-hi); }
+.ph-cap { position: absolute; left: 0; right: 0; bottom: 20px; text-align: center; font: 500 10px var(--mono); letter-spacing: .3em; color: var(--dim); }
+.ph-stage { position: relative; transform: scale(var(--s, 1)); transform-origin: center; }
+.ph-rise { animation: phRise 1s cubic-bezier(.2, .9, .25, 1) backwards; }
+@keyframes phRise { from { transform: translateY(70vh) rotateX(35deg) rotateZ(-8deg); opacity: 0; } }
+.ph-back.out .ph-stage > .phone { animation: phDown .5s var(--ez) forwards; }
+@keyframes phDown { to { transform: translateY(60vh) rotateZ(6deg); opacity: 0; } }
+
+/* 본체 + 검정 케이스 */
+.phone { position: relative; width: 330px; height: 700px; perspective: 1400px; }
+.ph-case {
+  position: absolute; inset: 0; border-radius: 62px;
+  background: linear-gradient(145deg, #232323, #0b0b0b 40%, #050505 70%, #1a1a1a);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, .07), inset 0 2px 1px rgba(255, 255, 255, .12), inset 0 -2px 2px rgba(0, 0, 0, .8),
+    0 40px 80px -20px rgba(0, 0, 0, .9), 0 0 60px -10px color-mix(in srgb, var(--c, #e8e5de) 40%, transparent);
+}
+.ph-case::before { /* 무광 질감 */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .18; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='1.2' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+.ph-hole { position: absolute; left: 26px; bottom: 14px; width: 16px; height: 8px; border-radius: 4px; background: #000; box-shadow: inset 0 1px 2px rgba(255, 255, 255, .12); z-index: 2; }
+.ph-side { position: absolute; width: 4px; border-radius: 2px; background: linear-gradient(90deg, #2a2a2a, #111); }
+.ph-side.a { left: -3px; top: 140px; height: 34px; } .ph-side.b { left: -3px; top: 190px; height: 58px; } .ph-side.c { left: -3px; top: 258px; height: 58px; }
+.ph-side.d { right: -3px; top: 210px; height: 90px; }
+.ph-screen { position: absolute; inset: 11px; border-radius: 52px; overflow: hidden; background: #000; isolation: isolate;
+  box-shadow: 0 0 0 2px #000, inset 0 0 0 1px rgba(255, 255, 255, .04); }
+.ph-screen.off > * { opacity: 0; }
+.ph-screen > * { transition: opacity .6s; }
+.ph-wall { position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center 20%; transform: scale(1.08); transition: transform 1.2s var(--ez), filter .8s; }
+.ph-wall::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .05) 35%, rgba(0, 0, 0, .55)); }
+.ph-wall.grad { background: radial-gradient(ellipse 80% 60% at 30% 20%, color-mix(in srgb, var(--c) 70%, #000), transparent 60%), radial-gradient(ellipse 80% 70% at 80% 90%, color-mix(in srgb, var(--c) 45%, #000), transparent 60%), linear-gradient(160deg, #090a12, #050303); }
+.ph-wall.grad::before { content: attr(data-han); position: absolute; right: -10px; bottom: 60px; font: 400 230px/1 var(--han); color: rgba(255, 255, 255, .06); }
+.ph-screen.on .ph-wall { transform: scale(1); }
+.ph-island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 112px; height: 33px; border-radius: 20px; background: #000; z-index: 6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .03); }
+.ph-island::after { content: ""; position: absolute; right: 14px; top: 11px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2b3a55, #05070c 60%); }
+.ph-status { position: absolute; top: 18px; left: 34px; right: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 5; color: #fff; font: 600 14px var(--sans); }
+.ph-icons { display: flex; gap: 6px; align-items: center; }
+.ph-sig { display: flex; gap: 1.5px; align-items: flex-end; height: 11px; }
+.ph-sig i { width: 3px; background: #fff; border-radius: 1px; }
+.ph-sig i:nth-child(1) { height: 4px; } .ph-sig i:nth-child(2) { height: 6px; } .ph-sig i:nth-child(3) { height: 8.5px; } .ph-sig i:nth-child(4) { height: 11px; }
+.ph-bat { width: 24px; height: 12px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, .5); padding: 1.5px; position: relative; }
+.ph-bat::after { content: ""; position: absolute; right: -3.5px; top: 3.5px; width: 2px; height: 4px; border-radius: 0 1px 1px 0; background: rgba(255, 255, 255, .5); }
+.ph-bat i { display: block; height: 100%; width: 78%; background: #fff; border-radius: 2px; }
+
+/* 잠금 화면 */
+.ph-lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 64px 14px 0; color: #fff; transition: transform .7s var(--ez), opacity .5s; }
+.ph-lockic { width: 14px; height: 18px; margin-bottom: 6px; opacity: .9; }
+.ph-date { font: 600 16px var(--sans); opacity: .92; letter-spacing: .01em; text-shadow: 0 1px 6px rgba(0, 0, 0, .3); }
+.ph-clock { font: 600 84px/1 var(--sans); letter-spacing: -.035em; margin-top: 2px; text-shadow: 0 2px 20px rgba(0, 0, 0, .25);
+  background: linear-gradient(180deg, #fff 30%, rgba(255, 255, 255, .78)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ph-owner { margin-top: 6px; font: 500 11px var(--sans); letter-spacing: .06em; opacity: .7; }
+.ph-notis { width: 100%; margin-top: auto; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 370px; overflow-y: auto; scrollbar-width: none; padding: 6px 0 2px; }
+.ph-notis::-webkit-scrollbar { display: none; }
+.ph-none { text-align: center; font: 500 12px var(--sans); opacity: .55; margin: auto 0 20px; }
+.ph-bottom { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 34px; }
+.ph-round { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(40, 40, 40, .45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 0; color: #fff; font-size: 18px; }
+.ph-hint { font: 500 11px var(--sans); opacity: .75; animation: hintUp 2.4s ease-in-out infinite; background: none; border: 0; color: #fff; padding: 6px; }
+@keyframes hintUp { 0%, 100% { transform: none; opacity: .5; } 50% { transform: translateY(-4px); opacity: 1; } }
+.ph-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 120px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .85); z-index: 6; cursor: grab; }
+
+/* 알림 카드 */
+.noti { --t: #0a84ff; --t2: #5ac8fa; position: relative; width: 100%; border-radius: 22px; padding: 11px 13px 12px; text-align: left; color: #fff; border: 0; cursor: pointer;
+  background: rgba(38, 38, 42, .52); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 6px 18px rgba(0, 0, 0, .25);
+  display: grid; grid-template-columns: 38px 1fr; gap: 0 10px; align-items: start; overflow: hidden;
+  animation: notiIn .8s cubic-bezier(.2, 1.2, .3, 1) backwards; animation-delay: calc(1.25s + var(--i) * .16s); transition: transform .35s var(--ez); }
+.noti.sms { --t: #30d158; --t2: #7ff59a; }
+.noti.missed { --t: #e8e5de; --t2: #ff9f0a; }
+@keyframes notiIn { from { opacity: 0; transform: translateY(-40px) scale(.92); filter: blur(10px); } }
+.noti:hover { transform: scale(1.015); }
+.noti:active { transform: scale(.98); }
+/* 반짝임 1: 빛줄기가 훑고 지나감 */
+.noti::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .06) 30%, rgba(255, 255, 255, .32) 50%, rgba(255, 255, 255, .06) 70%, transparent);
+  transform: skewX(-18deg); animation: sheen 4.2s ease-in-out infinite; animation-delay: calc(2.2s + var(--i) * .55s); }
+@keyframes sheen { 0% { left: -60%; } 28%, 100% { left: 130%; } }
+/* 반짝임 2: 테마색 테두리가 숨 쉬듯 빛남 */
+.noti::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; padding: 1px;
+  background: linear-gradient(135deg, var(--t2), transparent 35%, transparent 65%, var(--t));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: .5; animation: rim 2.8s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .3s); }
+@keyframes rim { to { opacity: 1; filter: drop-shadow(0 0 4px var(--t)); } }
+.noti .ic { position: relative; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; grid-row: span 3;
+  background: linear-gradient(180deg, var(--t2), var(--t)); box-shadow: 0 2px 8px color-mix(in srgb, var(--t) 50%, transparent); }
+.noti .ic svg { width: 22px; height: 22px; }
+.noti .ic .av { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(30, 30, 34, .9); background: #222 center 15%/cover; }
+/* 반짝임 3: 아이콘 주변 별빛 */
+.noti .tw { position: absolute; font-size: 9px; color: #fff; pointer-events: none; text-shadow: 0 0 6px var(--t2); animation: twinkle 2.2s ease-in-out infinite; }
+.noti .tw.a { left: -4px; top: -4px; } .noti .tw.b { left: 32px; top: 30px; font-size: 7px; animation-delay: .8s; } .noti .tw.c { left: 34px; top: -3px; font-size: 6px; animation-delay: 1.5s; }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 40% { opacity: 1; transform: scale(1.2) rotate(90deg); } 60% { opacity: .8; transform: scale(.9) rotate(120deg); } }
+.noti .hd { display: flex; justify-content: space-between; align-items: center; font: 500 11.5px var(--sans); opacity: .62; }
+.noti .ttl { font: 650 14px/1.3 var(--sans); font-weight: 650; margin-top: 1px; display: flex; align-items: center; gap: 6px; }
+.noti .ttl .cnt { font: 700 11px var(--sans); background: #e8e5de; color: #fff; border-radius: 9px; padding: 0 6px; }
+.noti .msg { font: 400 13.5px/1.35 var(--sans); opacity: .95; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+.noti.missed .msg { color: #e8e5de; }
+.noti .more { display: none; grid-column: 1 / -1; margin-top: 10px; padding-top: 10px; border-top: .5px solid rgba(255, 255, 255, .15); font: 500 12px var(--sans); }
+.noti.open .msg { -webkit-line-clamp: unset; }
+.noti.open .more { display: block; animation: fade .4s; }
+.noti .aff { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.noti .aff .bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.noti .aff .bar i { display: block; height: 100%; width: var(--a); background: linear-gradient(90deg, #e8e5de, #e8e5de); border-radius: 2px; animation: grow .8s var(--ez); transform-origin: left; }
+.noti .aff b { color: #e8e5de; font-weight: 700; }
+.noti .go { display: inline-block; margin-top: 2px; color: var(--t2); font-weight: 600; }
+
+/* 잠금 해제 후: 연락처 */
+
+@media (max-width: 520px) { .ph-x { top: 10px; right: 10px; } }
+
+/* ================================================================
+   관계 휴대폰 v2 — 호감도 · 반짝임 없앰, 진짜 아이폰 잠금 화면 알림처럼, 현실적인 키링
+   ================================================================ */
+/* 알림: iOS 잠금 화면 (반투명 재질 · 연락처 사진 + 작은 앱 배지 · 이름/시간 한 줄 · 내용) */
+.noti { --apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, sans-serif;
+  border-radius: 20px; padding: 11px 14px 12px 12px; gap: 0 11px; grid-template-columns: 38px 1fr; align-items: center;
+  background: rgba(58, 58, 62, .46); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: none; font-family: var(--apple); }
+.noti::before, .noti::after, .noti .tw { display: none !important; content: none; animation: none; }
+.noti:hover { transform: none; }
+.noti:active { transform: scale(.985); }
+.noti .ic { width: 38px; height: 38px; border-radius: 50%; background: none; box-shadow: none; grid-row: span 2; align-self: start; margin-top: 1px; }
+.noti .ic .av { position: absolute; inset: 0; right: auto; bottom: auto; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #3a3a3c center 15%/cover; }
+.noti .ic .badge { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center;
+  background: linear-gradient(180deg, #5cf777, #0cbd2a); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.noti .ic .badge svg { width: 12px; height: 12px; }
+.noti .ic.app { border-radius: 9px; display: grid; place-items: center; background: linear-gradient(180deg, #5cf777, #0cbd2a); }
+.noti .ic.app svg { width: 22px; height: 22px; }
+.noti .ttl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; font: 600 15px/1.25 var(--apple); letter-spacing: -.01em; }
+.noti .ttl b { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.noti .ttl time { flex: none; font: 400 13px var(--apple); color: rgba(255, 255, 255, .55); letter-spacing: 0; }
+.noti .msg { margin-top: 1px; font: 400 15px/1.3 var(--apple); letter-spacing: -.01em; color: rgba(255, 255, 255, .95); -webkit-line-clamp: 4; opacity: 1; }
+.noti.missed .msg { color: rgba(255, 255, 255, .95); }
+.noti .more { margin-top: 9px; padding-top: 9px; border-top: .5px solid rgba(255, 255, 255, .16); font: 400 13px var(--apple); display: none; gap: 8px; flex-direction: column; }
+.noti.open .more { display: flex; }
+.noti .more .n-rel { color: rgba(255, 255, 255, .62); }
+.noti .go { align-self: flex-start; padding: 6px 12px; border-radius: 14px; background: rgba(255, 255, 255, .16); color: #fff; font: 600 13px var(--apple); }
+
+/* 연락처의 호감도 표시 없앰 */
+
+/* 알림 — 유리 느낌 (맑게 비치고, 위쪽 가장자리에 빛이 살짝 맺혀요) */
+.noti { background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .09));
+  backdrop-filter: blur(26px) saturate(1.9) brightness(1.05); -webkit-backdrop-filter: blur(26px) saturate(1.9) brightness(1.05);
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .45), inset 0 0 0 .5px rgba(255, 255, 255, .16), 0 8px 24px rgba(0, 0, 0, .22);
+  transition: transform .3s var(--ez), background .3s; }
+.noti::before { display: block !important; content: "" !important; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; animation: none !important;
+  padding: 0; mask: none; -webkit-mask: none; opacity: 1; filter: none;
+  background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, .16), transparent 60%); }
+.noti.open { background: linear-gradient(180deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, .12)); }
+.noti .more { display: none !important; }
+.noti .msg { -webkit-line-clamp: 2; }
+.noti.open .msg { -webkit-line-clamp: unset; }
+
+
+/* ================================================================
+   키링 (assets/js/keyring.js) — 폰 오른쪽 위 고리(ph-lug)에 맨 위 한 점(가로 57px · 세로 8px)이 걸려요
+   영어 스트랩(은색) / 아크릴 키링 두 가지만
+   ================================================================ */
+.ph-lug { position: absolute; left: calc(100% - 2px); top: 50px; width: 14px; height: 22px; z-index: 5; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.ph-lug svg { display: block; width: 100%; height: 100%; }
+.kr { position: absolute; left: 278px; top: 53px; width: 114px; z-index: 4; transform-origin: 57px 8px; cursor: grab; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+  animation: krIn 2.6s cubic-bezier(.25, .8, .3, 1) backwards .6s, krIdle 5s ease-in-out infinite alternate 3.2s; }
+.kr.again { animation: krIn 2.2s cubic-bezier(.25, .8, .3, 1); }
+@keyframes krIn { 0% { transform: rotate(30deg); } 20% { transform: rotate(-20deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(3deg); } 100% { transform: rotate(0); } }
+@keyframes krIdle { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+.kr .kr-svg { display: block; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .5)); }
+.kr .kr-svg text { font-size: 5.6px; }
+/* 아크릴: 투명 PNG면 그 모양대로 흰 테두리 + 맑은 아크릴 여백 */
+.kr-acryl { display: flex; justify-content: center; width: 130px; margin: -4px 0 0 -8px; transform-origin: 50% 0; animation: krCharm 2.6s cubic-bezier(.45, .05, .55, .95) infinite alternate; }
+.kr-acryl img { display: block; max-width: 122px; max-height: 150px; object-fit: contain; pointer-events: none; user-select: none;
+  filter: drop-shadow(1.8px 0 0 #fff) drop-shadow(-1.8px 0 0 #fff) drop-shadow(0 1.8px 0 #fff) drop-shadow(0 -1.8px 0 #fff)
+    drop-shadow(3px 0 0 rgba(226, 232, 255, .55)) drop-shadow(-3px 0 0 rgba(226, 232, 255, .55)) drop-shadow(0 3px 0 rgba(226, 232, 255, .55)) drop-shadow(0 -3px 0 rgba(226, 232, 255, .55))
+    drop-shadow(0 8px 10px rgba(0, 0, 0, .5)); }
+@keyframes krCharm { 0% { transform: rotate(-6deg); } 100% { transform: rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .kr, .kr-acryl { animation: none; } }
+/* 성능: 휴대폰 뒤 화면 전체 흐림 대신 진한 바탕 (뒤의 프로필 화면이 계속 움직여서 매 프레임 다시 흐려졌어요) */ .ph-back { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(4, 3, 6, .9); }
+.ph-hint { animation: none; }   /* 잠금 화면만 남아서 안내 글자는 비어 있어요 */

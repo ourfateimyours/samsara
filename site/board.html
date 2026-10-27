@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사건 보드 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="board" class="board-page" data-nofooter>
+
+<div class="board-bar">
+  <h1><b>案</b>사건 보드</h1>
+  <button class="btn sm" id="add">+ 쪽지</button>
+  <button class="btn ghost sm" id="link">🧵 실 잇기</button>
+  <button class="btn ghost sm" id="reload" title="새로고침">↻</button>  <span class="hint" id="hint">빈 곳을 끌어 둘러보고, 쪽지를 끌어 옮기세요.</span>
+</div>
+
+<div class="board-view" id="view">
+  <div class="board" id="board">
+    <div id="bbg"></div>
+    <div class="notes-layer" id="layer"></div>
+    <svg class="strings" id="strings"></svg>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  const W = 2400, H = 1600, NOTE_W = 210;
+  const COLORS = { fu: '#e3c25a', white: '#ece3d3', red: '#a3171c', pink: '#e8a7a2', yellow: '#e6c766', orange: '#d98c5f', blue: '#b9c4cc', green: '#c3c9a5' };
+  const view = $('#view'), board = $('#board'), layer = $('#layer'), svg = $('#strings');
+  $('#bbg').outerHTML = baguaSVG();
+  let freshLink = null;
+  let notes = [], links = [], chars = [];
+  let linking = false, linkFrom = null, zTop = 10;
+  const HINT = $('#hint').textContent;
+  // 쪽지 글씨체: 쓸 때 쪽지마다 골라요 (인천교육자람체 / 온글잎 박다현체)
+  const NOTE_FONTS = { jaram: '자람체', dahyeon: '박다현체' };
+
+  async function load() {
+    try {
+      [notes, links, chars] = await Promise.all([Store.list('notes'), Store.list('links'), Store.list('characters')]);
+    } catch (e) { toast(e.message, 'err'); }
+    render();
+  }
+
+  function noteHTML(n) {
+    const ch = n.character_id && chars.find(c => c.id === n.character_id);
+    const cd = (ch && ch.data) || {};
+    const photo = safeUrl(n.photo) ? n.photo : '';
+    const img = photo || (ch && charImage(cd, ch.id));
+    const mine = user && user.id === n.owner_id;
+    const x = Math.round(+n.x || 0), y = Math.round(+n.y || 0), r = (+n.rot || 0).toFixed(1);
+    return `<div class="note c-${COLORS[n.color] ? n.color : 'fu'} f-${NOTE_FONTS[n.font] ? n.font : 'jaram'} ${ch || photo ? 'polaroid' : ''}" data-id="${esc(n.id)}"
+        style="left:${x}px;top:${y}px;--r:${r}deg" tabindex="0">
+      <span class="pin"></span>
+      ${ch || photo ? `<div class="photo">${img ? `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>` : ''}
+      <div class="n-title">${ch && !n.title ? `<a href="character.html?id=${encodeURIComponent(ch.id)}">${esc(ch.data.name)}</a>` : esc(n.title)}</div>
+      ${n.body ? `<div class="n-body">${esc(n.body)}</div>` : ''}
+      <div class="n-meta">${esc(n.author)} · ${fmtDate(n.created_at)}${ch && n.title ? ` · <a href="character.html?id=${encodeURIComponent(ch.id)}">${esc(ch.data.name)}</a>` : ''}</div>
+      ${mine ? `<div class="n-tools"><button data-act="edit">수정</button><button data-act="del">떼기</button></div>` : ''}
+    </div>`;
+  }
+
+  function render() {
+    layer.innerHTML = notes.map(noteHTML).join('') +
+      (notes.length ? '' : '<div class="board-empty">아직 아무 단서도 없다…<br>첫 번째 쪽지를 붙여 보자.</div>');
+    // 이미지 로딩 후 높이가 바뀌면 실 위치 다시 계산
+    $$('img', layer).forEach(i => i.complete || i.addEventListener('load', drawStrings, { once: true }));
+    drawStrings();
+  }
+
+  function pinPos(id) {
+    const pin = layer.querySelector(`.note[data-id="${CSS.escape(id)}"] .pin`);
+    if (!pin) return null;
+    const a = pin.getBoundingClientRect(), b = board.getBoundingClientRect();
+    return [a.left - b.left + a.width / 2, a.top - b.top + a.height / 2];
+  }
+
+  function drawStrings() {
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = links.map(l => {
+      const p = pinPos(l.from_id), q = pinPos(l.to_id);
+      if (!p || !q) return '';
+      const dist = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2 + Math.min(110, dist * .16) + 8;
+      const d = `M${p[0]},${p[1]} Q${mx},${my} ${q[0]},${q[1]}`;
+      return `<g><path class="sh" d="${d}"/><path class="hit" data-link="${esc(l.id)}" d="${d}"/><path class="s ${l.id === freshLink ? 'new' : ''}" d="${d}"/></g>`;
+    }).join('');
+  }
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  /* ---- 포스트잇 드래그 / 실 잇기 ---- */
+  layer.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.note');
+    if (!el || e.target.closest('button, a')) return;
+    e.stopPropagation();
+    const n = notes.find(x => x.id === el.dataset.id);
+    if (linking) return pickLink(el);
+    el.style.zIndex = ++zTop;
+    if (!user) return toast('입장하면 쪽지를 옮길 수 있어요.');
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, ox = +n.x, oy = +n.y;
+    let moved = false;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+    const move = ev => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 3) return;
+      moved = true;
+      n.x = clamp(ox + dx, 20, W - NOTE_W - 20); n.y = clamp(oy + dy, 20, H - 180);
+      el.style.left = n.x + 'px'; el.style.top = n.y + 'px';
+      drawStrings();
+    };
+    const up = async () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      el.classList.remove('dragging');
+      setTimeout(drawStrings, 220);
+      if (!moved) return;
+      try { await Store.update('notes', n.id, { x: Math.round(n.x), y: Math.round(n.y) }); }
+      catch (ex) { toast(ex.message, 'err'); n.x = ox; n.y = oy; render(); }
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  });
+
+  layer.addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const n = notes.find(x => x.id === b.closest('.note').dataset.id);
+    if (b.dataset.act === 'edit') editNote(n);
+    if (b.dataset.act === 'del') {
+      if (!await askConfirm('이 쪽지를 떼어낼까요? 연결된 실도 함께 사라져요.')) return;
+      try {
+        await Store.remove('notes', n.id);
+        notes = notes.filter(x => x !== n);
+        links = links.filter(l => l.from_id !== n.id && l.to_id !== n.id);
+        render();
+      } catch (ex) { toast(ex.message, 'err'); }
+    }
+  });
+
+  function setLinking(on) {
+    linking = on; linkFrom = null;
+    $$('.note.selected').forEach(x => x.classList.remove('selected'));
+    $('#link').classList.toggle('on', on);
+    view.classList.toggle('connecting', on);
+    $('#hint').textContent = on ? '이을 쪽지 두 장을 차례로 누르세요. (Esc: 취소)' : HINT;
+  }
+  async function pickLink(el) {
+    const id = el.dataset.id;
+    if (!linkFrom) { linkFrom = id; el.classList.add('selected'); return; }
+    if (linkFrom === id) { linkFrom = null; el.classList.remove('selected'); return; }
+    const a = linkFrom, b = id;
+    $$('.note.selected').forEach(x => x.classList.remove('selected'));
+    linkFrom = null;
+    if (links.some(l => (l.from_id === a && l.to_id === b) || (l.from_id === b && l.to_id === a)))
+      return toast('이미 실로 이어져 있어요.');
+    try { const l = await Store.insert('links', { from_id: a, to_id: b }); links.push(l); freshLink = l.id; drawStrings(); freshLink = null; }
+    catch (ex) { toast(ex.message, 'err'); }
+  }
+  $('#link').onclick = () => {
+    if (!user) return location.href = 'login.html?next=board.html';
+    setLinking(!linking);
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && linking) setLinking(false); });
+
+  /* ---- 실 끊기 ---- */
+  svg.addEventListener('click', async e => {
+    const p = e.target.closest('[data-link]'); if (!p) return;
+    const l = links.find(x => x.id === p.dataset.link);
+    if (!user || user.id !== l.owner_id) return toast(`@${l.author} 님이 이은 실이에요.`);
+    if (!await askConfirm('이 실을 끊을까요?')) return;
+    try { await Store.remove('links', l.id); links = links.filter(x => x !== l); drawStrings(); }
+    catch (ex) { toast(ex.message, 'err'); }
+  });
+
+  /* ---- 보드 끌어서 둘러보기 ---- */
+  view.addEventListener('pointerdown', e => {
+    if (e.target.closest('.note, [data-link]') || e.button !== 0) return;
+    const sx = e.clientX, sy = e.clientY, sl = view.scrollLeft, st = view.scrollTop;
+    view.setPointerCapture(e.pointerId); view.classList.add('panning');
+    const move = ev => { view.scrollLeft = sl - (ev.clientX - sx); view.scrollTop = st - (ev.clientY - sy); };
+    const up = () => {
+      view.removeEventListener('pointermove', move); view.removeEventListener('pointerup', up);
+      view.removeEventListener('pointercancel', up); view.classList.remove('panning');
+    };
+    view.addEventListener('pointermove', move); view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
+  });
+
+  /* ---- 포스트잇 작성/수정 ---- */
+  function editNote(n) {
+    const color = (n && n.color) || 'fu', font = NOTE_FONTS[n && n.font] ? n.font : 'jaram';
+    const m = openModal(`
+      <h2>${n ? '쪽지 수정' : '새 쪽지'}</h2>
+      <form id="nf" novalidate>
+        <label class="field"><span>제목</span><input name="title" maxlength="40" value="${esc(n && n.title)}" placeholder="3번 다리의 목격자 (모브 이름)"></label>
+        <label class="field"><span>내용</span><textarea name="body" rows="5" maxlength="400" placeholder="새벽 3시, 안개 속에서 붉은 우산을 든 사람…">${esc(n && n.body)}</textarea></label>
+        <div class="field"><span>색</span><div class="swatches">${Object.entries(COLORS).map(([k, v]) =>
+          `<label><input type="radio" name="color" value="${k}" ${k === color ? 'checked' : ''}><span style="background:${v}"></span></label>`).join('')}</div></div>
+        <div class="field"><span>글씨체</span><div class="nf-fonts">${Object.entries(NOTE_FONTS).map(([k, l]) =>
+          `<label class="nf-f f-${k}"><input type="radio" name="font" value="${k}" ${k === font ? 'checked' : ''}><b>${l}</b></label>`).join('')}</div></div>
+        <div class="field"><span>모브 사진 <small>외부 이미지 링크 · 넣으면 폴라로이드가 돼요</small></span>
+          <div class="img-pick"><div class="thumb" id="nph" style="background-image:${cssUrl(n && n.photo)}"></div>
+            <div class="ctrl"><input name="photo" type="url" inputmode="url" placeholder="https://… (이미지 주소)" value="${esc((n && n.photo) || '')}"></div></div></div>
+        <p class="err-text" id="nerr"></p>
+        <div class="modal-foot"><button type="button" class="btn-pill ghost" data-cancel>취소</button><button class="btn-pill">${n ? '저장' : '붙이기'}</button></div>
+      </form>`);
+    const f = $('#nf', m);
+    $('[data-cancel]', m).onclick = closeModal;
+    f.photo.oninput = () => { $('#nph', m).style.backgroundImage = cssUrl(safeUrl(f.photo.value.trim())); };
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const photo = f.photo.value.trim();
+      if (photo && !/^https?:\/\//i.test(photo)) return $('#nerr', m).textContent = '사진은 https:// 로 시작하는 이미지 링크로 넣어 주세요.';
+      const data = { title: f.title.value.trim(), body: f.body.value.trim(), color: f.color.value, font: f.font.value, photo };
+      if (!data.title && !data.body && !data.photo && !(n && n.character_id)) return $('#nerr', m).textContent = '제목이나 내용을 적어 주세요.';
+      try {
+        if (n) Object.assign(n, await Store.update('notes', n.id, data));
+        else {
+          data.x = Math.round(clamp(view.scrollLeft + view.clientWidth / 2 - NOTE_W / 2 + (Math.random() - .5) * 120, 20, W - NOTE_W - 20));
+          data.y = Math.round(clamp(view.scrollTop + view.clientHeight / 2 - 110 + (Math.random() - .5) * 80, 20, H - 180));
+          data.rot = +((Math.random() - .5) * 8).toFixed(1);
+          notes.push(await Store.insert('notes', data));
+        }
+        closeModal(); render();
+      } catch (ex) { $('#nerr', m).textContent = ex.message; }
+    };
+  }
+  $('#add').onclick = () => user ? editNote() : location.href = 'login.html?next=board.html';
+  $('#reload').onclick = load;
+
+  await load();
+  // 처음 위치: 주소에 #포스트잇id 가 있으면 그 쪽으로, 아니면 가운데
+  const target = location.hash && layer.querySelector(`.note[data-id="${CSS.escape(decodeURIComponent(location.hash.slice(1)))}"]`);
+  if (target) {
+    view.scrollLeft = target.offsetLeft - view.clientWidth / 2 + NOTE_W / 2;
+    view.scrollTop = target.offsetTop - view.clientHeight / 2 + 100;
+    target.classList.add('selected'); setTimeout(() => target.classList.remove('selected'), 1800);
+  } else {
+    view.scrollLeft = (W - view.clientWidth) / 2; view.scrollTop = (H - view.clientHeight) / 2 - 150;
+  }
+  if (document.fonts) document.fonts.ready.then(drawStrings);
+  addEventListener('resize', drawStrings);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>캐릭터 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Encode+Sans+Compressed:wght@500;600;700&family=Playfair+Display:ital,wght@1,400;1,700&family=Nanum+Pen+Script&family=Zhi+Mang+Xing&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/roster.css">
+<link rel="stylesheet" href="assets/css/archive.css">
+<link rel="stylesheet" href="assets/css/entryseq.css">
+<link rel="stylesheet" href="assets/css/loginseq.css">
+</head>
+<body data-page="characters" class="roster-page archive-theme" data-noheader data-nofooter>
+
+<!-- 맨 위 메뉴 -->
+<nav class="rs-nav" id="rsnav">
+  <a class="on" href="characters.html">CHARACTERS<sup>01</sup></a>
+  <a href="board.html">BOARD<sup>02</sup></a>
+  <a href="https://samsaraworld.vercel.app/world.html" target="_blank" rel="noopener">WORLD<sup>03</sup></a>
+  <i></i>
+  <a href="index.html">‹ HOME</a>
+</nav>
+
+<!-- 로스터: 팀별로 캐릭터가 바닥선 위에 서 있어요 -->
+<main class="roster" id="roster">
+  <canvas class="sparkle" id="sparkle"></canvas>
+  <div class="r-bg"><div class="r-word" id="word"></div>
+    <span class="gbar a"></span><span class="gbar b"></span><span class="gbar c"></span></div>
+  <span class="cb tl"></span><span class="cb tr"></span><span class="cb bl"></span><span class="cb br"></span>
+  <div class="r-top">
+    <span class="lbl" id="org-lbl">天師監 // PERSONNEL ROSTER</span>
+    <div class="r-tabs" id="tabs"></div>
+    <div class="r-right">
+      <span class="r-page"><em>PAGE</em><b id="pg">01</b>/ <span id="pgs">01</span></span>
+    </div>
+  </div>
+  <button class="r-arrow l" id="prev" aria-label="이전">‹</button>
+  <div class="r-stage" id="stage"></div>
+  <div class="r-floor"></div>
+  <button class="r-arrow r" id="next" aria-label="다음">›</button>
+  <div class="rs-foot"><span class="barcode"></span><span id="foot-info">PERSONNEL FILE // 00 PROFILES // 00 SECTORS</span>
+    <button class="new" data-new>+ NEW FILE</button><span class="chev">›››</span></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/keyring.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script src="assets/js/entryseq.js"></script>
+<script src="assets/js/loginseq.js"></script>
+<script>
+App.ready.then(async user => {
+  let all = [];
+  try { all = await Store.list('characters'); } catch (e) { toast(e.message, 'err'); }
+  const rankOf = r => (r || '').replace(/[+-]$/, '');
+  const rankSup = r => ((r || '').match(/[+-]$/) || [''])[0];
+
+  /* ---------- 팀별 묶기 ---------- */
+  // 가문 세 곳으로 고정 (01 瑞門 / 02 誓門 / 03 染). 가문을 안 고른 예전 기록만 따로 모아요.
+  const groups = HOUSES.map(h => ({ name: h, list: [] }));
+  const undecided = { name: '未定', list: [] };
+  all.forEach(c => { const t = normChar(c.data).team; (groups.find(g => g.name === t) || undecided).list.push(c); });
+  if (undecided.list.length) groups.push(undecided);
+  // 능력 계급이 높은 순 (SS > S+ > S > S- > A+ …), 같은 계급은 이름 가나다순, 계급 없으면 맨 뒤
+  const rankScore = c => RANKS.indexOf(normChar(c.data).rank);
+  groups.forEach(g => g.list.sort((a, b) => rankScore(b) - rankScore(a) || String(a.data.name || '').localeCompare(String(b.data.name || ''), 'ko')));
+  let gi = 0, page = 0;
+  const perPage = () => 5; // 한 쪽에 5명씩 가로로 (등급 높은 순 왼→오), 넘치면 다음 쪽으로 — 화면이 좁으면 옆으로 밀어서 봐요
+  // 액자 카드 모양 (위아래 왼쪽 모서리가 비스듬히 잘린 세로 카드) — 테두리 빛도 이 선을 따라 돌아요
+  const CARD_PTS = '29,1 199,1 199,294 29,294 1,265 1,30';
+  let swiped = 0;
+
+
+  function renderTabs() {
+    $('#tabs').innerHTML = groups.map((g, i) => `<button data-g="${i}" class="${i === gi ? 'on' : ''}"><small>${pad2(i + 1)}</small>${esc(g.name)}</button>`).join('');
+  }
+  function arrowHint(b, label, people) {
+    if (!b.querySelector('i')) b.innerHTML = `<i>${b.textContent.trim()}</i><small></small>`;
+    b.querySelector('small').textContent = label; b.classList.toggle('has', !!people && !b.disabled);
+  }
+  function renderStage(dir) {
+    const st = $('#stage');
+    if (!groups.length) {
+      st.innerHTML = `<div class="r-empty"><div><b>空</b>아직 봉인된 인물이 없어요.</div></div>`;
+      $('#word').textContent = 'ROSTER'; $('#pg').textContent = '00'; $('#pgs').textContent = '00';
+      $('#prev').disabled = $('#next').disabled = true; return;
+    }
+    const g = groups[gi], pp = perPage(), pages = Math.max(1, Math.ceil(g.list.length / pp));
+    if (!g.list.length) {
+      const w0 = $('#word'); w0.textContent = g.name; w0.classList.remove('swap'); void w0.offsetWidth; w0.classList.add('swap');
+      $('#pg').textContent = '01'; $('#pgs').textContent = '01';
+      $('#prev').disabled = gi === 0; $('#next').disabled = gi >= groups.length - 1;
+      arrowHint($('#prev'), gi > 0 ? groups[gi - 1].name : '', false); arrowHint($('#next'), gi < groups.length - 1 ? groups[gi + 1].name : '', false);
+      st.innerHTML = `<div class="r-empty"><div><b>${esc(g.name)}</b>아직 이 가문에 기록된 인물이 없어요.</div></div>`;
+      return;
+    }
+    page = Math.min(page, pages - 1);
+    const w = $('#word'); w.textContent = g.name; w.classList.remove('swap'); void w.offsetWidth; w.classList.add('swap');
+    $('#pg').textContent = pad2(page + 1); $('#pgs').textContent = pad2(pages);
+    $('#prev').disabled = page === 0 && gi === 0;
+    $('#next').disabled = page >= pages - 1 && gi >= groups.length - 1;
+    // 옆에 사람이 더 있으면 화살표가 빛나며 '+n명', 가문이 바뀌면 다음 가문 이름
+    const before = page * pp, after = Math.max(0, g.list.length - (page + 1) * pp);
+    arrowHint($('#prev'), before ? `+${before}명` : gi > 0 ? groups[gi - 1].name : '', before > 0);
+    arrowHint($('#next'), after ? `+${after}명` : gi < groups.length - 1 ? groups[gi + 1].name : '', after > 0);
+    st.dataset.dir = dir || 0; // 넘긴 방향으로 미끄러져 들어오기
+    st.classList.add('pcards');
+    // 레퍼런스 PAIRS 카드 틀: 모서리가 깎인 세로 카드에 두상(움짤) 한 장, 위에 번호·계급, 아래에 가문·이름
+    st.innerHTML = g.list.slice(page * pp, page * pp + pp).map((c, i) => {
+      const d = normChar(c.data), no = g.list.indexOf(c) + 1, el = ELEMENTS[d.element];
+      const src = d.head || charImage(c.data, c.id), fallback = !d.head;
+      return `<button class="r-fig pcard ${fallback ? 'nohead' : ''} ${fallback && !d.images.length ? 'dummy' : ''}" data-id="${esc(c.id)}" style="--i:${i};--fc:${d.color}" aria-label="${esc(d.name)}">
+        <span class="pc-fs"><span class="pc-f"><img class="${fallback ? silClass(c.data) : 'head'}" src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span></span>
+        <span class="pc-t"><span class="pc-no"><b>${pad2(no)}</b><i>PROFILE</i></span>
+          <span class="pc-dd"><b>${esc(d.rank || '—')}</b><i>${el ? `${esc(el.han)} · ${esc(el.en)}` : 'UNCLASSED'}</i></span></span>
+        <span class="pc-b"><em>${esc(d.team || '未定')} · ${esc(FIXED.codename)}</em><b>${esc(d.name)}</b>
+          <i><s></s>${esc((d.name_en || d.name).toUpperCase())}<u>/</u>${esc(FIXED.subtitle.toUpperCase())}</i></span>
+        <span class="pc-k"><i></i><i></i></span>
+      </button>`;
+    }).join('');
+  }  function move(dir) {
+    const g = groups[gi], pages = Math.ceil(g.list.length / perPage());
+    if (dir > 0) { if (page < pages - 1) page++; else if (gi < groups.length - 1) { gi++; page = 0; renderTabs(); } else return; }
+    else { if (page > 0) page--; else if (gi > 0) { gi--; page = Math.ceil(groups[gi].list.length / perPage()) - 1; renderTabs(); } else return; }
+    renderStage(dir);
+  }
+  renderTabs(); renderStage();
+  // 멤버란을 열 때마다 접속 화면 (NPC 한 명이 무작위로 나와요)
+  if (window.LoginSeq && !REDUCED) LoginSeq.play({ count: all.length });
+  // 휴대폰·트랙패드: 옆으로 쓸어서 다음 열로
+  (function swipe() {
+    let x0 = null, y0 = 0;
+    $('#roster').addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; x0 = e.clientX; y0 = e.clientY; });
+    $('#roster').addEventListener('pointerup', e => {
+      if (x0 == null) return; const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (!(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5)) return;
+      // 좁은 화면에서 5명 줄을 옆으로 밀어 보는 중이면, 줄 끝에 닿았을 때만 쪽을 넘겨요
+      const st = $('#stage'), max = st.scrollWidth - st.clientWidth;
+      if (max > 4 && ((dx < 0 && st.scrollLeft < max - 4) || (dx > 0 && st.scrollLeft > 4))) return;
+      swiped = Date.now(); move(dx < 0 ? 1 : -1);
+    });
+  })();
+  $('#foot-info').textContent = `PERSONNEL FILE // ${pad2(all.length)} PROFILES // ${pad2(groups.length)} SECTORS`;
+  $('#org-lbl').textContent = `${(all[0] && normChar(all[0].data).org) || SITE_CONFIG.siteName} // PERSONNEL ROSTER`;
+
+  /* 떠다니는 작은 빛 입자 */
+  (function sparkle() {
+    const c = $('#sparkle'), x = c.getContext('2d'); let W, H, P = [];
+    const size = () => { const d = Math.min(devicePixelRatio || 1, 2); W = c.offsetWidth; H = c.offsetHeight; c.width = W * d; c.height = H * d; x.setTransform(d, 0, 0, d, 0, 0);
+      P = Array.from({ length: Math.round(W * H / 22000) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + .3, v: Math.random() * .25 + .05, p: Math.random() * 6.3, s: Math.random() < .12 })); };
+    const draw = t => {
+      x.clearRect(0, 0, W, H);
+      for (const s of P) {
+        if (!REDUCED) { s.y -= s.v; if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; } }
+        const a = .25 + .6 * Math.abs(Math.sin(t / 900 + s.p));
+        x.fillStyle = `rgba(230,236,245,${a})`;
+        if (s.s) { x.fillRect(s.x - 3, s.y - .4, 6, .8); x.fillRect(s.x - .4, s.y - 3, .8, 6); } // 십자 반짝임
+        else { x.beginPath(); x.arc(s.x, s.y, s.r, 0, 6.3); x.fill(); }
+      }
+      if (!REDUCED) requestAnimationFrame(draw);
+    };
+    size(); addEventListener('resize', size); requestAnimationFrame(draw);
+  })();
+  $('#tabs').onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return; gi = +b.dataset.g; page = 0; renderTabs(); renderStage(); };
+  $('#prev').onclick = () => move(-1);
+  $('#next').onclick = () => move(1);
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderStage, 200); });
+
+  /* ---------- 인트로 ---------- */
+  // 캐릭터를 누르면: 시스템 링크 진입 연출(약 4초) → 쓸어 넘기며 인물 인트로
+  let introList = [], introIdx = 0, busy = false;
+  // 캐릭터마다 고유 번호 — 등록된 순서대로 001, 002 …
+  const ORDER = all.slice().sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || ''))).map(c => c.id);
+  const profNo = c => String(ORDER.indexOf(c.id) + 1).padStart(3, '0');
+  const opOf = c => {
+    const d = normChar(c.data);
+    return { img: charImage(c.data, c.id), dummy: !d.images.length, sil: /\bsil\b/.test(silClass(c.data)), color: d.color,
+      en: (d.name_en || d.name).toUpperCase(), name: d.name, cls: [d.classline.split('·')[0], d.codename || d.team].filter(x => x && x.trim()).map(x => x.trim()).join(' · ') };
+  };
+  async function openIntro(id, fromEl) {
+    if (busy) return;
+    const g = groups.find(x => x.list.some(c => c.id === id)) || { list: all };
+    introList = g.list; introIdx = introList.findIndex(c => c.id === id);
+    const c = introList[introIdx], d = normChar(c.data);
+    if (window.EntrySeq && !REDUCED) {
+      busy = true;
+      // 누른 인물의 정보만 세 장으로: 이름 → 코드네임·속성 → 등급
+      const org = (d.org || SITE_CONFIG.siteName).toUpperCase();
+      const el = ELEMENTS[d.element], EN = (d.name_en || d.name).toUpperCase();
+      const cls = d.classline.split('·').map(x => x.trim()).filter(Boolean);
+      const slides = [
+        { bg: EN, label: 'PROFILE', big: EN, sub1: d.name, sub2: cls.join(' · ') || d.team, side: el ? el.han : '符', han: true },
+        { bg: (d.codename || d.team || EN).toUpperCase(), label: 'CODENAME · UNIT', big: (d.codename || d.team || '—').toUpperCase(),
+          sub1: d.team || org, sub2: el ? `${el.word} · ${el.en}` : 'UNCLASSIFIED', side: el ? el.han : '印', han: true },
+        { bg: d.rank ? `CLASS ${d.rank}` : 'CLASSIFIED', label: 'DANGER CLEARANCE', big: d.rank ? `CLASS ${d.rank}` : 'N/A',
+          sub1: d.danger !== '' && d.danger != null ? `위험도 ${d.danger}%` : (d.subtitle || d.name), sub2: d.subtitle || org, side: d.rank || '?', han: false }
+      ];
+      await EntrySeq.play({
+        seed: c.id, color: d.color, org, logo: SITE_CONFIG.siteName, logoSub: SITE_CONFIG.siteNameKo,
+        title: [...org].length <= 6 ? org : (g.name || org), motto: SITE_CONFIG.siteMotto, mark: el ? el.han : '符',
+        ops: slides,
+        fa: `PROFILE · No.${profNo(c)}`, fb: (d.codename || d.name_en || d.name).toUpperCase(),
+        sign: d.team || '未定'
+      });
+      busy = false;
+    }
+    goProfile(c);
+  }
+  // 진입 연출이 끝나면 붉은 막으로 덮이며 바로 인물 파일로 (예전 인물 카드 '인트로2' 는 없앴어요)
+  function goProfile(c) {
+    const w = document.createElement('div'); w.className = 'wipe'; document.body.appendChild(w);
+    setTimeout(() => location.href = 'character.html?id=' + encodeURIComponent(c.id), REDUCED ? 0 : 450);
+  }
+  // 뒤로 가기로 돌아왔을 때 붉은 막이 남지 않게
+  addEventListener('pageshow', () => $$('.wipe').forEach(x => x.remove()));
+  $('#stage').onclick = e => { if (Date.now() - swiped < 400) return; const f = e.target.closest('.r-fig'); if (f) openIntro(f.dataset.id, f.querySelector('img')); };
+  addEventListener('keydown', e => {
+    if ($('.intro') || $('.es') || $('.modal-back')) return;
+    if (e.key === 'ArrowRight') move(1); if (e.key === 'ArrowLeft') move(-1);
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-new]')) return;
+    user ? CharEditor.open() : location.href = 'login.html?next=characters.html%3Fnew%3D1';
+  });
+  if (user && qs('new')) CharEditor.open();
+});
+</script>
+</body>
+</html>

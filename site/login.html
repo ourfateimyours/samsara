@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>입장 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="login" data-noheader data-nofooter class="gate-page">
+
+<main class="gate-wrap">
+  <div class="gate-video gate-photo" aria-hidden="true"></div><!-- 배경: 메인과 같은 밤의 서울 그림 (assets/img/lobby-bg.webp) -->
+  <div class="gate-inner">
+    <header class="gate-head">
+      <div class="eyebrow" id="motto"></div>
+      <h1 id="gname"></h1>
+      <p>승인된 기록자만 들어올 수 있는 기록소예요.</p>
+    </header>
+
+    <div class="gate-cards">
+      <!-- 입장 -->
+      <section class="auth-card" id="login-card">
+        <div class="head"><div class="eyebrow">Enter</div><h2>입장</h2></div>
+        <form id="lf" novalidate>
+          <label class="field"><span>아이디</span><input name="id" maxlength="8" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+          <label class="field"><span>비밀번호</span><input name="pw" type="password" maxlength="8" autocomplete="current-password"></label>
+          <label class="chk" style="margin:-4px 0 14px"><input type="checkbox" id="remember"> 아이디 저장</label>
+          <p class="err-text" id="lerr" role="alert"></p>
+          <button class="btn btn-block">입장</button>
+        </form>
+        <p class="note-text">비밀번호를 잊었다면 관리자에게 문의해 주세요.</p>
+      </section>
+
+      <!-- 가입 신청 -->
+      <section class="auth-card" id="signup-card">
+        <div class="head"><div class="eyebrow">Join</div><h2>가입 신청</h2></div>
+        <form id="sf" novalidate>
+          <label class="field"><span>아이디 <small>영문 소문자·숫자·_ 4~8자</small></span>
+            <input name="id" maxlength="8" autocomplete="username" autocapitalize="none" spellcheck="false"><small class="idchk" id="idchk"></small></label>
+          <div class="row2">
+            <label class="field"><span>비밀번호 <small>6~8자</small></span><input name="pw" type="password" maxlength="8" autocomplete="new-password"></label>
+            <label class="field"><span>비밀번호 확인</span><input name="pw2" type="password" maxlength="8" autocomplete="new-password"></label>
+          </div>
+          <label class="field"><span>닉네임 <small>명부에 보이는 이름</small></span><input name="nickname" maxlength="20" autocomplete="nickname"></label>
+          <label class="field"><span>이메일 <small>아무거나 적어도 돼요</small></span><input name="contact" maxlength="120" autocomplete="off"></label>
+          <p class="err-text" id="serr" role="alert"></p>
+          <button class="btn ghost btn-block" id="sbtn">가입 신청하기</button>
+        </form>
+        <div class="done" id="done" hidden>
+          <div class="done-ic">✦</div>
+          <h3>가입 신청 완료!</h3>
+          <p>관리자가 승인하면 입장할 수 있어요.<br>승인 전에는 로그인이 되지 않아요.</p>
+        </div>
+      </section>
+    </div>
+    <p class="note-text" id="mode-note"></p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  const next = (() => {
+    const n = qs('next') || '';
+    return /^[a-z]+\.html(\?[\w=&%.-]*)?$/i.test(n) && !/^login/i.test(n) ? n : 'index.html';
+  })();
+  if (user) { location.replace(next); return; }
+  $('#motto').textContent = SITE_CONFIG.siteMotto || '';
+  $('#gname').innerHTML = [...(SITE_CONFIG.siteName || '')].map((c, i) => `<span style="--i:${i}">${esc(c)}</span>`).join('');
+  if (Store.mode === 'demo') $('#mode-note').textContent = '지금은 데모 모드예요. 계정과 글이 이 브라우저에만 저장됩니다.';
+
+  /* ---------- 입장 ---------- */
+  const lf = $('#lf'), KEY = 'naru:remember-id';
+  try { const saved = localStorage.getItem(KEY); if (saved) { lf.id.value = saved; $('#remember').checked = true; lf.pw.focus(); } else lf.id.focus(); } catch (e) {}
+  lf.onsubmit = async e => {
+    e.preventDefault(); $('#lerr').textContent = '';
+    const btn = lf.querySelector('button'); btn.disabled = true;
+    try {
+      await Store.signIn(lf.id.value, lf.pw.value);
+      try { $('#remember').checked ? localStorage.setItem(KEY, lf.id.value.trim().toLowerCase()) : localStorage.removeItem(KEY); } catch (e) {}
+      location.replace(next);
+    } catch (ex) { $('#lerr').textContent = ex.message; btn.disabled = false; }
+  };
+
+  /* ---------- 가입 신청 ---------- */
+  const sf = $('#sf'), chk = $('#idchk');
+  let s = {}; try { s = await Store.settings(); } catch (e) {}
+  if (s.signup_open === false) {
+    sf.innerHTML = '<p class="err-text" style="margin:10px 0">지금은 가입 신청을 받지 않고 있어요.<br>관리자에게 문의해 주세요.</p>';
+  }
+  let t;
+  const checkId = async () => {
+    const v = sf.id.value.trim().toLowerCase(); sf.id.value = v;
+    if (!v) { chk.textContent = ''; chk.className = 'idchk'; return; }
+    try {
+      Store.checkId(v);
+      const ok = await Store.usernameAvailable(v);
+      chk.textContent = ok ? '✓ 사용할 수 있는 아이디예요' : '✕ 이미 있는 아이디예요';
+      chk.className = 'idchk ' + (ok ? 'ok' : 'no');
+    } catch (ex) { chk.textContent = '✕ ' + ex.message; chk.className = 'idchk no'; }
+  };
+  if (sf.id) {
+    sf.id.oninput = () => { clearTimeout(t); t = setTimeout(checkId, 350); };
+    sf.onsubmit = async e => {
+      e.preventDefault(); $('#serr').textContent = '';
+      if (sf.pw.value !== sf.pw2.value) return $('#serr').textContent = '비밀번호가 서로 달라요.';
+      const btn = $('#sbtn'); btn.disabled = true;
+      try {
+        const r = await Store.signUp(sf.id.value, sf.pw.value, sf.nickname.value, sf.contact.value);
+        if (r.user) { toast('첫 관리자 계정이에요. 바로 입장해요!'); return location.replace(next); }
+        sf.hidden = true; $('#done').hidden = false;
+      } catch (ex) { $('#serr').textContent = ex.message; btn.disabled = false; }
+    };
+  }
+  if (qs('mode') === 'signup' && sf.id) sf.id.focus();
+});
+</script>
+</body>
+</html>

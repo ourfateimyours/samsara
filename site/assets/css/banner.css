@@ -1,0 +1,44 @@
+/* 메인 왼쪽 아래 배너 — 메인(index.html)과 관리자 미리보기(admin.html)에서 같이 써요 */
+.lb-car { --panel-b: rgba(12, 14, 20, .86); }
+.lb-car { position: relative; width: 330px; overflow: hidden; padding-bottom: 18px; }
+.lb-car .track { display: flex; transition: transform .6s cubic-bezier(.6, 0, .2, 1); }
+.lb-car .slide { position: relative; flex: 0 0 100%; height: 124px; padding: 14px 18px; overflow: hidden; background: var(--panel-b); border: 1px solid var(--line-2);
+  box-shadow: inset 3px 0 0 var(--text); }
+.lb-car .slide:hover { border-color: rgba(255, 255, 255, .4); }
+.lb-car .tag { position: relative; display: inline-block; padding: 1px 7px; background: var(--text); color: #0c0e14; font: 700 9.5px var(--mono); letter-spacing: .14em; }
+.lb-car .when { position: relative; margin-left: 6px; font: 500 11px var(--mono); color: var(--muted); }
+.lb-car .slide b { position: relative; display: block; margin-top: 8px; font: 400 19px/1.25 var(--serif); }
+.lb-car .slide p { position: relative; margin: 4px 0 0; font: 400 12px/1.5 var(--sans); color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.lb-car .faces { position: absolute; right: 14px; bottom: 12px; display: flex; }
+.lb-car .faces span { width: 24px; height: 24px; margin-left: -7px; border-radius: 50%; background: #1c1f2a center/cover; box-shadow: 0 0 0 1.5px #0c0e14, 0 0 0 2.5px var(--line-2); }
+.lb-car .ghost { position: absolute; right: 10px; top: -8px; font: 400 72px/1 var(--han); color: rgba(255, 255, 255, .05); pointer-events: none; }
+.lb-car .dots { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; justify-content: center; gap: 6px; }
+.lb-car .dots button { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .25); transition: width .3s, background .3s; }
+.lb-car .dots button.on { width: 18px; border-radius: 3px; background: var(--text); }
+
+/* 관리자가 만든 배너: 그라데이션 바탕 */
+.lb-car .slide.cus { background: linear-gradient(var(--ga, 120deg), var(--g1), var(--g2)); border-color: rgba(255, 255, 255, .3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -40px 60px -30px rgba(0, 0, 0, .35); color: #fff; }
+.lb-car .slide.cus::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 80% at 100% 0%, rgba(255, 255, 255, .22), transparent 60%), repeating-linear-gradient(115deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 9px); }
+.lb-car .slide.cus b { text-shadow: 0 1px 8px rgba(0, 0, 0, .45); }
+.lb-car .slide.cus p { color: rgba(255, 255, 255, .82); text-shadow: 0 1px 6px rgba(0, 0, 0, .4); }
+.lb-car .slide.cus .tag { background: rgba(255, 255, 255, .92); color: #15172a; }
+.lb-car .slide.cus .ghost { color: rgba(255, 255, 255, .16); }
+.lb-car .slide.cus.lt { color: #15172a; }
+.lb-car .slide.cus.lt b, .lb-car .slide.cus.lt p { text-shadow: none; }
+.lb-car .slide.cus.lt p { color: rgba(21, 23, 42, .72); }
+.lb-car .slide.cus.lt .tag { background: #15172a; color: #fff; }
+.lb-car .slide.cus.lt .ghost { color: rgba(21, 23, 42, .1); }
+/* 관리자 '메인 배너' 편집 칸 */
+.bn-row { display: grid; grid-template-columns: 330px 1fr; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line); }
+.bn-row:first-child { border-top: 0; }
+.bn-prev .lb-car { max-width: 100%; }
+.bn-ord { display: flex; gap: 6px; margin-top: 10px; }
+.bn-f .row3 { display: grid; grid-template-columns: 1fr 110px 1.4fr; gap: 10px; }
+.bn-col { display: flex; gap: 12px; align-items: flex-end; }
+.bn-col input[type=range] { width: 100%; accent-color: #c4b6ff; }
+.bn-pre { display: flex; flex-wrap: wrap; gap: 6px; }
+.bn-pre button { padding: 5px 10px; border: 1px solid rgba(255, 255, 255, .25); color: #fff; font: 600 11px var(--sans); text-shadow: 0 1px 4px rgba(0, 0, 0, .7); cursor: pointer; }
+.bn-pre button:hover { border-color: #fff; }
+@media (max-width: 860px) { .bn-row { grid-template-columns: 1fr; } .bn-f .row3 { grid-template-columns: 1fr 1fr; } }

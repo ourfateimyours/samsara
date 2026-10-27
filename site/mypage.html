@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마이 페이지 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="mypage" data-embers>
+
+<main class="wrap" id="my"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/keyring.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script>
+App.ready.then(async user => {
+  const root = $('#my');
+  if (!user) { location.replace('login.html?next=mypage.html'); return; }
+  const ST = { draft: ['✎', '작성 중'], submitted: ['⏳', '심사 대기'], returned: ['↩', '반려됨'], published: ['✦', '게시됨'] };
+  const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
+  async function render() {
+    const [me, mine, s, cCreate, cEdit] = await Promise.all([
+      Store.profiles().then(p => p.find(x => x.id === user.id) || { nickname: user.nickname }),
+      Store.myCharacters(), Store.settings(true), Store.can('create'), Store.can('edit')
+    ]);
+    const isAdm = user.grade === 'admin';
+    const period = (label, c) => `<div><b>${label}</b>${c.ok ? `<span class="pill on">● 열림${c.until ? ' · ' + esc(dday(c.until)) : ''}${c.grant ? ' (예외 허용)' : ''}</span>` : `<span class="pill off">○ 닫힘</span>`}</div>`;
+    mine.sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)));
+
+    root.innerHTML = `
+      <section class="my-head">
+        <div class="seal star" aria-hidden="true">✦</div>
+        <div><div class="eyebrow">My Page</div><h1>${esc(me.nickname)}</h1>
+          <div class="meta">${isAdm ? '관리자' : '일반 회원'} · ${esc(me.title || 'Recorder')} · ${pad2(mine.length)} CHARACTERS</div></div>
+        <div class="acts"><button class="btn" data-new>+ 새 캐릭터</button><button class="btn ghost" data-profile>내 프로필 편집</button>
+          ${isAdm ? '<a class="btn ghost" href="admin.html">관리자 페이지</a>' : ''}</div>
+      </section>
+
+      <div class="my-periods">${period('✦ 등록 기간', cCreate)}${period('✎ 수정 기간', cEdit)}</div>
+      <p class="hint-text" style="margin:-18px 0 30px">작성본 저장과 미리보기는 언제든 할 수 있어요. <b>제출</b>은 기간 안에만 돼요${isAdm ? ' (관리자는 바로 게시할 수 있어요)' : ''}.</p>
+
+      <section class="my-sec">
+        <header><h2>내 캐릭터</h2><span class="label">${Object.entries(ST).map(([k, v]) => `${v[1]} ${mine.filter(c => (c.status || 'published') === k).length}`).join(' · ')}</span></header>
+        <div class="my-cards">${mine.length ? mine.map((c, i) => {
+          const st = c.status || 'published', d = (c.draft || c.data) || {}, [ic, lab] = ST[st];
+          const canSubmit = st === 'draft' || st === 'returned';
+          const subOk = c.published_at ? cEdit.ok : cCreate.ok;
+          return `<article class="my-card" id="c-${esc(c.id)}" style="--i:${i}">
+            <div class="im" style="background-image:${cssUrl(charImage(d, c.id))}"></div>
+            <div><h3>${esc(d.name || '이름 없음')}<span class="pv-st s-${st}">${ic} ${lab}</span></h3>
+              <p>${c.published_at ? (c.draft ? '게시본 있음 · 수정본 작성됨' : '게시됨 · ' + when(c.published_at)) : '아직 게시 전 (첫 등록)'}${st === 'submitted' && c.submitted_at ? ' · ' + when(c.submitted_at) + ' 제출' : ''}</p>
+              ${st === 'returned' && c.review_note ? `<p class="note">반려 메모: ${esc(c.review_note)}</p>` : ''}</div>
+            <div class="acts">
+              ${c.draft ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : ''}
+              ${c.published_at ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">게시본 보기</a>` : ''}
+              <button class="btn sm ghost" data-edit="${esc(c.id)}">✎ ${c.draft ? '계속 수정' : '수정본 작성'}</button>
+              ${st === 'submitted' ? `<button class="btn sm ghost" data-withdraw="${esc(c.id)}">제출 취소</button>` : ''}
+              ${canSubmit && c.draft && !isAdm ? `<button class="btn sm" data-submit="${esc(c.id)}" ${subOk ? '' : 'disabled title="지금은 기간이 아니에요"'}>제출</button>` : ''}
+              ${isAdm && c.draft ? `<button class="btn sm" data-publish="${esc(c.id)}">게시 ›</button>` : ''}
+            </div></article>`;
+        }).join('') : '<div class="empty">아직 캐릭터가 없어요. "+ 새 캐릭터"로 시작해 보세요.</div>'}</div>
+      </section>`;
+
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (h) { const el = document.getElementById(h); if (el) { el.classList.add('hl'); el.scrollIntoView({ block: 'center' }); } }
+  }
+
+  /* 내 프로필 편집 */
+  async function editProfile() {
+    const m = (await Store.profiles()).find(x => x.id === user.id) || { nickname: user.nickname };
+    const box = openModal(`<h2>내 프로필</h2><form id="pf" novalidate>
+      <p class="hint-text">아이디: <b>${esc(user.username || '')}</b> (아이디는 바꿀 수 없어요)</p>
+      <div class="row2">
+        <label class="field"><span>닉네임</span><input name="nickname" maxlength="20" value="${esc(m.nickname)}"></label>
+        <label class="field"><span>칭호 <small>영문 추천</small></span><input name="title" maxlength="30" value="${esc(m.title)}" placeholder="Night Archivist"></label>
+      </div>
+      <label class="field"><span>자기소개</span><textarea name="bio" rows="4" maxlength="300">${esc(m.bio)}</textarea></label>
+      <p class="err-text" id="perr"></p>
+      <div class="modal-foot"><button type="button" class="btn ghost" data-cancel>취소</button><button class="btn">저장</button></div></form>`);
+    const f = $('#pf', box);
+    $('[data-cancel]', box).onclick = closeModal;
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const nickname = f.nickname.value.trim();
+      if (!nickname) return $('#perr', box).textContent = '닉네임을 입력해 주세요.';
+      try {
+        await Store.updateProfile({ nickname, title: f.title.value.trim(), seal: m.seal || '', bio: f.bio.value.trim() });
+        closeModal(); toast('프로필을 고쳤어요');
+        const w = $('.site-header .who'); if (w) w.textContent = nickname;
+        render();
+      } catch (ex) { $('#perr', box).textContent = ex.message; }
+    };
+  }
+
+  root.addEventListener('click', async e => {
+    const t = e.target.closest('button'); if (!t) return;
+    try {
+      if (t.matches('[data-new]')) return CharEditor.open();
+      if (t.matches('[data-profile]')) return editProfile();
+      const mine = await Store.myCharacters();
+      const row = id => mine.find(c => c.id === id);
+      if (t.dataset.edit) return CharEditor.open(row(t.dataset.edit));
+      if (t.dataset.submit) { await Store.submit(t.dataset.submit); toast('제출했어요! 관리자가 확인한 뒤 게시돼요.'); return render(); }
+      if (t.dataset.withdraw) { await Store.withdraw(t.dataset.withdraw); toast('제출을 취소했어요.'); return render(); }
+      if (t.dataset.publish) { await Store.publish(t.dataset.publish); toast('게시했어요 ✦'); return render(); }
+    } catch (ex) { toast(ex.message, 'err'); }
+  });
+  render();
+  if (location.hash === '#profile') editProfile();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>출석 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/market.css">
+</head>
+<body data-page="attend" data-embers>
+
+<header class="page-head wrap">
+  <div class="big-han">出席</div>
+  <div class="eyebrow">Attendance · 出席簿</div>
+  <h1>출석 도장</h1>
+  <p>하루 한 번 도장을 찍으면 영전을 받아요. 7일을 이어서 찍으면 보너스 영전을 더 드려요.</p>
+</header>
+
+<main class="wrap mk" id="att">
+  <div class="mk-panel wallet" id="wallet"></div>
+
+  <section class="mk-sec att-top">
+    <div class="mk-panel stamp-box">
+      <div class="day" id="day"></div>
+      <button type="button" class="stamp" id="stamp" aria-label="출석 도장 찍기"><span class="ink">印</span><span class="lbl">눌러서 도장 찍기</span></button>
+      <label class="field say"><span>오늘의 한마디 <small>선택 · 60자</small></span><input id="say" maxlength="60" placeholder="예) 오늘도 망량 조심!"></label>
+      <div class="gain" id="gain"></div>
+    </div>
+    <div class="mk-panel track7">
+      <div class="mk-h"><b>이레 보상</b><small>7-DAY STREAK</small></div>
+      <div class="cells" id="cells"></div>
+      <div class="stats" id="stats"></div>
+      <p class="rule" id="rule"></p>
+    </div>
+  </section>
+
+  <section class="mk-sec">
+    <div class="mk-h"><b id="cal-t">달력</b><small>CALENDAR</small><div class="r cal"><div class="nav"><button type="button" id="prev" aria-label="이전 달">‹</button><button type="button" id="next" aria-label="다음 달">›</button></div></div></div>
+    <div class="mk-panel cal"><div class="wk"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div><div class="grid" id="grid"></div></div>
+  </section>
+
+  <section class="mk-sec">
+    <div class="mk-h"><b>오늘의 출석부</b><small>TODAY'S ROLL</small><span class="r pill" id="roll-n">0명</span></div>
+    <div class="mk-panel roll"><ul id="roll"></ul></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=attendance.html'); return; }
+  const today = Store.kstDay(), A = Store.ATTEND;
+  const [ty, tm] = today.split('-').map(Number);
+  let view = { y: ty, m: tm }, wal, rows = [], shop = [];
+  const ymd = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+  // 지난 400일 출석을 불러와요 (달력 · 연속 계산용)
+  async function loadAll() {
+    const from = new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10);
+    const [w, todayRows, mineRows, sh] = await Promise.all([Store.wallet(), Store.attendance(today), Store.myAttendance(from), Store.shopItems()]);
+    wal = w; shop = sh; rows = mineRows.filter(r => r.day !== today).concat(todayRows);
+  }
+
+  const item = id => shop.find(i => i.id === id);
+  const myDays = () => rows.filter(r => r.user_id === user.id).map(r => r.day);
+  const done = () => myDays().includes(today);
+
+  function renderWallet() {
+    const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
+    $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
+      <div class="w-i">칭호 <b>${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div><div class="w-i">츄르 <b>${wal.snacks}</b>개</div>
+      <a class="btn ghost sm w-go" href="shop.html">상점 가기 →</a>`;
+  }
+
+  function renderStamp() {
+    const d = new Date(today + 'T00:00:00Z');
+    $('#day').innerHTML = `TODAY<b>${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][d.getUTCDay()]}요일</b>`;
+    const st = $('#stamp');
+    st.classList.toggle('done', done());
+    st.querySelector('.lbl').textContent = done() ? '오늘 출석 완료' : '눌러서 도장 찍기';
+    $('#say').disabled = done();
+    if (done()) { const mine = rows.find(r => r.user_id === user.id && r.day === today); $('#say').value = mine ? mine.comment : ''; if (!$('#gain').innerHTML) $('#gain').textContent = '오늘 출석 완료 · 내일 또 만나요'; }
+  }
+
+  function renderTrack() {
+    const streak = Store.streakOf(myDays(), today);
+    const inCycle = streak % 7 || (streak ? 7 : 0);       // 이번 이레 안에서 몇 칸째
+    const shown = done() ? inCycle : (streak % 7);        // 오늘 아직이면 어제까지의 칸
+    $('#cells').innerHTML = Array.from({ length: 7 }, (_, i) => {
+      const big = i === 6, got = i < shown, now = !done() && i === shown;
+      return `<div class="cell${big ? ' big' : ''}${got ? ' got' : ''}${now ? ' now' : ''}"><small>DAY ${i + 1}</small><span class="mk7">印</span><span class="rw">+${A.week[i]}</span></div>`;
+    }).join('');
+    const total = myDays().length;
+    const next = A.week[(done() ? inCycle : streak % 7) % 7];   // 다음에 도장 찍으면 받을 영전
+    $('#stats').innerHTML = `<div><small>STREAK</small><b>${streak}<i>일 연속</i></b></div><div><small>TOTAL</small><b>${total}<i>번 출석</i></b></div><div><small>${done() ? 'TOMORROW' : 'TODAY'}</small><b>+${next}<i>영전</i></b></div>`;
+    $('#rule').textContent = `연속 출석 1일째 +${A.week[0]} → 7일째 +${A.week[6]} 영전 · 7일을 채우면 다음 날부터 다시 1일째 · 하루라도 빠지면 1일째부터 다시 시작돼요. (한국 시간 자정 기준)`;
+  }
+
+  function renderCal() {
+    const { y, m } = view;
+    $('#cal-t').textContent = `${y}년 ${m}월`;
+    const first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const set = new Set(myDays());
+    let h = '';
+    for (let i = 0; i < first; i++) h += '<div class="d out"></div>';
+    for (let d = 1; d <= last; d++) {
+      const k = ymd(y, m, d);
+      h += `<div class="d${k === today ? ' today' : ''}${k > today ? ' fut' : ''}">${d}${set.has(k) ? `<span class="sl" style="rotate:${((d * 37) % 17) - 8}deg">印</span>` : ''}</div>`;
+    }
+    $('#grid').innerHTML = h;
+    $('#next').disabled = y === ty && m === tm;
+  }
+
+  function renderRoll() {
+    const list = rows.filter(r => r.day === today).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    $('#roll-n').textContent = `${list.length}명`;
+    const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+    $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
+      <span class="who" style="${r.tag ? `color:${esc(r.tag)}` : ''}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
+      <span class="cm">${esc(r.comment || '')}</span></li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
+  }
+
+  const renderAll = () => { renderWallet(); renderStamp(); renderTrack(); renderCal(); renderRoll(); };
+  try { await loadAll(); } catch (e) { toast(e.message, 'err'); wal = { coins: 0, items: [], equip: {}, snacks: 0 }; }
+  renderAll();
+
+  $('#stamp').onclick = async () => {
+    if (done()) return;
+    const st = $('#stamp'); st.disabled = true;
+    try {
+      const r = await Store.checkIn($('#say').value);
+      await loadAll(); renderAll();
+      st.classList.add('thud'); setTimeout(() => st.classList.remove('thud'), 700);
+      $('#gain').innerHTML = `DAY ${r.day} · <b>+${r.gained}</b> 靈錢 · 지금 <b>${r.coins}</b> 영전 · ${r.streak}일 연속`;
+      toast(r.day === 7 ? `7일째 출석! +${r.gained} 영전` : `출석 완료! DAY ${r.day} · +${r.gained} 영전`);
+    } catch (e) { toast(e.message, 'err'); }
+    st.disabled = false;
+  };
+  $('#prev').onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } renderCal(); };
+  $('#next').onclick = () => { if (view.y === ty && view.m === tm) return; view.m++; if (view.m > 12) { view.m = 1; view.y++; } renderCal(); };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>三娑罗 — 삼사라</title>
+<meta name="description" content="콘셉트 밴드 삼사라">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/lobby.css">
+<link rel="stylesheet" href="assets/css/banner.css">
+</head>
+<body data-page="home" class="home-only lobby-page" data-nofooter>
+
+<!-- 로비 (사이트 위 막대 아래): 왼쪽 위 기록자 카드 · 왼쪽 둥근 버튼 · 왼쪽 아래 배너 / 가운데 고양이 / 오른쪽 위 영전 · 이벤트 원 · 오른쪽 아래 메뉴 -->
+<main class="lobby" id="lobby">
+  <!-- 배경: assets/img/lobby-bg.webp 를 바꾸면 배경 그림이 바뀌어요 -->
+  <div class="lb-bg" aria-hidden="true"><i class="photo"></i><i class="shade"></i><i class="grid"></i><i class="scan"></i><div class="lb-meteors" id="meteors"></div><div class="lb-dayfx" id="dayfx"></div></div>
+  <div class="lb-glints" id="glints" aria-hidden="true"></div>
+  <button class="lb-fig lb-cat" id="fig" type="button" aria-label="고양이에게 말 걸기"><img id="fig-img" alt="" draggable="false"></button>
+  <!-- 고양이 대사: 게임 나레이션처럼 그림 아래에 -->
+  <div class="lb-narr" id="narr">
+    <div class="nr-line"><i></i><span class="nr-name">天師監 · 고양이</span><i></i></div>
+    <p class="nr-text" id="say" aria-live="polite"></p>
+    <button type="button" class="lb-churu" id="churu" hidden>츄르 주기 <b id="churu-n">0</b></button>
+  </div>
+
+  <!-- 왼쪽 위: 기록자 카드 -->
+  <section class="lb-card">
+    <small class="eb">RECORDER · 記錄者</small>
+    <div class="row"><b class="nm" id="nick">—</b><span class="ttl" id="ttl" hidden></span></div>
+    <div class="bar" id="aff-bar" title="고양이 호감도"><i id="bar"></i></div>
+    <div class="date" id="today"></div>
+  </section>
+
+  <!-- 오른쪽 위: 영전 -->
+  <div class="lb-tr">
+    <a class="lb-pill" href="shop.html" title="영전 · 상점"><span class="coin" aria-hidden="true"></span><small>靈錢</small><b id="coins">0</b><span class="plus">+</span></a>
+    <div class="lb-chips" id="chips"></div>
+  </div>
+
+  <!-- 왼쪽: 둥근 버튼 -->
+  <nav class="lb-side" aria-label="바로가기">
+    <a class="rb" href="attendance.html" id="sb-att"><span class="ci" data-emb="attend"></span><b>출석</b></a>
+    <button type="button" class="rb" data-music><span class="ci" data-emb="music"></span><b>음악</b></button>
+    <a class="rb" href="admin.html" id="sb-admin" hidden><span class="ci" data-emb="admin"></span><b>관리</b></a>
+  </nav>
+
+  <!-- 오른쪽 위: 배너 — 비스듬히 걸린 HUD 창 (관리자 페이지 '메인 배너' 에서 만든 배너 + 등록 기간 · 출석) -->
+  <aside class="lb-hud" id="hud" aria-label="소식">
+    
+    <div class="hud-panel">
+      <div class="hud-head"><b id="hud-tag">NOTICE</b><span class="hud-no" id="hud-no">01 / 01</span><span class="hud-nav"><button type="button" id="hud-prev" aria-label="이전 배너">‹</button><button type="button" id="hud-next" aria-label="다음 배너">›</button></span></div>
+      <div class="lb-car"><div class="track" id="track"></div><div class="dots" id="dots"></div></div>
+
+    </div>
+    <!-- 배너 아래: 서울시 재난관리 현황 (꾸밈용 · 숫자는 날마다 / 누를 때마다 바뀌어요) -->
+    <div class="sd-panel" id="sd" role="button" tabindex="0" aria-label="서울시 재난관리 현황 · 눌러서 새로 받기">
+      <!-- 동양풍 무늬: 오른쪽 아래 회문(回紋) 테두리 문양 원 + 鎭 · 왼쪽 아래 구름 줄 -->
+      <svg class="sd-orn" viewBox="0 0 400 220" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
+        <defs><pattern id="sdFret" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M1 11V1h10v8H4V4h4v2" fill="none" stroke="currentColor" stroke-width="1.3"/></pattern>
+          <mask id="sdRingM"><circle cx="340" cy="170" r="86" fill="#fff"/><circle cx="340" cy="170" r="70" fill="#000"/></mask></defs>
+        <circle cx="340" cy="170" r="86" fill="url(#sdFret)" mask="url(#sdRingM)"/>
+        <circle cx="340" cy="170" r="88" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="340" cy="170" r="68" fill="none" stroke="currentColor" stroke-width="1"/>
+        <circle cx="340" cy="170" r="58" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="2 4"/>
+        <text x="340" y="196" text-anchor="middle" font-size="72" fill="currentColor" class="sd-orn-han">鎭</text>
+        <path d="M-10 190 H70 q12 0 12 -9 q0 -9 -12 -9 H40 M-10 204 H118 q10 0 10 -7 q0 -7 -10 -7 H96 M-10 214 H60" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <div class="sd-head"><span class="sd-live"><i></i>LIVE</span><b>서울시 재난관리 현황</b><small>SEOUL DISASTER CTRL.</small><span class="sd-time" id="sd-time">--:--</span></div>
+      <!-- 밤: 처음 디자인 (경계 한 줄 + 4칸 · 결계는 막대) / 낮: 원 게이지 · 깎은 칸 · 동양풍 -->
+      <div class="sd-v1"><div class="sd1-alert" id="sd1-alert"></div><div class="sd1-grid" id="sd1-grid"></div></div>
+      <div class="sd-v2"><div class="sd-alert" id="sd-alert"></div><div class="sd-grid" id="sd-grid"></div></div>
+      <div class="sd-foot"><span class="sd-zone" id="sd-zone"></span><span class="sd-tap">↻ TAP TO SYNC</span></div>
+    </div>
+    <!-- 그 아래: 미니 게임 전광판 (하루 한 판 · 하고 나면 자물쇠) -->
+    <!-- 미니 게임: 유리 배너 배경에 도트 그라데이션 + 반짝이 / 그 안에 어두운 전광판 (네온 글자가 흘러요) -->
+    <a class="pg-board" id="pang" href="pang.html" aria-label="미니 게임 · 영전을 걸고 하루 한 판">
+      <div class="pg-sign" aria-hidden="true"><div class="pg-run"><span>★ 오늘의 미니 게임 ★ 같은 캐릭터 셋을 맞춰 터뜨려요 ★ 50 ~ 1000 영전 ★ 최대 ×10 </span><span>★ 오늘의 미니 게임 ★ 같은 캐릭터 셋을 맞춰 터뜨려요 ★ 50 ~ 1000 영전 ★ 최대 ×10 </span></div></div>
+      <div class="pg-row"><b class="pt-ttl">미니 게임</b><em class="pt-chip">하루 한 번</em><span class="pg-go" id="pang-go">PLAY ▸</span></div>
+    </a>
+  </aside>
+
+  <!-- 왼쪽 아래: 전체 화면 -->
+  <div class="lb-bl">
+    <button type="button" class="mb" id="fs" title="전체 화면" aria-label="전체 화면"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
+  </div>
+
+  <!-- 왼쪽 아래: 보유 영전 순위 홀로그램 카드 · 1 · 2 · 3 등을 넘겨 봐요 -->
+  <aside class="lb-holo" id="holo" aria-label="영전 순위" hidden>
+    <div class="hl-panel">
+      <div class="hl-head"><b>RANKING</b><span class="hl-no" id="hl-no">01 / 03</span></div>
+      <div class="hl-stage" id="hl-stage"></div>
+      <div class="hl-pages" id="hl-pages"></div>
+    </div>
+  </aside>
+
+  <!-- 오른쪽 아래: 메뉴 -->
+  <nav class="lb-dock" aria-label="메뉴">
+    <a class="rb big" href="characters.html"><span class="ci" data-emb="roster"></span><b>멤버란<small>ROSTER</small></b><em class="cnt" id="n-roster"></em></a>
+    <a class="rb big" href="board.html"><span class="ci" data-emb="board"></span><b>사건 보드<small>BOARD</small></b></a>
+    <a class="rb big" href="https://samsaraworld.vercel.app/world.html" target="_blank" rel="noopener"><span class="ci" data-emb="world"></span><b>세계관<small>WORLD</small></b></a>
+    <button type="button" class="rb big" data-tele id="db-tele"><span class="ci" data-emb="heart"></span><b>심박<small>HEARTBEAT</small></b></button>
+    <a class="rb big" href="mypage.html" id="book"><span class="ci" data-emb="record"></span><b>내 기록<small>RECORD</small></b></a>
+  </nav>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script src="assets/js/emblems.js"></script><script src="assets/js/holocard.js"></script><script>
+/* 버튼 아이콘 (assets/js/emblems.js) · 뒤의 팔괘 · 반짝이 */
+$$('[data-emb]').forEach(el => {
+  if (window.EMBLEM) el.insertAdjacentHTML('beforeend', EMBLEM[el.dataset.emb] || '');
+  // 아이콘 뒤 효과: 은은한 빛무리 · 바닥 반사 · 마우스를 올리면 튀어나오는 반짝이 4개
+  el.insertAdjacentHTML('afterbegin', '<i class="fx-glow" aria-hidden="true"></i><i class="fx-floor" aria-hidden="true"></i>');
+  el.insertAdjacentHTML('beforeend', '<i class="fx-sp" aria-hidden="true"><b></b><b></b><b></b><b></b></i>');
+});
+/* 휴대폰: 왼쪽 버튼(출석 · 음악 · 관리)도 아래 메뉴 한 줄에 같이 놓아요 */
+(function oneRow() {
+  const mq = matchMedia('(max-width: 760px)'), side = $('.lb-side'), dock = $('.lb-dock');
+  const sideBtns = [...side.children];
+  const apply = () => { if (mq.matches) sideBtns.forEach(b => dock.appendChild(b)); else sideBtns.forEach(b => side.appendChild(b)); };
+  apply(); mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+})();
+/* 별똥별 — 사진 속 방향(오른쪽 위 → 왼쪽 아래, 약 32°)으로 가끔 떨어져요 */
+/* 낮 · 밤 배경: 06시~18시는 낮 그림(DAY_IMG), 나머지는 밤 그림(assets/img/lobby-bg.webp)
+   낮에는 별똥별 · 반짝이를 쉬어요. 낮 그림 파일이 없으면 밤 그림 그대로 */
+const DAY_FROM = 6, DAY_TO = 18, DAY_IMG = 'https://i.imgur.com/v8ZbESH.png';   // 낮 그림 주소 (바꾸면 낮 배경이 바뀌어요)
+const DAY_FORCE = false;   // 미리보기용: true로 바꾸면 시간과 상관없이 항상 낮 화면
+/* 낮에는 별똥별 대신 벚꽃잎: 화면 위에서 바람에 흩날리며 떨어져요 */
+(function dayFx() {
+  const box = $('#dayfx'); if (!box) return;
+  const R = (a, b) => a + Math.random() * (b - a);
+  box.innerHTML = Array.from({ length: 36 }, () => { const t = R(10, 18);
+    return `<i style="left:${R(-5, 100).toFixed(1)}%;--y:${R(5, 90).toFixed(0)}%;--s:${R(13, 24).toFixed(1)}px;--dx:${R(40, 160).toFixed(0)}px;--t:${t.toFixed(1)}s;--f:${R(1.2, 2.6).toFixed(1)}s;animation-delay:-${R(0, t).toFixed(1)}s"><b></b></i>`; }).join('');
+})();
+const isDay = () => { if (DAY_FORCE) return true; const h = new Date().getHours(); return h >= DAY_FROM && h < DAY_TO; };
+(function dayNight() {
+  // 켜 둔 채로 낮 ↔ 밤이 바뀌면: 지금 화면이 서서히 흐려지면서 새 화면이 겹쳐 떠올라요 (크로스페이드 · 처음 들어올 때는 바로)
+  let cur = null;
+  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const flip = day => { $('#lobby').classList.toggle('is-day', day); document.body.classList.toggle('lobby-day', day); cur = day; };   // 낮에는 화면 색도 밝은 테마로
+  // 넘어가는 동안: 카메라 노출이 바뀌듯 지금 화면은 어두워지거나(밤) 밝게 바래고(낮), 새 화면이 부드럽게 내려앉아요
+  const sweep = day => {
+    if (cur === null || REDUCE) return flip(day);
+    if (document.startViewTransition) { document.documentElement.dataset.dn = day ? 'day' : 'night'; return document.startViewTransition(() => flip(day)); }
+    const lb = $('#lobby');   // 그 기능이 없는 브라우저: 살짝 흐려졌다가 바뀌고 다시 또렷하게
+    lb.classList.add('dn-fade');
+    setTimeout(() => { flip(day); lb.classList.remove('dn-fade'); }, 900);
+  };
+  const set = () => {
+    if (!isDay()) { if (cur !== false) sweep(false); return; }
+    if (cur === true) return;
+    const im = new Image();
+    im.onload = () => sweep(true);
+    im.src = DAY_IMG;
+  };
+  set(); setInterval(set, 60e3);   // 1분마다 다시 확인 (켜 둔 채로 시간이 바뀌어도)
+  window.lobbyDayNight = sweep;    // 미리보기용: 콘솔에서 lobbyDayNight(true / false)
+})();
+/* 서울시 재난관리 현황 (꾸밈용 · 진짜 데이터는 없어요)
+   처음엔 날짜로 정해진 숫자, 누를 때마다 새로 무작위 · 숫자는 세어 올라가요 */
+(function disasterBoard() {
+  const box = $('#sd'); if (!box) return;
+  const IC = {   // 흰 선 아이콘 (viewBox 24)
+    eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v-1.6M15.4 9.6l1-1"/>',
+    blade: '<path d="M4 20 15.5 8.5M15.5 8.5l3-5 2 2-5 3M7 13l4 4M3 21l2-1"/>',
+    shield: '<path d="M12 3 19.5 6v5.6c0 4.6-3.2 8-7.5 9.4-4.3-1.4-7.5-4.8-7.5-9.4V6L12 3Z"/><path d="M8.7 12.2 11 14.5l4.4-4.6"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5.5 5.5M8 8.8a3 3 0 0 1 2.4-1.3"/>',
+    pin: '<path d="M12 21s-6.5-6.3-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.7 12 21 12 21Z"/><circle cx="12" cy="9.8" r="2.3"/>',
+    warn: '<path d="M12 3.5 21.5 20h-19L12 3.5Z"/><path d="M12 10v4.5M12 17.2v.3"/>'
+  };
+  const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+  const LV = [['관심', 'BLUE', 1], ['주의', 'YELLOW', 2], ['경계', 'ORANGE', 3], ['심각', 'RED', 4]];
+  const GU = ['종로구', '중구', '용산구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '마포구', '양천구', '강서구', '구로구', '금천구', '영등포구', '동작구', '관악구', '서초구', '강남구', '송파구', '강동구'];
+  const rng = seed => () => { seed = (seed + 0x6D2B79F5) >>> 0; let t = seed; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const daySeed = [...(Store.kstDay ? Store.kstDay() : new Date().toISOString().slice(0, 10))].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 11);
+  const draw = (seed, anim) => {
+    const r = rng(seed), I = (a, b) => a + Math.floor(r() * (b - a + 1));
+    const lv = LV[Math.min(3, Math.floor(Math.pow(r(), 1.6) * 4))], stab = I(41, 98);
+    const zones = [...GU].sort(() => r() - .5).slice(0, I(2, 3));
+    const rows = [
+      ['eye', '망량 발견', I(3, 48), '건', 'SIGHTED'],
+      ['blade', '퇴치 완료', 0, '건', 'PURGED'],
+      ['search', '실종 신고', I(0, 12), '명', 'MISSING'],
+      ['shield', '결계 안정도', stab, '%', 'BARRIER']
+    ];
+    rows[1][2] = Math.max(0, rows[0][2] - I(0, 9));
+    // 위: 경계 단계 카드 + 결계 안정도 동그란 게이지 (게임 로비의 '진행도' 원처럼)
+    const C = 2 * Math.PI * 21, off = C * (1 - stab / 100);
+    $('#sd-alert').innerHTML = `<div class="sd-lvbox lv${lv[2]}"><span class="sd-tag">ALERT</span>
+        <span class="sd-lv">${svg('warn')}<b>${lv[0]}</b></span><small>LEVEL ${lv[2]} · ${lv[1]}</small>
+        <span class="sd-steps">${LV.map(x => `<i class="${x[2] <= lv[2] ? 'on' : ''} lv${x[2]}"></i>`).join('')}</span></div>
+      <div class="sd-ring" title="결계 안정도"><svg viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="21" class="bg"/><circle cx="25" cy="25" r="21" class="fg" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(anim ? C : off).toFixed(1)}" data-off="${off.toFixed(1)}"/></svg>
+        <b><em data-n="${stab}">${anim ? 0 : stab}</em><u>%</u></b><small>BARRIER</small></div>`;
+    // 아래: 망량 발견 · 퇴치 · 실종 (결계는 위 게이지로)
+    $('#sd-grid').innerHTML = rows.filter(r => r[0] !== 'shield').map(([ic, t, v, u, en], k) => `<div class="sd-c">
+      ${k === 0 && v >= 30 ? '<i class="sd-dot" aria-hidden="true"></i>' : ''}<span class="sd-ic">${svg(ic)}</span><span class="sd-t"><small>${en}</small>${t}</span><b><em data-n="${v}">${anim ? 0 : v}</em><u>${u}</u></b></div>`).join('');
+    if (anim) requestAnimationFrame(() => { const fg = $('#sd-alert .fg'); if (fg) fg.style.strokeDashoffset = fg.dataset.off; });
+    // 밤 디자인 (처음 버전): 경계 한 줄 + 망량 · 퇴치 · 실종 · 결계(막대) 4칸
+    $('#sd1-alert').innerHTML = `<span class="sd-lv lv${lv[2]}">${svg('warn')}<b>${lv[0]}</b><small>LEVEL ${lv[2]} · ${lv[1]}</small></span>
+      <span class="sd-steps">${LV.map(x => `<i class="${x[2] <= lv[2] ? 'on' : ''} lv${x[2]}"></i>`).join('')}</span>`;
+    $('#sd1-grid').innerHTML = rows.map(([ic, t, v, u, en]) => `<div class="sd1-c ${ic === 'shield' ? 'bar' : ''}" style="${ic === 'shield' ? `--p:${v}%` : ''}">
+      <span class="sd-ic">${svg(ic)}</span><span class="sd-t"><small>${en}</small>${t}</span><b><em data-n="${v}">${anim ? 0 : v}</em><u>${u}</u></b></div>`).join('');
+    $('#sd-zone').innerHTML = `${svg('pin')}<span>활성 구역</span><b>${zones.join(' · ')}</b>`;
+    const d = new Date(); $('#sd-time').textContent = `${pad2(d.getHours())}:${pad2(d.getMinutes())} 갱신`;
+    box.dataset.lv = lv[2];
+    if (anim) $$('#sd em').forEach(e => countUp(e, +e.dataset.n, 700));
+  };
+  draw(daySeed, false);
+  const roll = () => { box.classList.remove('sync'); void box.offsetWidth; box.classList.add('sync'); draw(Math.floor(Math.random() * 4294967296), true); };
+  box.addEventListener('click', roll);
+  box.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); roll(); } });
+})();
+(function meteors() {
+  const box = $('#meteors'); if (!box || REDUCED) return;
+  const ANG = 32 * Math.PI / 180;
+  const one = (delay = 0) => setTimeout(() => {
+    const m = document.createElement('i'), big = Math.random() < .25, len = (big ? 200 : 80) + Math.random() * 140, dist = 380 + Math.random() * 620;
+    m.style.cssText = `left:${20 + Math.random() * 85}%;top:${Math.random() * 40}%;--len:${len.toFixed(0)}px;--dx:${(-Math.cos(ANG) * dist).toFixed(0)}px;--dy:${(Math.sin(ANG) * dist).toFixed(0)}px;--t:${(.7 + Math.random() * .9).toFixed(2)}s${big ? '' : ';height:1.4px'}`;
+    m.className = ['', 'lav', 'lav', 'pink', 'pink', 'rose', 'mint'][Math.floor(Math.random() * 7)];   // 파랑 · 연보라 · 연분홍 · 장밋빛 · 민트
+    box.appendChild(m); m.addEventListener('animationend', () => m.remove());
+  }, delay);
+  const shoot = () => {
+    if (!document.hidden && !$('#lobby').classList.contains('is-day') && box.childElementCount < 14) {   // 혹시 쌓여도 14개까지만
+      // 한 번에 1~3개 (가끔 우르르), 간격도 무작위
+      const n = Math.random() < .15 ? 3 + Math.floor(Math.random() * 3) : 1 + Math.floor(Math.random() * 2);
+      for (let k = 0; k < n; k++) one(k * (120 + Math.random() * 380));
+    }
+    setTimeout(shoot, 500 + Math.random() * 1700);
+  };
+  setTimeout(shoot, 500);
+})();
+$('#glints').innerHTML = Array.from({ length: 12 }, (_, i) => `<i style="left:${(i * 37.7) % 100}%;top:${(i * 61.3) % 100}%;animation-delay:${(i * .43) % 6}s;--s:${.5 + (i % 5) * .22}"></i>`).join('');
+
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=index.html'); return; }
+  const now = new Date(), today = Store.kstDay();
+  $('#today').innerHTML = `${now.getFullYear()}.${pad2(now.getMonth() + 1)}.${pad2(now.getDate())} <span>${['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][now.getDay()]}</span>`;
+  $('#nick').textContent = user.nickname;
+  if (user.grade === 'admin') $('#sb-admin').hidden = false;
+
+  let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
+  try { [all, teles, s, wal, att, shop] = await Promise.all([Store.list('characters'), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
+  const pub = all.filter(c => (c.status || 'published') === 'published');
+  const mine = all.filter(c => c.owner_id === user.id);
+
+  /* 지갑 · 칭호 · 이름표 색 */
+  const item = id => shop.find(i => i.id === id);
+  $('#coins').textContent = wal.coins;
+  const ttl = wal.equip.title && item(wal.equip.title), tag = wal.equip.tag && item(wal.equip.tag);
+  // 칭호는 내 캐릭터 색으로 (가장 최근에 게시된 캐릭터)
+  const myChar = mine.filter(c => c.published_at).sort((a, b) => String(b.published_at).localeCompare(String(a.published_at)))[0] || mine[0];
+  if (ttl) { $('#ttl').hidden = false; $('#ttl').textContent = Store.titleText(ttl, wal.equip); if (myChar) $('#ttl').style.setProperty('--tc', normChar(myChar.data || myChar.draft).color); }
+  if (tag) $('#nick').style.color = tag.value;
+  const checked = att.some(r => r.user_id === user.id && r.day === today);
+  if (!checked) $('#sb-att').classList.add('new');
+
+  /* 메인 고양이: 들어올 때마다 자세 · 대사가 무작위
+     누르면 대사 대신 '호감도가 올라갑니다' 알림이 살짝 떠올라요 (수치는 기록자 카드 막대에 쌓여요) */
+  const cname = (myChar && normChar(myChar.data || myChar.draft).name) || user.nickname;
+  const yeo = n => { const c = String(n).charCodeAt(String(n).length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? '이여' : '여'; };   // 받침 있으면 '이여'
+  const CAT_LINES = [
+    '망량의 기운이 느껴진다냐앙', '가계도는 확인했느냐앙', '불닭볶음면에 참치를 비벼 먹고 싶다냐앙', '근친상간은 금물이다냐앙 /ᐠ˵- ⩊ -˵マ',
+    '오늘 심박은 보냈느냐 냐앙', '부적은 함부로 떼는 게 아니다냐앙', '결계 밖은 위험하다냥 멀리 가지 마라냐앙', '서울에 가면 꼭 고디바찹쌀떡을 먹고 싶다냐앙',
+    '츄르를 바쳐라!', '사건 보드에 새 사건이 붙었다냐앙', '이 몸은 서문 소속이다냐앙', '술력이 모자라면 밥부터 먹어라냐앙',
+    '새벽에 망령 부르지 마라냐앙 무섭다냥', '염 가문 사람들은 눈빛이 무섭다냐앙', '쓰다듬는 건 세 번까지다냐앙', '그만 눌러라냐앙! 털 빠진다냥',
+    '마감은 지키라고 있는 거다냐앙', '극번 받은 놈은 조심해라냐앙', '인물 등록 기간을 놓치지 마라냐앙', '졸리다냐 오 분만 잘 테다냥 /ᐠ . ̫ .マ',
+    '생선 냄새가 난다냐앙 누가 숨겼느냐냥', `${cname}${yeo(cname)} 오늘도 무사했느냐앙`, '관계란은 정리했느냐 냐앙 복잡하다냥', '소문으로 듣기에 본가의 천사감엔 일기가 하나 묻혀있다냐앙',
+    '나를 귀엽다고 하면 기분이 좋다냐앙', '이 매듭은 풀지 마라냐앙 소중한 거다냥', '비 오는 날엔 부적이 번진다냐앙', '염가 사람이 지나갔다냐앙 향 냄새가 난다냥',
+    '이름 없는 아이의 소문을 들었느냐앙', '공지는 꼭 읽어라냐앙 두 번 말 안 한다냥', '남의 설정을 함부로 가져가면 안 된다냐앙', '경파 사람들이 다녀가면 츄르가 많아진다냐앙',
+    '다른 인원을 존중하는 게 가문의 첫째 규칙이다냐앙', '야식은 엽기떡볶이가 진리다냐앙', '꾹꾹이를 해 주겠다냐앙 감사해라냥', '경계의 도읍에 밤이 온다냐앙',
+    '오늘의 운세: 망령 조심, 간식 대길이다냐앙', '뭘 보느냐 냐앙 할 일이나 해라냥', '나에게도 신의 피가 조금 흐른다냐앙 아마도냥', '절계 근처에선 꼬리를 숨겨라냐앙'
+  ];
+  if (!checked) CAT_LINES.push('오늘 출석 도장은 찍었느냐 냐앙', '출석하면 영전을 준다냐앙 어서 가라냥');
+  if (ttl) { const tt = Store.titleText(ttl, wal.equip); CAT_LINES.push(`오, ${tt} 납셨다냐앙`, `세상에, 세상에! ${tt}냐앙`); }
+  const CHURU_LINES = ['츄르는 최고다냐앙!!', '너는 좋은 기록자다냐앙♡', '한 개 더 있느냐앙', '이 은혜는 망량을 쫓아 갚겠다냐앙', '꼬리가 저절로 흔들린다냐앙'];
+  const fig = $('#fig'), say = $('#say'), N = 8;
+  $('#fig-img').src = 'assets/img/mascot/cat' + (1 + Math.floor(Math.random() * N)) + '.webp';
+  const speak = line => {   // 게임 나레이션처럼 한 글자씩
+    typeText(say, line, 34);
+    const nr = $('#narr'); nr.classList.remove('pop'); void nr.offsetWidth; nr.classList.add('pop');
+    fig.classList.remove('boing'); void fig.offsetWidth; fig.classList.add('boing');
+  };
+  // 한마디: 들어올 때마다 무작위로 하나 (바로 전에 본 대사는 피해요)
+  const LINE_KEY = 'naru:catline:last';
+  let lastLine = ''; try { lastLine = localStorage.getItem(LINE_KEY) || ''; } catch (e) {}
+  const pool = CAT_LINES.length > 1 ? CAT_LINES.filter(l => l !== lastLine) : CAT_LINES;
+  const todayLine = pool[Math.floor(Math.random() * pool.length)];
+  try { localStorage.setItem(LINE_KEY, todayLine); } catch (e) {}
+  setTimeout(() => speak(todayLine), 900);   // 들어오면 오늘의 한마디
+  // 누르면: 고양이가 통 튀고, 투명한 알림이 위로 떠올라 사라져요
+  // 가끔(약 12%) 호감도가 떨어지면 → "실망했다냥....." 하고 고양이가 화면에서 사라져요 (30초 뒤 슬그머니 돌아와요)
+  const likeToast = (html, cls) => {
+    const n = document.createElement('div'); n.className = 'cat-like' + (cls ? ' ' + cls : ''); n.innerHTML = html;
+    const r = fig.getBoundingClientRect(); n.style.left = (r.left + r.width / 2) + 'px'; n.style.top = (r.top + r.height * .28) + 'px';
+    document.body.appendChild(n); setTimeout(() => n.remove(), 1700);
+  };
+  /* 고양이 호감도 (기록자 카드 막대): 누르면 +1 · 하루에 +5까지 (날이 바뀌어도 계속 쌓여요) · 삐지면 -2 (하루 한 번)
+     25 · 50 · 75 에 처음 닿으면 영전 선물 · 100 이면 상점에 '집사' 칭호가 공개돼요 — 계산은 Store.catPet (Supabase 에선 서버) */
+  const affShow = () => {
+    const a = Math.max(0, Math.min(100, wal.aff || 0));
+    $('#bar').style.width = a + '%';
+  };
+  affShow();
+  if (myChar) $('#aff-bar').style.setProperty('--ac', normChar(myChar.data || myChar.draft).color);   // 막대는 내 캐릭터 색
+  let catGone = false, petBusy = false;
+  fig.addEventListener('click', async () => {
+    if (catGone || petBusy) return;
+    if (Math.random() < .12) {
+      catGone = true;
+      const r = await Store.catPet(false).catch(() => null);
+      if (r) { wal = r.wallet; affShow(); }
+      likeToast(r && r.changed < 0 ? `<b>💔</b> 호감도가 떨어졌습니다 ${r.changed}` : '<b>💔</b> 삐졌습니다', 'down');
+      fig.classList.add('sulk'); speak('실망했다냥.....');
+      setTimeout(() => fig.classList.add('gone'), 1600);   // 삐진 채로 사라져요
+      setTimeout(() => { fig.classList.remove('sulk', 'gone'); fig.classList.add('back'); catGone = false; speak('...흥. 다시 와 줬다냥'); setTimeout(() => fig.classList.remove('back'), 1200); }, 30000);
+      return;
+    }
+    fig.classList.remove('boing'); void fig.offsetWidth; fig.classList.add('boing');
+    if ((wal.aff || 0) >= 100) return likeToast('<b>♥</b> 이미 최고로 친해요');
+    if (Store.affToday(wal) >= Store.CAT.daily) return likeToast('<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
+    petBusy = true;
+    try {
+      const r = await Store.catPet(true); wal = r.wallet; affShow();
+      likeToast(r.changed > 0 ? '<b>♥</b> 호감도가 올라갑니다 +1' : '<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
+      if (r.gift) { $('#coins').textContent = wal.coins;
+        setTimeout(() => { speak(`선물이다냥! 영전 ${r.gift}닢을 물어 왔다냥`); likeToast(`<b>靈</b> 고양이의 선물 +${r.gift} 靈錢`, 'gift'); }, 900); }
+      if (r.unlocked) setTimeout(() => { speak('이제부터 너는 나의 집사다냥! 상점에 가 봐라냥'); toast('상점에 「집사」 칭호가 공개됐어요'); }, 2600);
+    } catch (e) { toast(e.message); }
+    finally { petBusy = false; }
+  });  /* 미니 게임 전광판: 오늘 이미 했으면 자물쇠 (서버 기록 기준이라 새로고침해도 그대로) */
+  Store.pangStatus().then(p => {
+    if (!p || !p.played) return;
+    const b = $('#pang'); b.classList.add('locked'); b.removeAttribute('href'); b.setAttribute('aria-disabled', 'true');
+    $('#pang-go').textContent = '🔒 내일 다시';
+    b.title = p.done ? (p.win ? `오늘의 한 판: 승리 · +${p.delta} 영전` : `오늘의 한 판: 패배 · ${p.delta} 영전`) : '오늘의 한 판은 이미 시작했어요 (도중에 나가면 패배로 정산돼요)';
+  }).catch(() => {});
+  /* 츄르: 상점에서 산 만큼 줄 수 있어요 */
+  const churu = () => { $('#churu').hidden = wal.snacks < 1; $('#churu-n').textContent = wal.snacks; };
+  churu();
+  $('#churu').onclick = async () => {
+    try { wal = await Store.useSnack(); churu(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]); }
+    catch (e) { toast(e.message); }
+  };
+
+  /* 숫자들 */
+  const inbox = teles.filter(m => m.to_user === user.id && m.owner_id !== user.id);
+  const unread = inbox.filter(m => !m.read).length;
+  const since = Store.dayStart();
+  const sent = teles.filter(m => m.owner_id === user.id && m.created_at >= since).length;
+  const total = mine.length ? Store.DAILY : 0, left = Math.max(0, total - sent) + (mine.length ? ((wal && wal.tickets) || {}).k_beat || 0 : 0);   // 오늘 남은 무료(한 사람당 하루 1번) + 가진 심박권
+  $('#chips').innerHTML = `<span>♥ 받은 심박 <b>${inbox.length}</b></span><span>남은 심박 <b>${left}</b></span><span>오늘 출석 <b>${new Set(att.map(r => r.user_id)).size}</b></span>`;
+  $('#n-roster').textContent = pub.length ? pad2(pub.length) : '';
+  if (unread) $('#db-tele').classList.add('new');
+
+  /* 영전 순위 홀로그램 카드 (왼쪽 아래): 보유 영전이 많은 멤버 3명 · 그 멤버가 가장 최근에 게시한 캐릭터의 두상
+     카드는 층을 겹쳐 만들어요 — 배경(뒤로) · 두상(앞으로) · 무지개 박(기울기에 따라 결이 흘러요) · 별빛 · 글자(표면)
+     기울이면 층마다 다르게 움직여서 입체처럼 보여요 */
+  (async () => {
+    const badges = await Store.badges().catch(() => ({}));
+    // 그 멤버의 대표 캐릭터: 두상이 있는 캐릭터가 먼저, 그중 가장 먼저 등록한 캐릭터
+    const latest = uid => pub.filter(c => c.owner_id === uid).sort((a, b) => (!!normChar(b.data || {}).head - !!normChar(a.data || {}).head)
+      || String(a.created_at).localeCompare(String(b.created_at)))[0];
+    const top = Object.entries(badges).map(([uid, b]) => ({ b, coins: +b.coins || 0, ch: latest(uid) }))
+      .filter(r => r.ch && r.coins > 0).sort((a, b) => b.coins - a.coins).slice(0, 3);
+    if (!top.length) return;
+    $('#holo').hidden = false;
+    // 1 · 2 · 3 등 두상을 미리 받아 둬요 (넘길 때 로딩 없이)
+    if (window.HoloCard && HoloCard.preload) HoloCard.preload(top.map(r => { const d = normChar(r.ch.data || {}); return d.head || charImage(r.ch.data || {}, r.ch.id); }));
+    // 카드 문장: 별 + 초승달 + 연꽃잎 (왼쪽 반을 그리고 오른쪽은 뒤집어 붙여요)
+    const half = `<path d="M34 30 C25 40 25 53 36 61 C31 51 31 40 34 30Z"/><path d="M27 41 C19 45 15 51 13 57 C20 53 24 48 27 41Z"/>
+      <path d="M48 71 C38 61 22 58 9 61 C23 62 37 66 48 73Z"/><path d="M46 75 C36 75 26 78 19 83 C29 80 37 78 46 77Z"/><path d="M39 53 C36 58 36 63 40 67 C39 62 39 58 39 53Z"/>`;
+    const LOGO = `<svg class="hc-logo" viewBox="0 0 100 106" aria-hidden="true" fill="currentColor">
+      <path d="M50 1 L51.6 19 L63 21.5 L51.6 24 L50 45 L48.4 24 L37 21.5 L48.4 19Z"/>
+      <path d="M36 43 A14 14 0 0 0 64 43 A12.5 11 0 0 1 36 43Z"/>${half}<g transform="translate(100 0) scale(-1 1)">${half}</g>
+      <path d="M48 72 L50 82 L52 72Z"/><circle cx="50" cy="62" r="1.3"/><circle cx="50" cy="66" r="1.1"/>
+      <path d="M50 85 L51 90 L56 91 L51 92 L50 98 L49 92 L44 91 L49 90Z"/><circle cx="50" cy="103" r="1.2"/></svg>`;
+    const cardHTML = i => {
+      const { b, coins, ch } = top[i], d = normChar(ch.data || {});
+      const t = b.equip && b.equip.title && item(b.equip.title);
+      const head = d.head, img = head || charImage(ch.data || {}, ch.id);   // 두상이 없으면 전신 그림의 윗부분을 두상처럼
+      return `<a class="hc ${head ? '' : 'nohead'}" href="character.html?id=${encodeURIComponent(ch.id)}" style="--c:${esc(d.color)}" aria-label="${i + 1}위 ${esc(d.name)} · 영전 ${coins}">
+        <span class="hc-bg"></span><span class="hc-sub" style="background-image:${cssUrl(img)}"></span>
+        <span class="hc-laser"></span><span class="hc-star"></span><span class="hc-star b"></span><span class="hc-glare"></span>
+        <span class="hc-txt"><span class="hc-rk">No.<b>${i + 1}</b></span><span class="hc-emb">${LOGO}</span>
+          <span class="hc-bt">${t ? `<small>${esc(Store.titleText(t, b.equip))}</small>` : ''}<b>${esc(d.name || '?')}</b>
+            <em><i></i>${coins.toLocaleString()}<span>靈錢</span></em></span></span></a>`;
+    };
+    let cur = 0, busy = false;
+    $('#hl-pages').innerHTML = top.map((_, i) => `<button type="button" data-pg="${i}">${i + 1}</button>`).join('');
+    const show = (i, flip) => {
+      cur = (i + top.length) % top.length;
+      const put = () => {
+        $('#hl-stage').innerHTML = cardHTML(cur);
+        $('#hl-no').textContent = `${pad2(cur + 1)} / ${pad2(top.length)}`;
+        $$('#hl-pages button').forEach(x => x.classList.toggle('on', +x.dataset.pg === cur));
+        const hc = $('#hl-stage .hc'), d = normChar(top[cur].ch.data || {});
+        // WebGL 홀로그램 셰이더 (assets/js/holocard.js) · 안 되면 CSS 카드로
+        if (!(window.HoloCard && HoloCard.attach(hc, { img: d.head || charImage(top[cur].ch.data || {}, top[cur].ch.id), color: d.color, nohead: !d.head }))) bindTilt(hc);
+      };
+      if (!flip || REDUCED) return put();
+      if (busy) return; busy = true;
+      const st = $('#hl-stage'); st.classList.add('out');
+      setTimeout(() => { put(); st.classList.remove('out'); st.classList.add('in'); setTimeout(() => { st.classList.remove('in'); busy = false; }, 380); }, 260);
+    };
+    // 마우스를 따라 기울고(--px · --py: -1 ~ 1), 층마다 깊이가 달라요
+    const bindTilt = c => {
+      if (!c) return;
+      c.addEventListener('pointermove', e => {
+        const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 2 - 1, y = (e.clientY - r.top) / r.height * 2 - 1;
+        c.classList.add('on'); c.style.setProperty('--px', x.toFixed(3)); c.style.setProperty('--py', y.toFixed(3));
+      });
+      c.addEventListener('pointerleave', () => { c.classList.remove('on'); c.style.removeProperty('--px'); c.style.removeProperty('--py'); });
+    };
+    $('#hl-pages').onclick = e => { const b = e.target.closest('[data-pg]'); if (b && +b.dataset.pg !== cur) show(+b.dataset.pg, true); };
+    if (top.length < 2) $('#hl-pages').hidden = true;
+    show(0);
+  })();
+  /* 배너 1: 등록 · 수정 기간 */
+  const cw = Store.windowState(s, 'create'), ew = Store.windowState(s, 'edit');
+  const until = iso => { const ms = Date.parse(iso) - Date.now(); return isNaN(ms) ? '' : `D-${Math.max(0, Math.ceil(ms / 864e5))}`; };
+  const md = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getMonth() + 1}.${pad2(d.getDate())}까지`; };
+  let b1;
+  if (cw.open) b1 = { tag: 'OPEN', when: cw.until ? md(cw.until) : '상시', t: '인물 등록 기간', p: cw.until ? `${until(cw.until)} · 새 인물을 봉인해 주세요` : '언제든 새 인물을 봉인할 수 있어요', href: 'characters.html?new=1' };
+  else if (ew.open) b1 = { tag: 'EDIT', when: ew.until ? md(ew.until) : '상시', t: '인물 수정 기간', p: ew.until ? `${until(ew.until)} · 게시된 기록을 고칠 수 있어요` : '게시된 기록을 고칠 수 있어요', href: 'characters.html' };
+  else b1 = { tag: 'NOTICE', when: cw.next ? md(cw.next).replace('까지', '부터') : '', t: '등록 기간이 아니에요', p: cw.next ? '다음 등록 기간을 기다려 주세요' : '작성본 저장은 언제든 할 수 있어요', href: 'characters.html?new=1' };
+  const news = myNews(user.id);
+  if (news.length) $('#book').classList.add('new');
+
+  /* 오른쪽 위 배너: 관리자가 만든 배너(맨 앞) + 등록 기간 + 출석 */
+  const custom = (Array.isArray(s.lobby_banners) ? s.lobby_banners : []).filter(b => b && (b.title || b.text));
+  const slideHTML = [
+    ...custom.map(b => lobbyBanner(b)),
+    `<a class="slide" href="${b1.href}"><span class="tag">${b1.tag}</span><span class="when">${esc(b1.when)}</span><b>${esc(b1.t)}</b><p>${esc(b1.p)}</p></a>`,
+    checked
+      ? `<a class="slide" href="attendance.html"><span class="tag">ATTEND</span><span class="when">출석 완료</span><b>오늘의 도장을 찍었어요</b><p>내일 또 와서 연속 출석을 이어 가세요</p></a>`
+      : `<a class="slide" href="attendance.html"><span class="tag">ATTEND</span><span class="when">+${Store.ATTEND.week[0]}~${Store.ATTEND.week[6]} 靈錢</span><b>오늘의 출석 도장</b><p>연속으로 찍을수록 영전이 늘어요 · 7일째 +${Store.ATTEND.week[6]}</p></a>`
+  ];
+  $('#track').innerHTML = slideHTML.join('');
+
+  /* 배너 넘기기 (5초마다) */
+  const slides = $$('#track .slide'); let cur = 0, auto;
+  $('#dots').innerHTML = slides.map((_, i) => `<button type="button" aria-label="${i + 1}번 배너"></button>`).join('');
+  const go = i => {
+    cur = (i + slides.length) % slides.length; $('#track').style.transform = `translateX(${-cur * 100}%)`;
+    $$('#dots button').forEach((d, j) => d.classList.toggle('on', j === cur));
+    $('#hud-no').textContent = `${pad2(cur + 1)} / ${pad2(slides.length)}`;   // HUD 머리: 번호 · 그 배너의 태그
+    const tg = slides[cur] && slides[cur].querySelector('.tag'); $('#hud-tag').textContent = tg ? tg.textContent : 'NOTICE';
+  };
+  const restart = () => { clearInterval(auto); if (!REDUCED && slides.length > 1) auto = setInterval(() => go(cur + 1), 5000); };
+  $$('#dots button').forEach((d, i) => d.onclick = () => { go(i); restart(); });
+  $('#hud-prev').onclick = () => { go(cur - 1); restart(); };
+  $('#hud-next').onclick = () => { go(cur + 1); restart(); };
+  go(0); if (!REDUCED && slides.length > 1) auto = setInterval(() => go(cur + 1), 5000);
+
+  /* 버튼 */
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-tele]')) { e.preventDefault(); if (window.Telepathy) Telepathy.open('write'); else toast('잠시 후 다시 눌러 주세요.'); }
+    if (e.target.closest('[data-music]')) {
+      const disc = $('.bgm-disc'); // 관리자 페이지에서 BGM 을 켰으면 그 플레이어를
+      if (disc) disc.click(); else toast('관리자 페이지에서 BGM 을 설정하면 들을 수 있어요.');
+    }
+    if (e.target.closest('#fs')) { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
+  });
+});</script>
+</body>
+</html>
