@@ -451,7 +451,9 @@
   /* ---------------- Supabase 백엔드 ---------------- */
   let remote = null;
   if (remoteOn) {
-    const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    // 주소 뒤에 /rest/v1/ 같은 게 붙어 있어도 프로젝트 주소(https://xxxx.supabase.co)만 써요 (붙어 있으면 "Invalid path" 오류가 나요)
+    const sbUrl = String(cfg.supabaseUrl).trim().replace(/\/(rest|auth|storage|functions)\/v1.*$/i, '').replace(/\/+$/, '');
+    const sb = window.supabase.createClient(sbUrl, String(cfg.supabaseAnonKey).trim());
     const ok = ({ data, error }) => { if (error) throw new Error(koError(error.message)); return data; };
     const toUser = async u => {
       if (!u) return null;

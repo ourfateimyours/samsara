@@ -96,7 +96,7 @@ window.Phone = (function () {
   // (부재중 전화는 실제 아이폰처럼 전화 앱 아이콘 + "부재중 전화")
   function notiHTML(n, i) {
     const who = esc(nameOf(n.from));
-    const av = cssUrl(charImage(n.from.data, n.from.id));
+    const av = cssUrl(normChar(n.from.data || {}).head || charImage(n.from.data, n.from.id));   // 멤버란 두상 → 없으면 전신 그림
     const t = n.time ? esc(n.time) : (i === 0 ? '지금' : `${(i * 7) + 2}분 전`);
     const missed = n.type === 'missed';
     const lead = missed
