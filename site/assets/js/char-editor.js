@@ -30,7 +30,7 @@ window.normPStyle = (s = {}) => {
 window.personaCSS = s => { s = normPStyle(s); return `font-family:${PERSONA_FONTS[s.font][1]};font-size:${s.size}pt;letter-spacing:${s.ls}px;line-height:${(1.8 + s.lh).toFixed(1)}`; };
 
 /* 나이 · 키 · 몸무게 (profile 칸에 "항목: 내용" 줄로 저장돼요) */
-window.BODY_KEYS = [['나이', 'p_age', '27'], ['키', 'p_h', '183cm'], ['몸무게', 'p_w', '70kg']];
+window.BODY_KEYS = [['나이', 'p_age', ''], ['키', 'p_h', ''], ['몸무게', 'p_w', '']];
 window.bodyOf = d => Object.fromEntries(parseKV((d && d.profile) || ''));
 
 /* 배경 효과 이미지를 섞는 방식 */
@@ -129,9 +129,9 @@ function listEditor(box, items, fields, addLabel, blank, max) {
   }).filter(o => fields.some(f => f.type !== 'check' && f.type !== 'action' && o[f.k]));
 }
 
-// 관계란 한 줄 정리: 고른 알림 종류에 맞는 칸만 남겨요 (관계 이름 · 혈연은 더 이상 쓰지 않아요)
+// 관계란 한 줄 정리: 고른 알림 종류에 맞는 칸만 남겨요 (관계 이름 · 혈연 · 설명은 더 이상 쓰지 않아요)
 const cleanRel = r => {
-  const o = { id: r.id, note: r.note || '', msgType: r.msgType || '' };
+  const o = { id: r.id, msgType: r.msgType || '' };
   if (o.msgType === 'imessage' || o.msgType === 'sms') o.msg = r.msg || '';
   if (o.msgType === 'missed') { o.time = r.time || ''; o.missed = r.missed || ''; }
   return o;
@@ -165,24 +165,24 @@ window.CharEditor = {
       <form id="cf" novalidate>
         <div class="epane on" data-p="basic">
           <div class="row2">
-            <label class="field"><span>이름 *</span><input name="name" maxlength="30" value="${esc(d.name)}" placeholder="레이 시"></label>
-            <label class="field"><span>영문 표기 <small>크게 표시돼요</small></span><input name="name_en" maxlength="20" value="${esc(d.name_en)}" placeholder="BALE"></label>
+            <label class="field"><span>이름 *</span><input name="name" maxlength="30" value="${esc(d.name)}"></label>
+            <label class="field"><span>영문 표기 <small>크게 표시돼요</small></span><input name="name_en" maxlength="20" value="${esc(d.name_en)}"></label>
           </div>
           <div class="row3">
             <label class="field"><span>가문 * <small>멤버란이 이 가문으로 나뉘어요</small></span><select name="team"><option value="">— 가문 선택 —</option>${HOUSES.map(h => `<option ${h === d.team ? 'selected' : ''}>${h}</option>`).join('')}</select></label>
-            <label class="field"><span>소속 기관</span><input name="org" maxlength="30" value="${esc(d.org)}" placeholder="天師監"></label>
+            <label class="field"><span>소속 기관</span><input name="org" maxlength="30" value="${esc(d.org)}"></label>
             <label class="field"><span>위험 등급</span><select name="rank"><option value="">—</option>${RANKS.map(r => `<option ${r === d.rank ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
           </div>
           <label class="field"><span>한마디</span><textarea name="quote" rows="2" maxlength="200">${esc(d.quote)}</textarea></label>
           <div class="row3">
             <label class="field"><span>테마 컬러</span><input type="color" name="color" value="${esc(d.color)}"></label>
-            <label class="field"><span>태그 <small>쉼표 구분</small></span><input name="tags" value="${esc(d.tags.join(', '))}"></label>
+            
           </div>
           <div class="kr-ed">
             <div class="kr-f">
               <div class="field"><span>휴대폰 키링 <small>관계 휴대폰 오른쪽 위 고리에 달려요</small></span>
                 <div class="kr-types">${Object.entries((window.Keyring || { TYPES: { none: '없음' } }).TYPES).map(([k, n]) => `<label class="kr-chip"><input type="radio" name="kr_type" value="${k}" ${k === d.keyring.type ? 'checked' : ''}><b>${esc(n)}</b></label>`).join('')}</div></div>
-              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}" placeholder="SAMSARA"></label>
+              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}"></label>
               <label class="field kr-img"><span>아크릴 이미지 <small>배경이 투명한 PNG 링크를 넣으면 그 모양대로 아크릴이 돼요</small></span><input name="kr_img" type="url" inputmode="url" value="${esc(d.keyring.img)}" placeholder="https://…png"></label>
             </div>
             <div class="kr-prev" id="kr-prev" aria-label="키링 미리보기"></div>
@@ -209,7 +209,7 @@ window.CharEditor = {
 
         <div class="epane" data-p="skill">
           <div class="row3">
-            <label class="field"><span>능력 이름 <small>한자 추천</small></span><input name="a_name" value="${esc(d.ability.name)}" placeholder="無底"></label>
+            <label class="field"><span>능력 이름 <small>한자 추천</small></span><input name="a_name" value="${esc(d.ability.name)}"></label>
             <label class="field"><span>위험도 % <small>0~100</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}"></label>
           </div>
           <label class="field"><span>능력 설명</span><textarea name="a_desc" rows="3">${esc(d.ability.desc)}</textarea></label>
@@ -234,7 +234,7 @@ window.CharEditor = {
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
         <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
-        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 설명을 적어요. 알림을 고르면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
+        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
         ${row && row.status === 'submitted' ? '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>' : ''}
@@ -266,11 +266,11 @@ window.CharEditor = {
       { k: 'rel', type: 'select', options: () => [['', '— 선물한 · 관련 캐릭터 (선택) —']].concat(others.map(c => [c.id, (c.data && c.data.name) || '?'])) },
       { k: 'img', type: 'img', full: true },
       { k: 'desc', type: 'textarea', ph: '소개 / 이야기', rows: 4, full: true }], '소지품 추가', false, 6);
-    // 관계란: 캐릭터 · 설명 · 상대 휴대폰 알림 (아이메시지 · 문자 → 메시지 칸 / 부재중 전화 → 표시 시각 · 횟수 칸)
+    // 관계란: 캐릭터 · 상대 휴대폰 알림 (아이메시지 · 문자 → 메시지 칸 / 부재중 전화 → 표시 시각 · 횟수 칸)
     const isMsg = v => v.msgType === 'imessage' || v.msgType === 'sms', isCall = v => v.msgType === 'missed';
     const getRel = listEditor($('#e-rel', m), d.related, [
       { k: 'id', type: 'select', options: () => [['', '— 캐릭터 선택 —']].concat(others.map(c => [c.id, `${(c.data && c.data.name) || '?'} (@${c.author})`])) },
-      { k: 'note', type: 'textarea', ph: '설명', rows: 2, full: true },
+
       { k: 'msgType', type: 'select', full: true, options: () => [['', '📱 상대 휴대폰에 보낼 알림 — 없음'], ['imessage', '💬 아이메시지'], ['sms', '✉️ 문자'], ['missed', '📞 부재중 전화']] },
       { k: 'msg', type: 'textarea', ph: '상대 잠금 화면에 뜰 메시지', rows: 2, full: true, show: isMsg },
       { k: 'time', ph: '표시 시각 (예: 오전 2:14)', row: 'p', max: 12, show: isCall },
@@ -323,7 +323,7 @@ window.CharEditor = {
       const list = s => s.split(/[,，]/).map(x => x.trim()).filter(Boolean).slice(0, 16);
       const data = {
         name: v('name'), name_en: v('name_en'), org: v('org'), team: f.team.value, rank: f.rank.value, quote: v('quote'),
-        color: f.color.value, head, tags: list(v('tags')),
+        color: f.color.value, head, tags: [],   // 태그 칸은 없앴어요
         keyring: { type: (f.querySelector('[name=kr_type]:checked') || {}).value || 'none', text: v('kr_text').toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10), img: /^https?:\/\//i.test(v('kr_img')) ? v('kr_img') : '' },
         silhouette: false, card: false,
         bgfx: { url: /^https?:\/\//i.test(v('fx_url')) ? v('fx_url') : '', mode: BGFX_MODES[f.fx_mode.value] ? f.fx_mode.value : 'screen', op: Math.max(.1, Math.min(1, +f.fx_op.value || .8)) },
