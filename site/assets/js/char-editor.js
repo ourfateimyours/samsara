@@ -54,6 +54,8 @@ window.normChar = (d = {}) => {
       keyring: Object.assign({ type: 'none', text: '', img: '' }, d.keyring || (d.charmImg ? { type: 'acrylic', img: d.charmImg } : {})), silhouette: false, card: false,   // 검은 실루엣 · 카드 액자 표시는 없앴어요 (예전 기록에 켜져 있어도 꺼진 채로)
     items: (d.items || []).slice(0, 6),
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
+    figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치: 가운데 / 왼쪽 끝 / 오른쪽 끝
+    figFade: !!d.figFade,                                                                   // 전신 그림 가장자리를 흐리게
     // 프로필 배경 효과 이미지: 전신 뒤 배경 위에 섞어 얹어요 (빛망울 · 먼지 · 안개 같은 그림)
     bgfx: (o => ({ url: safeUrl(o.url) ? o.url : '', mode: BGFX_MODES[o.mode] ? o.mode : 'screen', op: Math.max(.1, Math.min(1, parseFloat(o.op) || .8)) }))(d.bgfx || {})
   };
@@ -195,6 +197,9 @@ window.CharEditor = {
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
           <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. 여러 장을 넣으면 화면 아래에서 버전을 바꿔 볼 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
+          <div class="field" style="margin:4px 0 10px"><span>전신 그림 위치 <small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></span>
+            <div class="kr-types">${[['center', '가운데'], ['left', '왼쪽 끝에 붙이기'], ['right', '오른쪽 끝에 붙이기']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="fig_al" value="${k}" ${k === d.figAlign ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
+          <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}> 가장자리를 <b>흐리게</b> (그림 테두리가 배경에 자연스럽게 녹아들어요)</label>
           <div id="e-img"></div>
           <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>프로필 전신 뒤 배경 위에 섞어 얹어요 · 빛망울 · 별가루 · 안개 사진 추천</small></span>
             <div class="img-pick"><div class="thumb" id="fx-th" style="background-image:${cssUrl(d.bgfx.url)}"></div>
@@ -326,6 +331,7 @@ window.CharEditor = {
         color: f.color.value, head, tags: [],   // 태그 칸은 없앴어요
         keyring: { type: (f.querySelector('[name=kr_type]:checked') || {}).value || 'none', text: v('kr_text').toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10), img: /^https?:\/\//i.test(v('kr_img')) ? v('kr_img') : '' },
         silhouette: false, card: false,
+        figAlign: (f.querySelector('[name=fig_al]:checked') || {}).value || 'center', figFade: f.fig_fade.checked,
         bgfx: { url: /^https?:\/\//i.test(v('fx_url')) ? v('fx_url') : '', mode: BGFX_MODES[f.fx_mode.value] ? f.fx_mode.value : 'screen', op: Math.max(.1, Math.min(1, +f.fx_op.value || .8)) },
         images: getImgs().filter(i => safeUrl(i.url)).map((i, k) => ({ label: 'V' + (k + 1), url: i.url })),
         song: { title: '', artist: '', url: v('s_url'), cover: '' },
