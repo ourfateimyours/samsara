@@ -286,7 +286,7 @@ App.ready.then(async user => {
   /* ---------- 접속(부팅) 화면: 로스터에서 들어오면 ?boot=1 ---------- */
   const openSec = qs('open');
   if (qs('boot') && !REDUCED && window.LoginSeq) {
-    // 레퍼런스와 같은 순서의 접속 화면 → 셔터가 열리면 인물 파일 등장
+    // 접속 화면 → 셔터가 열리면 인물 파일 등장
     stage.classList.add('hold');
     LoginSeq.play({
       seed: row.id, color: d.color, img: firstImg, dummy: isDummy, sil: /\bsil\b/.test(silClass(d)),
@@ -335,6 +335,10 @@ App.ready.then(async user => {
   }
 
   /* ---------- 이미지 버전 ---------- */
+  // 가로로 긴 그림이면 칸을 넓히고 화면 가운데에 놓아요 (세로 전신용 좁은 칸에 맞춰 작아지거나 바닥에 붙지 않게)
+  const figEl = $('#fig'), figImg = $('#figimg');
+  const fitFig = () => { if (figImg.naturalWidth) figEl.classList.toggle('wide', figImg.naturalWidth > figImg.naturalHeight * 1.05); };
+  figImg.addEventListener('load', fitFig); if (figImg.complete) fitFig();
   let imgIdx = 0;
   $$('#imgsw .th').forEach(b => b.onclick = () => {
     const i = +b.dataset.img;
