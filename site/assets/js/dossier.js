@@ -159,7 +159,7 @@ App.ready.then(async user => {
     ${d.bgfx.url ? `<div class="lyr bgfx" aria-hidden="true" style="mix-blend-mode:${d.bgfx.mode};opacity:${d.bgfx.op}"><img id="bgfx-img" src="${esc(d.bgfx.url)}" alt="" referrerpolicy="no-referrer"></div>` : ''}
     <div class="lyr kv-word px" data-depth="10"><div class="row r1">${Array(6).fill(`<span>${esc(EN)}</span>`).join('')}</div>
       <div class="row r2">${Array(6).fill(`<span>${esc(d.codename || EN)}</span>`).join('')}</div></div>
-    <div class="fig px ${isDummy ? 'dummy' : ''}" data-depth="-12" id="fig"><div class="fl"><img id="figimg" class="${silClass(d)}" src="${esc(firstImg)}" alt="${esc(d.name)}"></div></div>
+    <div class="fig px ${isDummy ? 'dummy' : ''} ${d.figAlign !== 'center' ? 'al-' + d.figAlign : ''} ${d.figFade ? 'fade' : ''}" data-depth="-12" id="fig"><div class="fl"><img id="figimg" class="${silClass(d)}" src="${esc(firstImg)}" alt="${esc(d.name)}"></div></div>
     <div class="lyr px" data-depth="-24"><div class="kv-band"><div>${bandTxt}</div></div><div class="kv-band kv-band2"><div>${bandTxt}</div></div></div>
 
     <div class="lyr hud fixed-m"><span class="cb tl"></span><span class="cb tr"></span><span class="cb bl"></span><span class="cb br"></span>
@@ -328,8 +328,8 @@ App.ready.then(async user => {
       px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5;
       if (pq) return;
       pq = requestAnimationFrame(() => {
-        pq = 0; const wide = innerWidth > 1000;
-        lyrs.forEach(l => { const k = +l.dataset.depth; l.style.transform = `${l.id === 'fig' && wide ? 'translateX(-50%) ' : ''}translate3d(${(-px * k).toFixed(1)}px, ${(-py * k).toFixed(1)}px, 0)`; });
+        pq = 0; const wide = innerWidth > 1000, figCentered = d.figAlign === 'center';   // 끝에 붙인 그림은 가운데 맞춤(-50%)을 빼요
+        lyrs.forEach(l => { const k = +l.dataset.depth; l.style.transform = `${l.id === 'fig' && wide && figCentered ? 'translateX(-50%) ' : ''}translate3d(${(-px * k).toFixed(1)}px, ${(-py * k).toFixed(1)}px, 0)`; });
       });
     }, { passive: true });
   }
