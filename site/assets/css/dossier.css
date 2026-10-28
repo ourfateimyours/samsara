@@ -785,3 +785,15 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
   .fig.wide { height: auto; min-height: 40vh; align-items: center; }
   .fig.wide .fl { height: auto; }
 }
+
+/* 전신 그림 위치 (편집 창 '이미지' 탭): 왼쪽 끝 / 오른쪽 끝에 붙이기 — 그림 끝이 잘려 있어도 화면 끝에 붙어서 잘린 선이 안 보여요 */
+.fig.al-left { left: 0; right: auto; transform: none; justify-content: flex-start; }
+.fig.al-right { left: auto; right: 0; transform: none; justify-content: flex-end; }
+.fig.al-left .fl { justify-content: flex-start; } .fig.al-right .fl { justify-content: flex-end; }
+@media (min-width: 1001px) { .fig.wide.al-left { left: 0; } .fig.wide.al-right { left: auto; right: 0; } }
+/* 가장자리 흐리게: 화면 끝에 붙지 않은 테두리를 투명하게 (왼쪽 · 오른쪽 · 위) */
+.fig.fade img { --fl: 14%; --fr: 14%; --ft: 12%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect; }
+.fig.fade.al-left img { --fl: 0%; } .fig.fade.al-right img { --fr: 0%; }
