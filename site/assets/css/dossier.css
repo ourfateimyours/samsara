@@ -775,3 +775,13 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
   .playing .bgm .wave i { animation: none; }
   .bgm-t { margin-top: 2px; font-size: 9px; }
 }
+
+/* 가로로 긴 전신 그림 (dossier.js 가 .wide 를 붙여요): 칸을 넓히고 화면 가운데에 · 원래 크기보다 키우지는 않아요 */
+.fig.wide .fl { align-items: center; }
+@media (min-width: 1001px) {
+  .fig.wide { left: 50%; width: min(94vw, 1700px); height: 92%; bottom: 4%; align-items: center; }
+}
+@media (max-width: 1000px) {
+  .fig.wide { height: auto; min-height: 40vh; align-items: center; }
+  .fig.wide .fl { height: auto; }
+}
