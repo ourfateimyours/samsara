@@ -135,7 +135,7 @@ App.ready.then(async user => {
   renderTabs(); renderStage();
   // 멤버란을 열 때마다 접속 화면 (NPC 한 명이 무작위로 나와요)
   if (window.LoginSeq && !REDUCED) LoginSeq.play({ count: all.length });
-  // 휴대폰·트랙패드: 옆으로 쓸어서 다음 열로
+
   (function swipe() {
     let x0 = null, y0 = 0;
     $('#roster').addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; x0 = e.clientX; y0 = e.clientY; });
@@ -174,10 +174,8 @@ App.ready.then(async user => {
   $('#next').onclick = () => move(1);
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderStage, 200); });
 
-  /* ---------- 인트로 ---------- */
-  // 캐릭터를 누르면: 시스템 링크 진입 연출(약 4초) → 쓸어 넘기며 인물 인트로
+
   let introList = [], introIdx = 0, busy = false;
-  // 캐릭터마다 고유 번호 — 등록된 순서대로 001, 002 …
   const ORDER = all.slice().sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || ''))).map(c => c.id);
   const profNo = c => String(ORDER.indexOf(c.id) + 1).padStart(3, '0');
   const opOf = c => {
@@ -192,7 +190,7 @@ App.ready.then(async user => {
     const c = introList[introIdx], d = normChar(c.data);
     if (window.EntrySeq && !REDUCED) {
       busy = true;
-      // 누른 인물의 정보만 세 장으로: 이름 → 코드네임·속성 → 등급
+
       const org = (d.org || SITE_CONFIG.siteName).toUpperCase();
       const el = ELEMENTS[d.element], EN = (d.name_en || d.name).toUpperCase();
       const cls = d.classline.split('·').map(x => x.trim()).filter(Boolean);
@@ -214,12 +212,12 @@ App.ready.then(async user => {
     }
     goProfile(c);
   }
-  // 진입 연출이 끝나면 붉은 막으로 덮이며 바로 인물 파일로 (예전 인물 카드 '인트로2' 는 없앴어요)
+
   function goProfile(c) {
     const w = document.createElement('div'); w.className = 'wipe'; document.body.appendChild(w);
     setTimeout(() => location.href = 'character.html?id=' + encodeURIComponent(c.id), REDUCED ? 0 : 450);
   }
-  // 뒤로 가기로 돌아왔을 때 붉은 막이 남지 않게
+
   addEventListener('pageshow', () => $$('.wipe').forEach(x => x.remove()));
   $('#stage').onclick = e => { if (Date.now() - swiped < 400) return; const f = e.target.closest('.r-fig'); if (f) openIntro(f.dataset.id, f.querySelector('img')); };
   addEventListener('keydown', e => {
