@@ -83,7 +83,7 @@ App.ready.then(async user => {
       <p class="hint-text">아이디: <b>${esc(user.username || '')}</b> (아이디는 바꿀 수 없어요)</p>
       <div class="row2">
         <label class="field"><span>닉네임</span><input name="nickname" maxlength="20" value="${esc(m.nickname)}"></label>
-        <label class="field"><span>칭호 <small>영문 추천</small></span><input name="title" maxlength="30" value="${esc(m.title)}" placeholder="Night Archivist"></label>
+        <label class="field"><span>칭호 <small>영문 추천</small></span><input name="title" maxlength="30" value="${esc(m.title)}" placeholder=""></label>
       </div>
       <label class="field"><span>자기소개</span><textarea name="bio" rows="4" maxlength="300">${esc(m.bio)}</textarea></label>
       <p class="err-text" id="perr"></p>
