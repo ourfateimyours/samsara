@@ -250,7 +250,7 @@ App.ready.then(async user => {
 
   let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.list('characters'), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
-  const pub = all.filter(c => (c.status || 'published') === 'published');
+  const pub = all.filter(c => c.published_at);   // 게시된 캐릭터 (수정본을 심사받는 중이어도 게시된 상태)
   const mine = all.filter(c => c.owner_id === user.id);
 
   /* 지갑 · 칭호 · 이름표 색 */
@@ -371,8 +371,12 @@ App.ready.then(async user => {
     const latest = uid => pub.filter(c => c.owner_id === uid).sort((a, b) => (!!normChar(b.data || {}).head - !!normChar(a.data || {}).head)
       || String(a.created_at).localeCompare(String(b.created_at)))[0];
     const top = Object.entries(badges).map(([uid, b]) => ({ b, coins: +b.coins || 0, ch: latest(uid) }))
-      .filter(r => r.ch && r.coins > 0).sort((a, b) => b.coins - a.coins).slice(0, 3);
+      .filter(r => r.ch && r.coins > 0).sort((a, b) => b.coins - a.coins);
     if (!top.length) return;
+    // 1 · 2 · 3등 안에 같은 영전을 가진 사람이 3명 이상이면 순위를 매길 수 없으니 카드를 띄우지 않아요 (금액이 달라지면 다시 나와요)
+    const same = {}; top.forEach(r => { same[r.coins] = (same[r.coins] || 0) + 1; });
+    if (top.slice(0, 3).some(r => same[r.coins] >= 3)) return;
+    top.splice(3);
     $('#holo').hidden = false;
     // 1 · 2 · 3 등 두상을 미리 받아 둬요 (넘길 때 로딩 없이)
     if (window.HoloCard && HoloCard.preload) HoloCard.preload(top.map(r => { const d = normChar(r.ch.data || {}); return d.head || charImage(r.ch.data || {}, r.ch.id); }));
@@ -431,7 +435,7 @@ App.ready.then(async user => {
   const md = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getMonth() + 1}.${pad2(d.getDate())}까지`; };
   let b1;
   if (cw.open) b1 = { tag: 'OPEN', when: cw.until ? md(cw.until) : '상시', t: '인물 등록 기간', p: cw.until ? `${until(cw.until)} · 새 인물을 봉인해 주세요` : '언제든 새 인물을 봉인할 수 있어요', href: 'characters.html?new=1' };
-  else if (ew.open) b1 = { tag: 'EDIT', when: ew.until ? md(ew.until) : '상시', t: '인물 수정 기간', p: ew.until ? `${until(ew.until)} · 게시된 기록을 고칠 수 있어요` : '게시된 기록을 고칠 수 있어요', href: 'characters.html' };
+  else if (ew.open) b1 = null;   // 수정 기간 안내는 메인에 띄우지 않아요
   else b1 = { tag: 'NOTICE', when: cw.next ? md(cw.next).replace('까지', '부터') : '', t: '등록 기간이 아니에요', p: cw.next ? '다음 등록 기간을 기다려 주세요' : '작성본 저장은 언제든 할 수 있어요', href: 'characters.html?new=1' };
   const news = myNews(user.id);
   if (news.length) $('#book').classList.add('new');
@@ -440,7 +444,7 @@ App.ready.then(async user => {
   const custom = (Array.isArray(s.lobby_banners) ? s.lobby_banners : []).filter(b => b && (b.title || b.text));
   const slideHTML = [
     ...custom.map(b => lobbyBanner(b)),
-    `<a class="slide" href="${b1.href}"><span class="tag">${b1.tag}</span><span class="when">${esc(b1.when)}</span><b>${esc(b1.t)}</b><p>${esc(b1.p)}</p></a>`,
+    b1 ? `<a class="slide" href="${b1.href}"><span class="tag">${b1.tag}</span><span class="when">${esc(b1.when)}</span><b>${esc(b1.t)}</b><p>${esc(b1.p)}</p></a>` : '',
     checked
       ? `<a class="slide" href="attendance.html"><span class="tag">ATTEND</span><span class="when">출석 완료</span><b>오늘의 도장을 찍었어요</b><p>내일 또 와서 연속 출석을 이어 가세요</p></a>`
       : `<a class="slide" href="attendance.html"><span class="tag">ATTEND</span><span class="when">+${Store.ATTEND.week[0]}~${Store.ATTEND.week[6]} 靈錢</span><b>오늘의 출석 도장</b><p>연속으로 찍을수록 영전이 늘어요 · 7일째 +${Store.ATTEND.week[6]}</p></a>`
