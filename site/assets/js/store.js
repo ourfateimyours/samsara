@@ -642,7 +642,7 @@
     windowState,
 
     /* 권한
-       save   : 작성본 저장 — 본인 것(새 캐릭터 포함)은 언제나, 관리자는 전부
+       save   : 작성본 저장 — 본인 것은 언제나 · 새 캐릭터 만들기는 등록 기간(또는 예외 허용)에만 · 관리자는 전부
        submit : 제출 — 본인 것만, 등록 기간(첫 등록) / 수정 기간(게시된 캐릭터) 안에만
        publish: 게시·반려 — 관리자만
        delete : 삭제 — 관리자만
@@ -651,10 +651,14 @@
       const u = await this.user();
       if (!u) return { ok: false, reason: '로그인이 필요해요.' };
       const isAdmin = u.grade === 'admin';
-      if (kind === 'save') return (!row || row.owner_id === u.id || isAdmin) ? { ok: true, admin: isAdmin } : { ok: false, reason: '본인이 작성한 인물만 수정할 수 있어요.' };
+      if (kind === 'save') {
+        if (!row && !isAdmin) { const c = await this.can('create'); return c.ok ? { ok: true } : { ok: false, reason: c.reason.replace('등록 기간이', '새 인물 등록 기간이') }; }   // 등록을 잠그면 새 캐릭터도 못 만들어요
+        return (!row || row.owner_id === u.id || isAdmin) ? { ok: true, admin: isAdmin } : { ok: false, reason: '본인이 작성한 인물만 수정할 수 있어요.' };
+      }
       if (kind === 'publish' || kind === 'delete') return isAdmin ? { ok: true, admin: true } : { ok: false, reason: kind === 'delete' ? '삭제는 관리자만 할 수 있어요.' : '게시는 관리자만 할 수 있어요.' };
       if (kind === 'submit') {
         if (row && row.owner_id !== u.id && !isAdmin) return { ok: false, reason: '본인이 작성한 인물만 제출할 수 있어요.' };
+        if (row && row.status === 'returned') return { ok: true };   // 반려된 프로필은 고쳐서 언제든 다시 제출
         return this.can(row && row.published_at ? 'edit' : 'create', row);
       }
       if (isAdmin) return { ok: true, admin: true };
@@ -748,13 +752,14 @@
     async saveDraft(id, draft) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
       if (!id) {
+        const c = await this.can('save', null); if (!c.ok) throw new Error(c.reason);   // 등록을 잠그면 새 캐릭터를 못 만들어요
         const r = await B.insert('characters', { owner_id: u.id, author: u.nickname, data: {}, draft, status: 'draft', published_at: null, submitted_at: null, review_note: '' });
         return r;
       }
       const row = await B.get('characters', id);
       const c = await this.can('save', row); if (!c.ok) throw new Error(c.reason);
       const patch = { draft, updated_at: now() };
-      if (row.status !== 'draft') patch.status = 'draft';
+      if (row.status !== 'draft' && row.status !== 'returned') patch.status = 'draft';   // 반려된 건 '반려' 그대로 (기간과 상관없이 다시 제출할 수 있게)
       const r = await B.update('characters', id, patch);
       return r;
     },
@@ -780,7 +785,8 @@
     },
     async reject(id, note) {
       await this.requireAdmin(); const u = await this.user(); const row = await B.get('characters', id);
-      const r = await B.update('characters', id, { status: 'returned', review_note: String(note || '').slice(0, 300) });
+      // 게시된 프로필을 반려하면 멤버란에서 내려가요: 게시 해제 + 게시본을 작성본으로 옮겨서 바로 고칠 수 있게
+      const r = await B.update('characters', id, { status: 'returned', review_note: String(note || '').slice(0, 300), published_at: null, draft: row.draft || row.data });
       return r;
     },
 

@@ -470,6 +470,16 @@ App.ready.then(async user => {
     const ic = e.target.closest('.item-card'); if (ic && !e.target.closest('a')) return openItem(+ic.dataset.i);
   });
   // 소지품 카드를 누르면 크게 펼쳐 보기
+  // 소지품 원본 그림 보기: 화면보다 작으면 원래 크기 그대로, 크면 화면에 맞춰 (자르지 않아요) · 아무 데나 누르면 닫혀요
+  function showFull(src) {
+    if (!src) return;
+    const ov = document.createElement('div'); ov.className = 'img-full';
+    ov.innerHTML = `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer"><span class="img-full-x">닫기 ✕</span>`;
+    const close = () => { ov.remove(); removeEventListener('keydown', key, true); };
+    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    ov.onclick = close; addEventListener('keydown', key, true);
+    document.body.appendChild(ov);
+  }
   // 게임의 무기 · 장비 창처럼: 왼쪽은 빛나는 받침 위의 그림, 오른쪽은 이름 · 정보 칸 · 이야기
   function openItem(i) {
     const it = d.items[i]; if (!it) return;
@@ -488,7 +498,11 @@ App.ready.then(async user => {
         ${n > 1 ? `<div class="wpn-nav"><button type="button" data-wi="${(i - 1 + n) % n}">‹ 이전</button><button type="button" data-wi="${(i + 1) % n}">다음 ›</button></div>` : ''}
       </div></div>`, 'item-modal');
     m.style.setProperty('--c', d.color);   // 창 바탕의 은은한 빛도 이 캐릭터 색으로 (기본 빨강 대신)
-    m.addEventListener('click', e => { const b = e.target.closest('[data-wi]'); if (b) openItem(+b.dataset.wi); });
+    m.addEventListener('click', e => {
+      const b = e.target.closest('[data-wi]'); if (b) return openItem(+b.dataset.wi);
+      if (it.img && e.target.closest('.wpn-art')) showFull(safeUrl(it.img));   // 그림을 누르면 원본 그대로 크게
+    });
+    if (it.img) m.querySelector('.wpn-art').insertAdjacentHTML('beforeend', '<span class="wpn-zoom">원본 보기 ⤢</span>');
   }
   // 소지품 카드: NPC 카드처럼 마우스를 따라 3D로 기울고 빛이 반사돼요
   const tiltOk = matchMedia('(pointer:fine)').matches && !REDUCED;
