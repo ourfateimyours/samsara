@@ -797,3 +797,10 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
   mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 100%);
   -webkit-mask-composite: source-in; mask-composite: intersect; }
 .fig.fade.al-left img { --fl: 0%; } .fig.fade.al-right img { --fr: 0%; }
+
+/* 소지품 원본 그림 보기 (소지품 창에서 그림을 누르면) */
+.wpn-art { cursor: zoom-in; }
+.wpn-zoom { position: absolute; right: 12px; bottom: 10px; z-index: 2; font: 600 9.5px var(--mono); letter-spacing: .14em; color: rgba(255, 255, 255, .6); pointer-events: none; }
+.img-full { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 24px; background: rgba(3, 2, 6, .92); cursor: zoom-out; animation: fade .25s; }
+.img-full img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.img-full-x { position: fixed; top: 14px; right: 18px; font: 600 11px var(--mono); letter-spacing: .2em; color: rgba(255, 255, 255, .7); }
