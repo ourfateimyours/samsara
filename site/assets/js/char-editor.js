@@ -154,7 +154,7 @@ window.CharEditor = {
     const pub = row && row.data ? normChar(row.data) : null;
     const statLocked = !isAdmin && !!(pub && parseKV(pub.stats).some(([, v]) => v !== ''));
     const statMap = Object.fromEntries(parseKV(d.stats));
-    const TABS = [['basic', '기본'], ['img', '이미지'], ['song', '테마곡'], ['skill', '능력·스킬'], ['persona', '성격·프로필'],
+    const TABS = [['basic', '기본'], ['img', '이미지'], ['song', 'BGM'], ['skill', '술력'], ['persona', '성격'],
       ['stat', '스탯'], ['items', '소지품'], ['rel', '관계란']];
     const m = openModal(`
       <h2>${row ? '인물 기록 수정' : '새 인물 봉인'}</h2>
