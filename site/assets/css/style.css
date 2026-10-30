@@ -777,7 +777,7 @@ body[data-page="home"] .bgm-dock { bottom: 18px; }
 /* 캐릭터 편집: 성격 글 서식 (글씨체 · 크기 · 자간 · 행간) */
 .ps-bar { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.4fr; gap: 10px; align-items: end; }
 .ps-bar input[type=range] { width: 100%; accent-color: var(--red); }
-.ps-bar small[data-psv] { font: 600 11px var(--mono); color: var(--text); }
+.ps-bar small[data-v] { font: 600 11px var(--mono); color: var(--text); }
 textarea.ps-text { white-space: pre-wrap; }
 @media (max-width: 560px) { .ps-bar { grid-template-columns: 1fr 1fr; } }
 /* 회원 지갑 · 영전 지급 */
