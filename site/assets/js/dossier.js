@@ -419,7 +419,7 @@ App.ready.then(async user => {
     { t: '스킬', en: 'SKILL', r: () => `
       ${d.ability.name ? `<div class="skh"><div class="skh-t"><small class="skh-k">ABILITY</small><b>${esc(d.ability.name)}</b><span class="skh-line" aria-hidden="true"><i></i></span></div>
         </div>` : ''}
-      ${d.ability.desc ? `<div class="text sk-text" style="margin:14px 0 10px">${esc(d.ability.desc)}</div>` : ''}
+      ${d.ability.desc ? `<div class="text sk-text" style="margin:14px 0 10px;${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</div>` : ''}
       ${d.skills.map((s, i) => `<div class="skr" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>

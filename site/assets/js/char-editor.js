@@ -8,22 +8,43 @@ window.parseKV = text => String(text || '').split('\n')
   .map(l => l.trim()).filter(Boolean)
   .map(l => { const i = l.search(/[:：]/); return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; });
 
+/* 모두에게 똑같이 들어가는 고정 문구 (플레이어가 적는 칸은 없어요) */
 window.FIXED = { subtitle: 'The Divine Bloodline', classline: '신의 피가 우리에게 흐를 때까지', codename: '神裔' };
+/* 가문: 셋 중 하나만 고를 수 있어요 (멤버란도 이 순서로 나뉘어요) */
 window.HOUSES = ['瑞門', '誓門', '染'];
+/* 스탯 항목 (숫자로 관리) */
 window.STAT_KEYS = ['근력', '지력', '이성', '술력', '외모', '재력', '행운'];
 
+/* 성격 · 능력 설명 글 서식: 글씨체 · 크기(9~14pt) · 자간(-2.0~1.0px) · 행간(기본 1.8에서 -1.0~+1.0) · 정렬 */
 window.PERSONA_FONTS = {
+  sans: ['기본 고딕', 'var(--sans)'],   // 사이트 기본 글씨 (능력 설명의 기본값)
   batang: ['바탕', "Batang, BatangChe, 'Nanum Myeongjo', 'Noto Serif KR', serif"],
   dotum: ['돋움', "Dotum, DotumChe, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif"],
   gulim: ['굴림', "Gulim, GulimChe, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif"],
   plexmono: ['IBM Plex Mono', "'IBM Plex Mono', 'IBM Plex Sans KR', monospace"]   // 한글은 IBM Plex Sans KR 로
 };
-window.normPStyle = (s = {}) => {
+/* 글 정렬: 양쪽 맞춤(기본 · 줄이 양옆 끝까지 꽉 차요) · 왼쪽 · 가운데 · 오른쪽 */
+window.TEXT_ALIGNS = { justify: '양쪽 맞춤', left: '왼쪽', center: '가운데', right: '오른쪽' };
+window.normAlign = a => TEXT_ALIGNS[a] ? a : 'justify';
+window.alignCSS = a => `text-align:${normAlign(a)}${normAlign(a) === 'justify' ? ';text-justify:inter-character' : ''}`;
+// 기본값: 성격은 바탕 11pt · 능력 설명은 지금 모습 그대로(기본 고딕 11pt · 행간 1.9)
+window.PSTYLE_DEF = { font: 'batang', size: 11, ls: 0, lh: 0 };
+window.ASTYLE_DEF = { font: 'sans', size: 11, ls: 0, lh: .1 };
+window.normPStyle = (s = {}, def = PSTYLE_DEF) => {
+  s = s || {};
   const c = (v, a, b, d) => { const n = parseFloat(v); return isNaN(n) ? d : Math.max(a, Math.min(b, n)); };
-  return { font: PERSONA_FONTS[s.font] ? s.font : 'batang', size: Math.round(c(s.size, 9, 14, 11)),
-    ls: Math.round(c(s.ls, -2, 1, 0) * 10) / 10, lh: Math.round(c(s.lh, -1, 1, 0) * 10) / 10 };
+  return { font: PERSONA_FONTS[s.font] ? s.font : def.font, size: Math.round(c(s.size, 9, 14, def.size)),
+    ls: Math.round(c(s.ls, -2, 1, def.ls) * 10) / 10, lh: Math.round(c(s.lh, -1, 1, def.lh) * 10) / 10, align: normAlign(s.align) };
 };
-window.personaCSS = s => { s = normPStyle(s); return `font-family:${PERSONA_FONTS[s.font][1]};font-size:${s.size}pt;letter-spacing:${s.ls}px;line-height:${(1.8 + s.lh).toFixed(1)}`; };
+// 서식 고르는 줄 (성격 · 능력 설명 공용) · p = 칸 이름 앞부분 (ps_ · as_)
+window.pstyleBar = (p, s) => `<div class="ps-bar">
+  <label class="field"><span>글씨체</span><select name="${p}font">${Object.entries(PERSONA_FONTS).map(([k, [n]]) => `<option value="${k}" ${k === s.font ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+  <label class="field"><span>글자 크기</span><select name="${p}size">${[9, 10, 11, 12, 13, 14].map(n => `<option value="${n}" ${n === s.size ? 'selected' : ''}>${n}pt</option>`).join('')}</select></label>
+  <label class="field"><span>자간 <small data-v="${p}ls">${s.ls.toFixed(1)}</small></span><input type="range" name="${p}ls" min="-2" max="1" step="0.1" value="${s.ls}"></label>
+  <label class="field"><span>행간 <small data-v="${p}lh">${s.lh.toFixed(1)}</small></span><input type="range" name="${p}lh" min="-1" max="1" step="0.1" value="${s.lh}"></label>
+  <label class="field"><span>정렬</span><select name="${p}align">${Object.entries(TEXT_ALIGNS).map(([k, n]) => `<option value="${k}" ${k === s.align ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+</div>`;
+window.personaCSS = (s, def) => { s = normPStyle(s, def); return `font-family:${PERSONA_FONTS[s.font][1]};font-size:${s.size}pt;letter-spacing:${s.ls}px;line-height:${(1.8 + s.lh).toFixed(1)};${alignCSS(s.align)}`; };
 
 /* 나이 · 키 · 몸무게 (profile 칸에 "항목: 내용" 줄로 저장돼요) */
 window.BODY_KEYS = [['나이', 'p_age', ''], ['키', 'p_h', ''], ['몸무게', 'p_w', '']];
@@ -42,7 +63,8 @@ window.normChar = (d = {}) => {
     classline: FIXED.classline, team: HOUSES.includes(d.team) ? d.team : '', codename: FIXED.codename, quote: d.quote || '',
     rank: RANKS.includes(d.rank) ? d.rank : (d.rank || ''), color: /^#[0-9a-f]{6}$/i.test(d.color) ? d.color : '#c8161d',
     element: '', images, song,   // 오행 속성은 쓰지 않아요
-    ability: Object.assign({ name: '', sub: '', desc: '' }, d.ability),
+    // 능력 설명 서식 (예전에 정렬만 따로 저장한 것도 이어받아요)
+    ability: (a => Object.assign(a, { style: normPStyle(Object.assign({ align: a.align }, a.style), ASTYLE_DEF) }))(Object.assign({ name: '', sub: '', desc: '' }, d.ability)),
     skills: d.skills || [], danger: d.danger === '' || d.danger == null ? '' : Math.max(0, Math.min(100, +d.danger || 0)),
     persona: d.persona || '', persona_style: normPStyle(d.persona_style), persona_tags: d.persona_tags || [], profile: d.profile || '', stats: d.stats || '',
     prompts: d.prompts || [], custom: d.custom || [], related: d.related || [], sections: d.sections || [],
@@ -52,6 +74,7 @@ window.normChar = (d = {}) => {
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
     figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치: 가운데 / 왼쪽 끝 / 오른쪽 끝
     figFade: !!d.figFade,                                                                   // 전신 그림 가장자리를 흐리게
+    // 프로필 배경 효과 이미지: 전신 뒤 배경 위에 섞어 얹어요 (빛망울 · 먼지 · 안개 같은 그림)
     bgfx: (o => ({ url: safeUrl(o.url) ? o.url : '', mode: BGFX_MODES[o.mode] ? o.mode : 'screen', op: Math.max(.1, Math.min(1, parseFloat(o.op) || .8)) }))(d.bgfx || {})
   };
 };
@@ -154,7 +177,7 @@ window.CharEditor = {
     const pub = row && row.data ? normChar(row.data) : null;
     const statLocked = !isAdmin && !!(pub && parseKV(pub.stats).some(([, v]) => v !== ''));
     const statMap = Object.fromEntries(parseKV(d.stats));
-    const TABS = [['basic', '기본'], ['img', '이미지'], ['song', 'BGM'], ['skill', '술력'], ['persona', '성격'],
+    const TABS = [['basic', '기본'], ['img', '이미지'], ['song', '테마곡'], ['skill', '능력·스킬'], ['persona', '성격·프로필'],
       ['stat', '스탯'], ['items', '소지품'], ['rel', '관계란']];
     const m = openModal(`
       <h2>${row ? '인물 기록 수정' : '새 인물 봉인'}</h2>
@@ -172,14 +195,14 @@ window.CharEditor = {
           </div>
           <label class="field"><span>한마디</span><textarea name="quote" rows="2" maxlength="200">${esc(d.quote)}</textarea></label>
           <div class="row3">
-            <label class="field"><span>술력 색상</span><input type="color" name="color" value="${esc(d.color)}"></label>
+            <label class="field"><span>테마 컬러</span><input type="color" name="color" value="${esc(d.color)}"></label>
             
           </div>
           <div class="kr-ed">
             <div class="kr-f">
               <div class="field"><span>휴대폰 키링 <small>관계 휴대폰 오른쪽 위 고리에 달려요</small></span>
                 <div class="kr-types">${Object.entries((window.Keyring || { TYPES: { none: '없음' } }).TYPES).map(([k, n]) => `<label class="kr-chip"><input type="radio" name="kr_type" value="${k}" ${k === d.keyring.type ? 'checked' : ''}><b>${esc(n)}</b></label>`).join('')}</div></div>
-              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10 자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}"></label>
+              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}"></label>
               <label class="field kr-img"><span>아크릴 이미지 <small>배경이 투명한 PNG 링크를 넣으면 그 모양대로 아크릴이 돼요</small></span><input name="kr_img" type="url" inputmode="url" value="${esc(d.keyring.img)}" placeholder="https://…png"></label>
             </div>
             <div class="kr-prev" id="kr-prev" aria-label="키링 미리보기"></div>
@@ -187,16 +210,16 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="img">
-          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 5:8이나 1:1도 괜찮습니다! · GIF 가능 · 2MB 이하 추천</small></span>
+          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) · GIF 가능 · 2MB 이하 추천</small></span>
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
-          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 프로필에 메인에 보이는 플레이어의 캐릭터 이미지입니다! 투명화(PNG)를 추천합니다.</p>
+          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. 여러 장을 넣으면 화면 아래에서 버전을 바꿔 볼 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
           <div class="field" style="margin:4px 0 10px"><span>전신 그림 위치 <small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></span>
             <div class="kr-types">${[['center', '가운데'], ['left', '왼쪽 끝에 붙이기'], ['right', '오른쪽 끝에 붙이기']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="fig_al" value="${k}" ${k === d.figAlign ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
           <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}> 가장자리를 <b>흐리게</b> (그림 테두리가 배경에 자연스럽게 녹아들어요)</label>
           <div id="e-img"></div>
-          <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>전신 이미지 뒤로 이미지를 깔 수 있습니다! 밑 배경으로 까는 이미지는 포토샵을 최소화로 해 주세요. </small></span>
+          <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>프로필 전신 뒤 배경 위에 섞어 얹어요 · 빛망울 · 별가루 · 안개 사진 추천</small></span>
             <div class="img-pick"><div class="thumb" id="fx-th" style="background-image:${cssUrl(d.bgfx.url)}"></div>
               <div class="ctrl"><input name="fx_url" type="url" inputmode="url" placeholder="이미지 외부 링크 https://… (비우면 없음)" value="${esc(d.bgfx.url)}">
                 <div class="row2" style="margin:8px 0 0"><label class="field" style="margin:0"><span>섞는 방식</span><select name="fx_mode">${Object.entries(BGFX_MODES).map(([k, l]) => `<option value="${k}" ${k === d.bgfx.mode ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -204,7 +227,7 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="song">
-          <label class="field"><span>유튜브 링크 또는 mp3 주소 <small>프로필에서 재생 바로 나옵니다.</small></span><input name="s_url" value="${esc(d.song.url)}" placeholder="https://youtu.be/…"></label>
+          <label class="field"><span>유튜브 링크 또는 mp3 주소 <small>프로필에서 재생바로만 나와요 · 재생하면 파형이 움직여요</small></span><input name="s_url" value="${esc(d.song.url)}" placeholder="https://youtu.be/…"></label>
         </div>
 
         <div class="epane" data-p="skill">
@@ -212,18 +235,14 @@ window.CharEditor = {
             <label class="field"><span>능력 이름 <small>한자 추천</small></span><input name="a_name" value="${esc(d.ability.name)}"></label>
             <label class="field"><span>위험도 % <small>0~100</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}"></label>
           </div>
-          <label class="field"><span>능력 설명</span><textarea name="a_desc" rows="3">${esc(d.ability.desc)}</textarea></label>
+          ${pstyleBar('as_', d.ability.style)}
+          <label class="field"><span>능력 설명 <small>위에서 고른 서식 그대로 프로필에 나와요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
           <div class="field"><span>스킬</span><div id="e-skill"></div></div>
 
         </div>
 
         <div class="epane" data-p="persona">
-          <div class="ps-bar">
-            <label class="field"><span>글씨체</span><select name="ps_font">${Object.entries(PERSONA_FONTS).map(([k, [n]]) => `<option value="${k}" ${k === d.persona_style.font ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-            <label class="field"><span>글자 크기</span><select name="ps_size">${[9, 10, 11, 12, 13, 14].map(n => `<option value="${n}" ${n === d.persona_style.size ? 'selected' : ''}>${n}pt</option>`).join('')}</select></label>
-            <label class="field"><span>자간 <small data-psv="ls">${d.persona_style.ls.toFixed(1)}</small></span><input type="range" name="ps_ls" min="-2" max="1" step="0.1" value="${d.persona_style.ls}"></label>
-            <label class="field"><span>행간 <small data-psv="lh">${d.persona_style.lh.toFixed(1)}</small></span><input type="range" name="ps_lh" min="-1" max="1" step="0.1" value="${d.persona_style.lh}"></label>
-          </div>
+          ${pstyleBar('ps_', d.persona_style)}
           <label class="field"><span>성격 · 성향 <small>쓴 그대로(줄바꿈 · 띄어쓰기 · 서식) 프로필에 나와요</small></span><textarea name="persona" rows="10" class="ps-text" style="${personaCSS(d.persona_style)}">${esc(d.persona)}</textarea></label>
 
           <div class="row3">${BODY_KEYS.map(([k, n, ph]) => `<label class="field"><span>${k} <small>프로필 이름 아래에 보여요</small></span><input name="${n}" maxlength="20" value="${esc(bodyOf(d)[k] || '')}" placeholder="${ph}"></label>`).join('')}</div>
@@ -233,7 +252,7 @@ window.CharEditor = {
           <p class="hint-text">숫자로 적어 주세요. ${statLocked ? '<b style="color:#ffcf6b">🔒 스탯은 처음 등록한 뒤로는 관리자만 고칠 수 있어요.</b>' : '처음 등록한 뒤로는 <b>관리자만</b> 고칠 수 있으니 신중하게 적어 주세요.'}</p>
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
-        <div class="epane" data-p="items"><p class="hint-text">성격 항목에서 <b>소지품</b> 칸에 카드로 보여요. 최대 6 개까지 넣을 수 있어요. 선물해 준 플레이어를 고를 시 카드에 <b>♥ (플레이어 이름)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
+        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
         <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
@@ -299,10 +318,14 @@ window.CharEditor = {
     f.querySelectorAll('[name=kr_type]').forEach(r => r.addEventListener('change', krPrev));
     krPrev();
 
-    // 성격 서식: 고르는 대로 글 칸에 바로 적용 (보이는 그대로 프로필에 나와요)
-    const psNow = () => normPStyle({ font: f.ps_font.value, size: f.ps_size.value, ls: f.ps_ls.value, lh: f.ps_lh.value });
-    const psApply = () => { const s = psNow(); f.persona.style.cssText = personaCSS(s); $('[data-psv="ls"]', m).textContent = s.ls.toFixed(1); $('[data-psv="lh"]', m).textContent = s.lh.toFixed(1); };
-    ['ps_font', 'ps_size', 'ps_ls', 'ps_lh'].forEach(n => f[n].addEventListener('input', psApply));
+    // 성격 · 능력 설명 서식: 고르는 대로 글 칸에 바로 적용 (보이는 그대로 프로필에 나와요)
+    const styleNow = (p, def) => normPStyle({ font: f[p + 'font'].value, size: f[p + 'size'].value, ls: f[p + 'ls'].value, lh: f[p + 'lh'].value, align: f[p + 'align'].value }, def);
+    const psNow = () => styleNow('ps_', PSTYLE_DEF), asNow = () => styleNow('as_', ASTYLE_DEF);
+    const bindStyle = (p, box, now, def) => {
+      const apply = () => { const s = now(); box.style.cssText = personaCSS(s, def); $(`[data-v="${p}ls"]`, m).textContent = s.ls.toFixed(1); $(`[data-v="${p}lh"]`, m).textContent = s.lh.toFixed(1); };
+      ['font', 'size', 'ls', 'lh', 'align'].forEach(n => f[p + n].addEventListener('input', apply));
+    };
+    bindStyle('ps_', f.persona, psNow, PSTYLE_DEF); bindStyle('as_', f.a_desc, asNow, ASTYLE_DEF);
     f.head.oninput = () => { $('#hd-th', m).style.backgroundImage = cssUrl(safeUrl(f.head.value.trim())); };
     f.fx_url.oninput = () => { $('#fx-th', m).style.backgroundImage = cssUrl(safeUrl(f.fx_url.value.trim())); };
     f.fx_op.oninput = () => { $('[data-fxv]', m).textContent = Math.round(f.fx_op.value * 100) + '%'; };
@@ -330,7 +353,7 @@ window.CharEditor = {
         bgfx: { url: /^https?:\/\//i.test(v('fx_url')) ? v('fx_url') : '', mode: BGFX_MODES[f.fx_mode.value] ? f.fx_mode.value : 'screen', op: Math.max(.1, Math.min(1, +f.fx_op.value || .8)) },
         images: getImgs().filter(i => safeUrl(i.url)).map((i, k) => ({ label: 'V' + (k + 1), url: i.url })),
         song: { title: '', artist: '', url: v('s_url'), cover: '' },
-        ability: { name: v('a_name'), sub: '', desc: v('a_desc') },
+        ability: { name: v('a_name'), sub: '', desc: v('a_desc'), style: asNow() },
         danger: v('danger') === '' ? '' : Math.max(0, Math.min(100, +v('danger') || 0)),
         skills: getSkills(), stats,
         persona: f.persona.value.replace(/\s+$/, ''), persona_style: psNow(),
