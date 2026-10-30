@@ -8,14 +8,10 @@ window.parseKV = text => String(text || '').split('\n')
   .map(l => l.trim()).filter(Boolean)
   .map(l => { const i = l.search(/[:：]/); return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; });
 
-/* 모두에게 똑같이 들어가는 고정 문구 (플레이어가 적는 칸은 없어요) */
 window.FIXED = { subtitle: 'The Divine Bloodline', classline: '신의 피가 우리에게 흐를 때까지', codename: '神裔' };
-/* 가문: 셋 중 하나만 고를 수 있어요 (멤버란도 이 순서로 나뉘어요) */
 window.HOUSES = ['瑞門', '誓門', '染'];
-/* 스탯 항목 (숫자로 관리) */
 window.STAT_KEYS = ['근력', '지력', '이성', '술력', '외모', '재력', '행운'];
 
-/* 성격 글 서식: 글씨체 · 크기(9~14pt) · 자간(-2.0~1.0px) · 행간(기본 1.8에서 -1.0~+1.0) */
 window.PERSONA_FONTS = {
   batang: ['바탕', "Batang, BatangChe, 'Nanum Myeongjo', 'Noto Serif KR', serif"],
   dotum: ['돋움', "Dotum, DotumChe, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif"],
@@ -56,7 +52,6 @@ window.normChar = (d = {}) => {
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
     figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치: 가운데 / 왼쪽 끝 / 오른쪽 끝
     figFade: !!d.figFade,                                                                   // 전신 그림 가장자리를 흐리게
-    // 프로필 배경 효과 이미지: 전신 뒤 배경 위에 섞어 얹어요 (빛망울 · 먼지 · 안개 같은 그림)
     bgfx: (o => ({ url: safeUrl(o.url) ? o.url : '', mode: BGFX_MODES[o.mode] ? o.mode : 'screen', op: Math.max(.1, Math.min(1, parseFloat(o.op) || .8)) }))(d.bgfx || {})
   };
 };
@@ -184,7 +179,7 @@ window.CharEditor = {
             <div class="kr-f">
               <div class="field"><span>휴대폰 키링 <small>관계 휴대폰 오른쪽 위 고리에 달려요</small></span>
                 <div class="kr-types">${Object.entries((window.Keyring || { TYPES: { none: '없음' } }).TYPES).map(([k, n]) => `<label class="kr-chip"><input type="radio" name="kr_type" value="${k}" ${k === d.keyring.type ? 'checked' : ''}><b>${esc(n)}</b></label>`).join('')}</div></div>
-              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}"></label>
+              <label class="field kr-txt"><span>영어 글자 <small>영문 · 숫자 최대 10 자 · 은색 큐브로 꿰어져요</small></span><input name="kr_text" maxlength="10" value="${esc(d.keyring.text)}"></label>
               <label class="field kr-img"><span>아크릴 이미지 <small>배경이 투명한 PNG 링크를 넣으면 그 모양대로 아크릴이 돼요</small></span><input name="kr_img" type="url" inputmode="url" value="${esc(d.keyring.img)}" placeholder="https://…png"></label>
             </div>
             <div class="kr-prev" id="kr-prev" aria-label="키링 미리보기"></div>
@@ -192,16 +187,16 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="img">
-          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) · GIF 가능 · 2MB 이하 추천</small></span>
+          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 5:8이나 1:1도 괜찮습니다! · GIF 가능 · 2MB 이하 추천</small></span>
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
-          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. 여러 장을 넣으면 화면 아래에서 버전을 바꿔 볼 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
+          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 프로필에 메인에 보이는 플레이어의 캐릭터 이미지입니다! 투명화(PNG)를 추천합니다.</p>
           <div class="field" style="margin:4px 0 10px"><span>전신 그림 위치 <small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></span>
             <div class="kr-types">${[['center', '가운데'], ['left', '왼쪽 끝에 붙이기'], ['right', '오른쪽 끝에 붙이기']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="fig_al" value="${k}" ${k === d.figAlign ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
           <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}> 가장자리를 <b>흐리게</b> (그림 테두리가 배경에 자연스럽게 녹아들어요)</label>
           <div id="e-img"></div>
-          <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>프로필 전신 뒤 배경 위에 섞어 얹어요 · 빛망울 · 별가루 · 안개 사진 추천</small></span>
+          <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>전신 이미지 뒤로 이미지를 깔 수 있습니다! 밑 배경으로 까는 이미지는 포토샵을 최소화로 해 주세요. </small></span>
             <div class="img-pick"><div class="thumb" id="fx-th" style="background-image:${cssUrl(d.bgfx.url)}"></div>
               <div class="ctrl"><input name="fx_url" type="url" inputmode="url" placeholder="이미지 외부 링크 https://… (비우면 없음)" value="${esc(d.bgfx.url)}">
                 <div class="row2" style="margin:8px 0 0"><label class="field" style="margin:0"><span>섞는 방식</span><select name="fx_mode">${Object.entries(BGFX_MODES).map(([k, l]) => `<option value="${k}" ${k === d.bgfx.mode ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -209,7 +204,7 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="song">
-          <label class="field"><span>유튜브 링크 또는 mp3 주소 <small>프로필에서 재생바로만 나와요 · 재생하면 파형이 움직여요</small></span><input name="s_url" value="${esc(d.song.url)}" placeholder="https://youtu.be/…"></label>
+          <label class="field"><span>유튜브 링크 또는 mp3 주소 <small>프로필에서 재생 바로 나옵니다.</small></span><input name="s_url" value="${esc(d.song.url)}" placeholder="https://youtu.be/…"></label>
         </div>
 
         <div class="epane" data-p="skill">
@@ -238,7 +233,7 @@ window.CharEditor = {
           <p class="hint-text">숫자로 적어 주세요. ${statLocked ? '<b style="color:#ffcf6b">🔒 스탯은 처음 등록한 뒤로는 관리자만 고칠 수 있어요.</b>' : '처음 등록한 뒤로는 <b>관리자만</b> 고칠 수 있으니 신중하게 적어 주세요.'}</p>
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
-        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
+        <div class="epane" data-p="items"><p class="hint-text">성격 항목에서 <b>소지품</b> 칸에 카드로 보여요. 최대 6 개까지 넣을 수 있어요. 선물해 준 플레이어를 고를 시 카드에 <b>♥ (플레이어 이름)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
         <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
