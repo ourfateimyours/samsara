@@ -172,7 +172,7 @@ window.CharEditor = {
           </div>
           <label class="field"><span>한마디</span><textarea name="quote" rows="2" maxlength="200">${esc(d.quote)}</textarea></label>
           <div class="row3">
-            <label class="field"><span>테마 컬러</span><input type="color" name="color" value="${esc(d.color)}"></label>
+            <label class="field"><span>술력 색상</span><input type="color" name="color" value="${esc(d.color)}"></label>
             
           </div>
           <div class="kr-ed">
