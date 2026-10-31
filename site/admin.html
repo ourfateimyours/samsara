@@ -438,7 +438,7 @@ App.ready.then(async user => {
 
   async function rptA() {
     const pane = curPane; let rows = []; try { rows = await Store.rptA(); } catch (e) { toast(e.message, 'err'); }
-    pane.innerHTML = `<section class="adm-card"><header><b>♥ 심박 기록</b><span class="label">${rows.length}건 · 관리자만</span></header>
+    pane.innerHTML = `<section class="adm-card"><header><b>회원 기록</b><span class="label">${rows.length}건</span></header>
       <input class="input" id="rq" placeholder="닉네임 · 캐릭터 · 내용 검색" style="margin-bottom:12px">
       <table class="adm-table"><thead><tr><th>시각</th><th>보낸 사람</th><th>받는 사람</th><th>내용</th><th>읽음</th></tr></thead><tbody id="rb"></tbody></table></section>`;
     const draw = q => $('#rb').innerHTML = rows.filter(r => !q || JSON.stringify(r).includes(q)).map(r => `<tr><td>${when(r.created_at)}</td><td>${esc(r.from_nick || '?')}<br><small class="dim">${esc(r.from_char || '')}</small></td><td>${esc(r.to_nick || '?')}<br><small class="dim">${esc(r.to_char || '')}</small></td><td>${esc(r.body)}</td><td>${r.read ? '✓' : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="dim">기록이 없어요.</td></tr>';
@@ -454,7 +454,7 @@ App.ready.then(async user => {
       if (curPane !== pane) return clearInterval(t);
       let rows = []; try { rows = await Store.rptB(); } catch (e) { return; }
       const on = rows.filter(r => Date.now() - Date.parse(r.at) < 15e4), off = rows.filter(r => !on.includes(r)).slice(0, 20);
-      pane.innerHTML = `<section class="adm-card"><header><b>● 지금 접속 중 ${on.length}</b><span class="label">15초마다 새로고침</span></header>
+      pane.innerHTML = `<section class="adm-card"><header><b>● 지금 ${on.length}</b><span class="label">15초마다 새로고침</span></header>
         <ul class="adm-list">${on.map(r => `<li><b>${esc(r.nickname || '?')}</b><span>@${esc(r.username || '')}</span><span>${esc(label(r.page))}</span><span>${ago(r.since)}째</span></li>`).join('') || '<li class="dim">지금 접속한 사람이 없어요.</li>'}</ul></section>
         <section class="adm-card" style="margin-top:16px"><header><b>최근 접속</b></header>
         <ul class="adm-list">${off.map(r => `<li><b>${esc(r.nickname || '?')}</b><span>${esc(label(r.page))}</span><span>${ago(r.at)} 전</span></li>`).join('') || '<li class="dim">—</li>'}</ul></section>`;
@@ -466,7 +466,7 @@ App.ready.then(async user => {
   /* 큰 메뉴 4개 → 안에 작은 탭 */
   const GROUPS = {
     char: [['review', '심사'], ['period', '등록 · 수정 기간']],
-    member: [['members', '회원 · 지갑 · 영전'], ['join', '가입 신청'], ['rptB', '지금 접속 중'], ['rptA', '심박 기록']],
+    member: [['members', '회원 · 지갑 · 영전'], ['join', '가입 신청'], ['rptB', '홈페이지 디자인'], ['rptA', '회원 기록']],
     shop: [['shop', '물건 · 구매 · 선물 기록']],
     site: [['site', '설정 · BGM'], ['banner', '메인 배너']]
   };
