@@ -37,13 +37,15 @@ window.normPStyle = (s = {}, def = PSTYLE_DEF) => {
     ls: Math.round(c(s.ls, -2, 1, def.ls) * 10) / 10, lh: Math.round(c(s.lh, -1, 1, def.lh) * 10) / 10, align: normAlign(s.align) };
 };
 // 서식 고르는 줄 (성격 · 능력 설명 공용) · p = 칸 이름 앞부분 (ps_ · as_)
-window.pstyleBar = (p, s) => `<div class="ps-bar">
+// 평소엔 한 줄로 접혀 있고 (지금 서식 요약만), 누르면 펼쳐져요
+window.pstyleSum = s => `${PERSONA_FONTS[s.font][0]} · ${s.size}pt · 자간 ${s.ls.toFixed(1)} · 행간 ${s.lh.toFixed(1)} · ${TEXT_ALIGNS[s.align]}`;
+window.pstyleBar = (p, s, label = '글 서식') => `<details class="ps-bar"><summary><span class="ps-ic">Aa</span><b>${label}</b><small data-sum="${p}">${pstyleSum(s)}</small></summary><div class="ps-grid">
   <label class="field"><span>글씨체</span><select name="${p}font">${Object.entries(PERSONA_FONTS).map(([k, [n]]) => `<option value="${k}" ${k === s.font ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-  <label class="field"><span>글자 크기</span><select name="${p}size">${[9, 10, 11, 12, 13, 14].map(n => `<option value="${n}" ${n === s.size ? 'selected' : ''}>${n}pt</option>`).join('')}</select></label>
+  <label class="field"><span>크기</span><select name="${p}size">${[9, 10, 11, 12, 13, 14].map(n => `<option value="${n}" ${n === s.size ? 'selected' : ''}>${n}pt</option>`).join('')}</select></label>
   <label class="field"><span>자간 <small data-v="${p}ls">${s.ls.toFixed(1)}</small></span><input type="range" name="${p}ls" min="-2" max="1" step="0.1" value="${s.ls}"></label>
   <label class="field"><span>행간 <small data-v="${p}lh">${s.lh.toFixed(1)}</small></span><input type="range" name="${p}lh" min="-1" max="1" step="0.1" value="${s.lh}"></label>
   <label class="field"><span>정렬</span><select name="${p}align">${Object.entries(TEXT_ALIGNS).map(([k, n]) => `<option value="${k}" ${k === s.align ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-</div>`;
+</div></details>`;
 window.personaCSS = (s, def) => { s = normPStyle(s, def); return `font-family:${PERSONA_FONTS[s.font][1]};font-size:${s.size}pt;letter-spacing:${s.ls}px;line-height:${(1.8 + s.lh).toFixed(1)};${alignCSS(s.align)}`; };
 
 /* 나이 · 키 · 몸무게 (profile 칸에 "항목: 내용" 줄로 저장돼요) */
@@ -56,7 +58,7 @@ window.BGFX_MODES = { screen: '스크린 · 검은 바탕이 사라지고 빛만
 /* 예전 형식 데이터도 새 형식으로 맞춰 줌 */
 window.normChar = (d = {}) => {
   const images = (d.images && d.images.length ? d.images : (d.image ? [{ label: '원본', url: d.image }] : []))
-    .filter(i => safeUrl(i.url));
+    .filter(i => safeUrl(i.url)).slice(0, 1);   // 전신은 한 장만 (예전에 여러 장 넣은 것도 첫 장만 보여요)
   const song = d.song || { title: d.song_title || '', artist: d.song_artist || '', url: d.song_url || '', cover: '' };
   return {
     name: d.name || '', name_en: d.name_en || '', subtitle: FIXED.subtitle, org: d.org || d.affiliation || '',
@@ -72,6 +74,7 @@ window.normChar = (d = {}) => {
       keyring: Object.assign({ type: 'none', text: '', img: '' }, d.keyring || (d.charmImg ? { type: 'acrylic', img: d.charmImg } : {})), silhouette: false, card: false,   // 검은 실루엣 · 카드 액자 표시는 없앴어요 (예전 기록에 켜져 있어도 꺼진 채로)
     items: (d.items || []).slice(0, 6),
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
+    phoneBg: d.phoneBg === 'moon' ? 'moon' : 'earth',   // 관계 휴대폰 배경: 지구 / 달
     figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치: 가운데 / 왼쪽 끝 / 오른쪽 끝
     figFade: !!d.figFade, figMobileBig: !!d.figMobileBig,   // 휴대폰에서 가로 그림을 크게 (양옆 조금 잘림)
                                                                   // 전신 그림 가장자리를 흐리게
@@ -208,6 +211,8 @@ window.CharEditor = {
             </div>
             <div class="kr-prev" id="kr-prev" aria-label="키링 미리보기"></div>
           </div>
+          <div class="field"><span>휴대폰 배경 <small>관계 휴대폰 잠금 화면 · 빛은 테마 컬러로 물들어요</small></span>
+            <div class="kr-types">${[['earth', '🌏 지구'], ['moon', '🌕 달']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="ph_bg" value="${k}" ${k === d.phoneBg ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
         </div>
 
         <div class="epane" data-p="img">
@@ -215,7 +220,7 @@ window.CharEditor = {
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
-          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. 여러 장을 넣으면 화면 아래에서 버전을 바꿔 볼 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
+          <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. <b>한 장</b>만 넣을 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
           <div class="field" style="margin:4px 0 10px"><span>전신 그림 위치 <small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></span>
             <div class="kr-types">${[['center', '가운데'], ['left', '왼쪽 끝에 붙이기'], ['right', '오른쪽 끝에 붙이기']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="fig_al" value="${k}" ${k === d.figAlign ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
           <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}> 가장자리를 <b>흐리게</b> (그림 테두리가 배경에 자연스럽게 녹아들어요)</label>
@@ -237,14 +242,14 @@ window.CharEditor = {
             <label class="field"><span>능력 이름 <small>한자 추천</small></span><input name="a_name" value="${esc(d.ability.name)}"></label>
             <label class="field"><span>위험도 % <small>0~100</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}"></label>
           </div>
-          ${pstyleBar('as_', d.ability.style)}
-          <label class="field"><span>능력 설명 <small>위에서 고른 서식 그대로 프로필에 나와요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
+          ${pstyleBar('as_', d.ability.style, '능력 · 스킬 글 서식')}
+          <label class="field"><span>능력 설명 <small>위 서식 그대로 프로필에 나와요 · 스킬 설명도 같은 서식이에요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
           <div class="field"><span>스킬</span><div id="e-skill"></div></div>
 
         </div>
 
         <div class="epane" data-p="persona">
-          ${pstyleBar('ps_', d.persona_style)}
+          ${pstyleBar('ps_', d.persona_style, '성격 글 서식')}
           <label class="field"><span>성격 · 성향 <small>쓴 그대로(줄바꿈 · 띄어쓰기 · 서식) 프로필에 나와요</small></span><textarea name="persona" rows="10" class="ps-text" style="${personaCSS(d.persona_style)}">${esc(d.persona)}</textarea></label>
 
           <div class="row3">${BODY_KEYS.map(([k, n, ph]) => `<label class="field"><span>${k} <small>프로필 이름 아래에 보여요</small></span><input name="${n}" maxlength="20" value="${esc(bodyOf(d)[k] || '')}" placeholder="${ph}"></label>`).join('')}</div>
@@ -278,7 +283,7 @@ window.CharEditor = {
     });
     if (tab) { const b = $(`.etabs [data-t="${tab}"]`, m); if (b) b.click(); }
 
-    const getImgs = listEditor($('#e-img', m), d.images, [{ k: 'url', type: 'img', full: true }], '이미지 추가', true);
+    const getImgs = listEditor($('#e-img', m), d.images, [{ k: 'url', type: 'img', full: true }], '이미지 추가', true, 1);   // 전신은 한 장만
     const getSkills = listEditor($('#e-skill', m), d.skills, [
       { k: 'name', ph: '스킬 이름', max: 30 }, { k: 'lv', ph: 'LV', narrow: true, max: 3 },
       { k: 'desc', type: 'textarea', ph: '설명', rows: 2, full: true }], '스킬 추가', !row);
@@ -323,11 +328,16 @@ window.CharEditor = {
     // 성격 · 능력 설명 서식: 고르는 대로 글 칸에 바로 적용 (보이는 그대로 프로필에 나와요)
     const styleNow = (p, def) => normPStyle({ font: f[p + 'font'].value, size: f[p + 'size'].value, ls: f[p + 'ls'].value, lh: f[p + 'lh'].value, align: f[p + 'align'].value }, def);
     const psNow = () => styleNow('ps_', PSTYLE_DEF), asNow = () => styleNow('as_', ASTYLE_DEF);
-    const bindStyle = (p, box, now, def) => {
-      const apply = () => { const s = now(); box.style.cssText = personaCSS(s, def); $(`[data-v="${p}ls"]`, m).textContent = s.ls.toFixed(1); $(`[data-v="${p}lh"]`, m).textContent = s.lh.toFixed(1); };
+    const bindStyle = (p, boxes, now, def) => {
+      const apply = () => { const s = now(), css = personaCSS(s, def); boxes().forEach(b => b.style.cssText = css);
+        $(`[data-v="${p}ls"]`, m).textContent = s.ls.toFixed(1); $(`[data-v="${p}lh"]`, m).textContent = s.lh.toFixed(1); $(`[data-sum="${p}"]`, m).textContent = pstyleSum(s); };
       ['font', 'size', 'ls', 'lh', 'align'].forEach(n => f[p + n].addEventListener('input', apply));
+      return apply;
     };
-    bindStyle('ps_', f.persona, psNow, PSTYLE_DEF); bindStyle('as_', f.a_desc, asNow, ASTYLE_DEF);
+    bindStyle('ps_', () => [f.persona], psNow, PSTYLE_DEF);
+    // 능력 설명 + 스킬 설명 칸 모두 같은 서식 (스킬을 새로 추가해도 맞춰져요)
+    const asApply = bindStyle('as_', () => [f.a_desc, ...$$('#e-skill textarea', m)], asNow, ASTYLE_DEF);
+    asApply(); new MutationObserver(asApply).observe($('#e-skill', m), { childList: true, subtree: true });
     f.head.oninput = () => { $('#hd-th', m).style.backgroundImage = cssUrl(safeUrl(f.head.value.trim())); };
     f.fx_url.oninput = () => { $('#fx-th', m).style.backgroundImage = cssUrl(safeUrl(f.fx_url.value.trim())); };
     f.fx_op.oninput = () => { $('[data-fxv]', m).textContent = Math.round(f.fx_op.value * 100) + '%'; };
@@ -353,7 +363,8 @@ window.CharEditor = {
         silhouette: false, card: false,
         figAlign: (f.querySelector('[name=fig_al]:checked') || {}).value || 'center', figFade: f.fig_fade.checked, figMobileBig: f.fig_mbig.checked,
         bgfx: { url: /^https?:\/\//i.test(v('fx_url')) ? v('fx_url') : '', mode: BGFX_MODES[f.fx_mode.value] ? f.fx_mode.value : 'screen', op: Math.max(.1, Math.min(1, +f.fx_op.value || .8)) },
-        images: getImgs().filter(i => safeUrl(i.url)).map((i, k) => ({ label: 'V' + (k + 1), url: i.url })),
+        images: getImgs().filter(i => safeUrl(i.url)).slice(0, 1).map(i => ({ label: '원본', url: i.url })),
+        phoneBg: (f.querySelector('[name=ph_bg]:checked') || {}).value === 'moon' ? 'moon' : 'earth',
         song: { title: '', artist: '', url: v('s_url'), cover: '' },
         ability: { name: v('a_name'), sub: '', desc: v('a_desc'), style: asNow() },
         danger: v('danger') === '' ? '' : Math.max(0, Math.min(100, +v('danger') || 0)),

@@ -423,7 +423,7 @@ App.ready.then(async user => {
       ${d.skills.map((s, i) => `<div class="skr" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>
-        <div class="dsc">${esc(s.desc || '설명이 없어요.')}</div></div>`).join('')}
+        <div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(s.desc || '설명이 없어요.')}</div></div>`).join('')}
       ${!d.ability.name && !d.skills.length ? empty : ''}` },
 
     { t: '소지품', en: 'BELONGINGS', r: () => d.items.length ? `<div class="items-grid">${d.items.map(itemCard).join('')}</div>` : empty }
