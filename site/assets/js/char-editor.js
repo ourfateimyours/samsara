@@ -11,7 +11,7 @@ window.parseKV = text => String(text || '').split('\n')
 /* 모두에게 똑같이 들어가는 고정 문구 (플레이어가 적는 칸은 없어요) */
 window.FIXED = { subtitle: 'The Divine Bloodline', classline: '신의 피가 우리에게 흐를 때까지', codename: '神裔' };
 /* 가문: 셋 중 하나만 고를 수 있어요 (멤버란도 이 순서로 나뉘어요) */
-window.HOUSES = ['瑞門', '誓門', '染'];
+window.HOUSES = ['瑞門', '誓門', '染', '其他'];   // 其他 = 그 밖의 가문들
 /* 스탯 항목 (숫자로 관리) */
 window.STAT_KEYS = ['근력', '지력', '이성', '술력', '외모', '재력', '행운'];
 
@@ -338,7 +338,7 @@ window.CharEditor = {
       const v = n => f[n].value.trim();
       const err = msg => { $('#cerr', m).textContent = msg; };
       if (!v('name')) { $('.etabs [data-t="basic"]', m).click(); return err('이름을 입력해 주세요.'); }
-      if (!HOUSES.includes(f.team.value)) { $('.etabs [data-t="basic"]', m).click(); return err('가문을 골라 주세요 (瑞門 / 誓門 / 染).'); }
+      if (!HOUSES.includes(f.team.value)) { $('.etabs [data-t="basic"]', m).click(); return err('가문을 골라 주세요 (瑞門 / 誓門 / 染 / 其他).'); }
       const head = f.head.value.trim();
       if (head && !/^https?:\/\//i.test(head)) { $('.etabs [data-t="img"]', m).click(); return err('두상은 https:// 로 시작하는 이미지 링크로 넣어 주세요.'); }
       const stats = statLocked ? pub.stats : STAT_KEYS.map(k => `${k}: ${f['st_' + k].value.trim()}`).join('\n');
