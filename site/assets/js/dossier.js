@@ -328,7 +328,7 @@ App.ready.then(async user => {
       px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5;
       if (pq) return;
       pq = requestAnimationFrame(() => {
-        pq = 0; const wide = innerWidth > 1000, figCentered = d.figAlign === 'center';   // 끝에 붙인 그림은 가운데 맞춤(-50%)을 빼요
+        pq = 0; const wide = innerWidth > 1000, figCentered = !figEl.classList.contains('al-left') && !figEl.classList.contains('al-right');   // 끝에 붙인 그림은 가운데 맞춤(-50%)을 빼요
         lyrs.forEach(l => { const k = +l.dataset.depth; l.style.transform = `${l.id === 'fig' && wide && figCentered && !l.classList.contains('wide') ? 'translateX(-50%) ' : ''}translate3d(${(-px * k).toFixed(1)}px, ${(-py * k).toFixed(1)}px, 0)`; });
       });
     }, { passive: true });
@@ -349,6 +349,11 @@ App.ready.then(async user => {
     const x0 = Math.max(0, ox), y0 = Math.max(0, oy), x1 = Math.min(ew, ox + w), y1 = Math.min(eh, oy + h);
     Object.entries({ '--mx': x0, '--my': y0, '--mw': x1 - x0, '--mh': y1 - y0 }).forEach(([k, v]) => figImg.style.setProperty(k, Math.round(v) + 'px'));
   };
+  // 전신 그림 위치: 컴퓨터(1001px 이상)는 figAlign · 휴대폰 · 태블릿은 figAlignM (비어 있으면 컴퓨터와 같게) — 화면 폭이 바뀌면 바로 다시 맞춰요
+  const mqPhone = matchMedia('(max-width: 1000px)');
+  const figAl = () => (mqPhone.matches && d.figAlignM) || d.figAlign || 'center';
+  const applyAl = () => { figEl.classList.remove('al-left', 'al-right'); if (figAl() !== 'center') figEl.classList.add('al-' + figAl()); figEl.style.transform = ''; requestAnimationFrame(fadeFit); };
+  applyAl(); mqPhone.addEventListener ? mqPhone.addEventListener('change', applyAl) : mqPhone.addListener(applyAl);
   const fitFig = () => { if (figImg.naturalWidth) figEl.classList.toggle('wide', figImg.naturalWidth > figImg.naturalHeight * 1.05); requestAnimationFrame(fadeFit); };
   figImg.addEventListener('load', fitFig); if (figImg.complete) fitFig();
   addEventListener('resize', fadeFit);

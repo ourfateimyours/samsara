@@ -75,7 +75,8 @@ window.normChar = (d = {}) => {
     items: (d.items || []).slice(0, 6),
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
     phoneBg: d.phoneBg === 'moon' ? 'moon' : 'earth',   // 관계 휴대폰 배경: 지구 / 달
-    figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치: 가운데 / 왼쪽 끝 / 오른쪽 끝
+    figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치 (컴퓨터): 가운데 / 왼쪽 끝 / 오른쪽 끝
+    figAlignM: ['center', 'left', 'right'].includes(d.figAlignM) ? d.figAlignM : '',   // 휴대폰 · 태블릿 위치 ('' = 아직 안 정함 → 컴퓨터 위치를 따라가요)
     figFade: !!d.figFade, figMobileBig: !!d.figMobileBig,   // 휴대폰에서 가로 그림을 크게 (양옆 조금 잘림)
                                                                   // 전신 그림 가장자리를 흐리게
     // 프로필 배경 효과 이미지: 전신 뒤 배경 위에 섞어 얹어요 (빛망울 · 먼지 · 안개 같은 그림)
@@ -221,10 +222,10 @@ window.CharEditor = {
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
           <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. <b>한 장</b>만 넣을 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
-          <div class="field" style="margin:4px 0 10px"><span>전신 그림 위치 <small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></span>
-            <div class="kr-types">${[['center', '가운데'], ['left', '왼쪽 끝에 붙이기'], ['right', '오른쪽 끝에 붙이기']].map(([k, n]) => `<label class="kr-chip"><input type="radio" name="fig_al" value="${k}" ${k === d.figAlign ? 'checked' : ''}><b>${n}</b></label>`).join('')}</div></div>
-          <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}> 가장자리를 <b>흐리게</b> (그림 테두리가 배경에 자연스럽게 녹아들어요)</label>
-          <label class="chk" style="margin-bottom:14px"><input type="checkbox" name="fig_mbig" ${d.figMobileBig ? 'checked' : ''}> <b>휴대폰에서 크게 보기</b> (가로 그림을 화면 높이에 꽉 채워요 · 양옆이 조금 잘리고, 보이는 쪽은 위의 '전신 그림 위치'를 따라가요)</label>
+          <div class="fig-set"><div class="fs-head"><b>전신 그림 배치</b><small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></div>
+            ${[['fig_al', '컴퓨터', d.figAlign], ['fig_alm', '휴대폰', d.figAlignM || d.figAlign]].map(([nm, lb, v]) => `<div class="fs-row"><span class="fs-k">${lb}</span><div class="seg">${[['center', '가운데'], ['left', '왼쪽 끝'], ['right', '오른쪽 끝']].map(([k, n]) => `<label><input type="radio" name="${nm}" value="${k}" ${k === v ? 'checked' : ''}><span>${n}</span></label>`).join('')}</div></div>`).join('')}
+            <div class="fs-opts"><label class="tg"><input type="checkbox" name="fig_fade" ${d.figFade ? 'checked' : ''}><span>가장자리 흐리게</span></label><label class="tg"><input type="checkbox" name="fig_mbig" ${d.figMobileBig ? 'checked' : ''}><span>휴대폰에서 크게</span></label></div>
+            <small class="fs-note">가장자리 흐리게 · 그림 테두리가 배경에 녹아들어요 &nbsp;/&nbsp; 휴대폰에서 크게 · 가로 그림을 화면 높이에 꽉 채워요 (양옆이 조금 잘려요)</small></div>
           <div id="e-img"></div>
           <div class="field bgfx-ed" style="margin-top:20px"><span>배경 효과 이미지 <small>프로필 전신 뒤 배경 위에 섞어 얹어요 · 빛망울 · 별가루 · 안개 사진 추천</small></span>
             <div class="img-pick"><div class="thumb" id="fx-th" style="background-image:${cssUrl(d.bgfx.url)}"></div>
@@ -361,7 +362,7 @@ window.CharEditor = {
         color: f.color.value, head, tags: [],   // 태그 칸은 없앴어요
         keyring: { type: (f.querySelector('[name=kr_type]:checked') || {}).value || 'none', text: v('kr_text').toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10), img: /^https?:\/\//i.test(v('kr_img')) ? v('kr_img') : '' },
         silhouette: false, card: false,
-        figAlign: (f.querySelector('[name=fig_al]:checked') || {}).value || 'center', figFade: f.fig_fade.checked, figMobileBig: f.fig_mbig.checked,
+        figAlign: (f.querySelector('[name=fig_al]:checked') || {}).value || 'center', figAlignM: (f.querySelector('[name=fig_alm]:checked') || {}).value || '', figFade: f.fig_fade.checked, figMobileBig: f.fig_mbig.checked,
         bgfx: { url: /^https?:\/\//i.test(v('fx_url')) ? v('fx_url') : '', mode: BGFX_MODES[f.fx_mode.value] ? f.fx_mode.value : 'screen', op: Math.max(.1, Math.min(1, +f.fx_op.value || .8)) },
         images: getImgs().filter(i => safeUrl(i.url)).slice(0, 1).map(i => ({ label: '원본', url: i.url })),
         phoneBg: (f.querySelector('[name=ph_bg]:checked') || {}).value === 'moon' ? 'moon' : 'earth',
