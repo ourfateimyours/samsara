@@ -439,8 +439,8 @@ App.ready.then(async user => {
   async function rptA() {
     const pane = curPane; let rows = []; try { rows = await Store.rptA(); } catch (e) { toast(e.message, 'err'); }
     pane.innerHTML = `<section class="adm-card"><header><b>회원 기록</b><span class="label">${rows.length}건</span></header>
-      <input class="input" id="rq" placeholder="닉네임 · 캐릭터 · 내용 검색" style="margin-bottom:12px">
-      <table class="adm-table"><thead><tr><th>시각</th><th>보낸 사람</th><th>받는 사람</th><th>내용</th><th>읽음</th></tr></thead><tbody id="rb"></tbody></table></section>`;
+      <input class="input" id="rq" placeholder="닉네임" style="margin-bottom:12px">
+      <table class="adm-table"><thead><tr><th>시각</th><th>보낸 사람</th><th>받는 사람</th><th>심박수</th><th>읽음</th></tr></thead><tbody id="rb"></tbody></table></section>`;
     const draw = q => $('#rb').innerHTML = rows.filter(r => !q || JSON.stringify(r).includes(q)).map(r => `<tr><td>${when(r.created_at)}</td><td>${esc(r.from_nick || '?')}<br><small class="dim">${esc(r.from_char || '')}</small></td><td>${esc(r.to_nick || '?')}<br><small class="dim">${esc(r.to_char || '')}</small></td><td>${esc(r.body)}</td><td>${r.read ? '✓' : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="dim">기록이 없어요.</td></tr>';
     draw(''); $('#rq').oninput = e => draw(e.target.value.trim());
   }
