@@ -42,6 +42,21 @@
 .ph-wall.grad { background: radial-gradient(ellipse 80% 60% at 30% 20%, color-mix(in srgb, var(--c) 70%, #000), transparent 60%), radial-gradient(ellipse 80% 70% at 80% 90%, color-mix(in srgb, var(--c) 45%, #000), transparent 60%), linear-gradient(160deg, #090a12, #050303); }
 .ph-wall.grad::before { content: attr(data-han); position: absolute; right: -10px; bottom: 60px; font: 400 230px/1 var(--han); color: rgba(255, 255, 255, .06); }
 .ph-screen.on .ph-wall { transform: scale(1); }
+/* 지구 배경: 우주 + 아래에 반쯤 걸친 지구 (나사 EPIC 사진) · 대기층 빛과 옆 빛이 캐릭터 색 */
+.ph-wall.space { background:
+    radial-gradient(1px 1px at 20% 30%, #fff8, transparent), radial-gradient(1px 1px at 70% 18%, #fff6, transparent),
+    radial-gradient(1px 1px at 42% 12%, #fff5, transparent), radial-gradient(1px 1px at 85% 40%, #fff4, transparent),
+    radial-gradient(1px 1px at 12% 52%, #fff4, transparent), radial-gradient(1.2px 1.2px at 58% 44%, #fff6, transparent),
+    radial-gradient(ellipse 90% 55% at 100% 70%, color-mix(in srgb, var(--c) 38%, transparent), transparent 70%), #000; }
+.ph-wall.space::after { background: linear-gradient(180deg, rgba(0, 0, 0, .2), transparent 30%); }
+.ph-earth, .ph-halo { position: absolute; width: 215%; aspect-ratio: 1; left: -58%; top: 59%; border-radius: 50%; }
+.ph-earth { overflow: hidden; animation: ph-drift 9s ease-in-out infinite alternate; }
+.ph-earth img { position: absolute; width: 131%; max-width: none; height: auto; left: -15.5%; top: -15.5%; transition: opacity .8s; }
+.ph-earth::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 18px 3px color-mix(in srgb, var(--c) 40%, transparent), inset -50px -10px 90px rgba(0, 0, 0, .75); }
+.ph-halo { box-shadow: 0 0 36px 8px color-mix(in srgb, var(--c) 42%, transparent), 0 0 110px 34px color-mix(in srgb, var(--c) 18%, transparent); animation: ph-breathe 7s ease-in-out infinite; }
+@keyframes ph-breathe { 50% { opacity: .6; } }
+@keyframes ph-drift { to { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .ph-earth, .ph-halo { animation: none; } }
 .ph-island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 112px; height: 33px; border-radius: 20px; background: #000; z-index: 6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .03); }
 .ph-island::after { content: ""; position: absolute; right: 14px; top: 11px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2b3a55, #05070c 60%); }
 .ph-status { position: absolute; top: 18px; left: 34px; right: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 5; color: #fff; font: 600 14px var(--sans); }
