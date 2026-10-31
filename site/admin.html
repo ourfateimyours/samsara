@@ -436,12 +436,37 @@ App.ready.then(async user => {
     };
   }
 
-  const TABS = { review, join, site, period, members: () => membersTab(), shop: shopTab, banner: bannerTab };
+  async function rptA() {
+    const pane = curPane; let rows = []; try { rows = await Store.rptA(); } catch (e) { toast(e.message, 'err'); }
+    pane.innerHTML = `<section class="adm-card"><header><b>♥ 심박 기록</b><span class="label">${rows.length}건 · 관리자만</span></header>
+      <input class="input" id="rq" placeholder="닉네임 · 캐릭터 · 내용 검색" style="margin-bottom:12px">
+      <table class="adm-table"><thead><tr><th>시각</th><th>보낸 사람</th><th>받는 사람</th><th>내용</th><th>읽음</th></tr></thead><tbody id="rb"></tbody></table></section>`;
+    const draw = q => $('#rb').innerHTML = rows.filter(r => !q || JSON.stringify(r).includes(q)).map(r => `<tr><td>${when(r.created_at)}</td><td>${esc(r.from_nick || '?')}<br><small class="dim">${esc(r.from_char || '')}</small></td><td>${esc(r.to_nick || '?')}<br><small class="dim">${esc(r.to_char || '')}</small></td><td>${esc(r.body)}</td><td>${r.read ? '✓' : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="dim">기록이 없어요.</td></tr>';
+    draw(''); $('#rq').oninput = e => draw(e.target.value.trim());
+  }
+  async function rptB() {
+    const pane = curPane;
+    const PG = { '': '메인', 'index.html': '메인', 'index-serious.html': '메인', 'shop.html': '상점', 'characters.html': '멤버란', 'character.html': '프로필', 'board.html': '사건 보드', 'attendance.html': '출석', 'mypage.html': '마이 페이지', 'pang.html': '모아팡', 'admin.html': '관리', 'login.html': '로그인', 'world.html': '세계관' };
+    let cs = []; try { cs = await Store.list('characters'); } catch (e) {}
+    const label = p => { const [f, q] = String(p || '').split('?'); const id = (q || '').match(/id=([^&]+)/); const c = id && cs.find(x => x.id === decodeURIComponent(id[1])); return (PG[f] || f || '메인') + (c ? ` · ${c.data.name}` : ''); };
+    const ago = iso => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 6e4)); return m < 1 ? '방금' : m < 60 ? m + '분' : Math.round(m / 60) + '시간'; };
+    const load = async () => {
+      if (curPane !== pane) return clearInterval(t);
+      let rows = []; try { rows = await Store.rptB(); } catch (e) { return; }
+      const on = rows.filter(r => Date.now() - Date.parse(r.at) < 15e4), off = rows.filter(r => !on.includes(r)).slice(0, 20);
+      pane.innerHTML = `<section class="adm-card"><header><b>● 지금 접속 중 ${on.length}</b><span class="label">15초마다 새로고침</span></header>
+        <ul class="adm-list">${on.map(r => `<li><b>${esc(r.nickname || '?')}</b><span>@${esc(r.username || '')}</span><span>${esc(label(r.page))}</span><span>${ago(r.since)}째</span></li>`).join('') || '<li class="dim">지금 접속한 사람이 없어요.</li>'}</ul></section>
+        <section class="adm-card" style="margin-top:16px"><header><b>최근 접속</b></header>
+        <ul class="adm-list">${off.map(r => `<li><b>${esc(r.nickname || '?')}</b><span>${esc(label(r.page))}</span><span>${ago(r.at)} 전</span></li>`).join('') || '<li class="dim">—</li>'}</ul></section>`;
+    };
+    const t = setInterval(load, 15e3); load();
+  }
+  const TABS = { review, join, site, period, members: () => membersTab(), shop: shopTab, banner: bannerTab, rptA, rptB };
   joinBadge();
   /* 큰 메뉴 4개 → 안에 작은 탭 */
   const GROUPS = {
     char: [['review', '심사'], ['period', '등록 · 수정 기간']],
-    member: [['members', '회원 · 지갑 · 영전'], ['join', '가입 신청']],
+    member: [['members', '회원 · 지갑 · 영전'], ['join', '가입 신청'], ['rptB', '지금 접속 중'], ['rptA', '심박 기록']],
     shop: [['shop', '물건 · 구매 · 선물 기록']],
     site: [['site', '설정 · BGM'], ['banner', '메인 배너']]
   };
