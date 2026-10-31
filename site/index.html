@@ -284,7 +284,8 @@ App.ready.then(async user => {
   const CHURU_LINES = ['츄르는 최고다냐앙!!', '너는 좋은 기록자다냐앙♡', '한 개 더 있느냐앙', '이 은혜는 망량을 쫓아 갚겠다냐앙', '꼬리가 저절로 흔들린다냐앙'];
   const fig = $('#fig'), say = $('#say'), N = 8;
   $('#fig-img').src = 'assets/img/mascot/cat' + (1 + Math.floor(Math.random() * N)) + '.webp';
-  const speak = line => {   // 게임 나레이션처럼 한 글자씩
+  const speak = (line, cls) => {   // 게임 나레이션처럼 한 글자씩 · cls 'master' = 캐릭터 색 + 무지개로 흐르는 글자
+    say.classList.toggle('master', cls === 'master');
     typeText(say, line, 34);
     const nr = $('#narr'); nr.classList.remove('pop'); void nr.offsetWidth; nr.classList.add('pop');
     fig.classList.remove('boing'); void fig.offsetWidth; fig.classList.add('boing');
@@ -304,13 +305,13 @@ App.ready.then(async user => {
     document.body.appendChild(n); setTimeout(() => n.remove(), 1700);
   };
   /* 고양이 호감도 (기록자 카드 막대): 누르면 +1 · 하루에 +5까지 (날이 바뀌어도 계속 쌓여요) · 삐지면 -2 (하루 한 번)
-     25 · 50 · 75 에 처음 닿으면 영전 선물 · 100 이면 상점에 '집사' 칭호가 공개돼요 — 계산은 Store.catPet (Supabase 에선 서버) */
+     쓰다듬을 때 5% 로 +10 · 5% 로 -10 · 최대 200 · 단계 선물: 60 · 150 비밀 내레이션 / 90 이성 +1 / 100 집사 / 170 칭호 / 200 주인님 — 계산은 Store.catPet (Supabase 에선 서버) */
   const affShow = () => {
-    const a = Math.max(0, Math.min(100, wal.aff || 0));
-    $('#bar').style.width = a + '%';
+    const a = Math.max(0, Math.min(Store.CAT.max, wal.aff || 0));
+    $('#bar').style.width = (a / Store.CAT.max * 100) + '%';
   };
   affShow();
-  if (myChar) $('#aff-bar').style.setProperty('--ac', normChar(myChar.data || myChar.draft).color);   // 막대는 내 캐릭터 색
+  if (myChar) { const mc = normChar(myChar.data || myChar.draft).color; $('#aff-bar').style.setProperty('--ac', mc); say.style.setProperty('--mc', mc); }   // 막대 · 주인님 글자는 내 캐릭터 색
   let catGone = false, petBusy = false;
   fig.addEventListener('click', async () => {
     if (catGone || petBusy) return;
@@ -325,15 +326,28 @@ App.ready.then(async user => {
       return;
     }
     fig.classList.remove('boing'); void fig.offsetWidth; fig.classList.add('boing');
-    if ((wal.aff || 0) >= 100) return likeToast('<b>♥</b> 이미 최고로 친해요');
+    if ((wal.aff || 0) >= Store.CAT.max) return likeToast('<b>♥</b> 이미 최고로 친해요');
     if (Store.affToday(wal) >= Store.CAT.daily) return likeToast('<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
     petBusy = true;
     try {
       const r = await Store.catPet(true); wal = r.wallet; affShow();
-      likeToast(r.changed > 0 ? '<b>♥</b> 호감도가 올라갑니다 +1' : '<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
-      if (r.gift) { $('#coins').textContent = wal.coins;
-        setTimeout(() => { speak(`선물이다냥! 영전 ${r.gift}닢을 물어 왔다냥`); likeToast(`<b>靈</b> 고양이의 선물 +${r.gift} 靈錢`, 'gift'); }, 900); }
-      if (r.unlocked) setTimeout(() => { speak('이제부터 너는 나의 집사다냥! 상점에 가 봐라냥'); toast('상점에 「집사」 칭호가 공개됐어요'); }, 2600);
+      // 5% 로 +10 · 또 5% 로 -10 (서버에서 정해요)
+      if (r.bonus > 0) { likeToast(`<b>♥</b> 호감도가 크게 올라갑니다 +${r.changed}`, 'gift'); speak('사실 비밀이 있다냥 나는 서문 가문 사람들 중 니가 제일 좋다냥!'); }
+      else if (r.bonus < 0) { likeToast(`<b>💔</b> 호감도가 떨어졌습니다 ${r.changed}`, 'down'); fig.classList.add('sulk'); setTimeout(() => fig.classList.remove('sulk'), 1600); speak('캬아아아갓컁앜ㅋ앙카앙ㄱ컄ㅇ아아악'); }
+      else likeToast(r.changed > 0 ? '<b>♥</b> 호감도가 올라갑니다 +1' : '<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
+      // 단계 선물: 호감도 순서대로 하나씩 (앞 대사가 다 나온 뒤에)
+      const ev = (r.rewards || []).concat(r.unlocked ? [{ th: Store.CAT.full, kind: 'butler' }] : []).sort((a, b) => a.th - b.th);
+      let at = r.bonus ? 3600 : 900;
+      ev.forEach(x => {
+        setTimeout(() => {
+          if (x.kind === 'lore') speak(x.text);
+          else if (x.kind === 'stat') likeToast('<b>✦</b> 고양이의 선물 · 내 캐릭터 이성 +1', 'gift');
+          else if (x.kind === 'butler') { speak('이제부터 너는 나의 집사다냥! 상점에 가 봐라냥'); toast('상점에 「집사」 칭호가 공개됐어요'); }
+          else if (x.kind === 'title') { likeToast('<b>✦</b> 칭호 「^. .^₎⟆ ˙⋆✮」를 받았어요', 'gift'); toast('상점에서 「^. .^₎⟆ ˙⋆✮」 칭호를 달 수 있어요'); }
+          else if (x.kind === 'master') { speak('주인님', 'master'); toast('상점에서 「주인님」 칭호를 달 수 있어요'); }
+        }, at);
+        at += x.kind === 'lore' ? 2000 + x.text.length * 34 : 2600;
+      });
     } catch (e) { toast(e.message); }
     finally { petBusy = false; }
   });  /* 미니 게임 전광판: 오늘 이미 했으면 자물쇠 (서버 기록 기준이라 새로고침해도 그대로) */
