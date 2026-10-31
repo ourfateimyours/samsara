@@ -304,7 +304,7 @@ App.ready.then(async user => {
     const pane = curPane;
     const cs = await Store.adminCharacters();
     const st = c => c.status || 'published';
-    const tabs = [['submitted', '⏳ 심사 대기'], ['draft', '✎ 작성 중'], ['returned', '↩ 반려'], ['published', '✦ 게시됨'], ['all', '전체']];
+    const tabs = [['submitted', '⏳ 심사 대기'], ['draft', '✎ 작성 중'], ['published', '✦ 게시됨'], ['all', '전체']];
     const list = cs.filter(c => rvFilter === 'all' || st(c) === rvFilter)
       .sort((a, b) => String(b.submitted_at || b.updated_at || b.created_at).localeCompare(String(a.submitted_at || a.updated_at || a.created_at)));
     const ST = { draft: '✎ 작성 중', submitted: '⏳ 심사 대기', returned: '↩ 반려됨', published: '✦ 게시됨' };
@@ -317,7 +317,7 @@ App.ready.then(async user => {
           <div><h4>${esc(d.name || '이름 없음')}<span class="pv-st s-${st(c)}">${ST[st(c)]}</span>${pend ? `<span class="kind ${c.published_at ? '' : 'new'}">${c.published_at ? '수정본' : '첫 등록'}</span>` : ''}</h4>
             <p>@${esc(c.author)}${c.submitted_at && st(c) === 'submitted' ? ' · ' + when(c.submitted_at) + ' 제출' : ''}${c.published_at ? ' · 게시 ' + when(c.published_at) : ''}</p>
             ${ch.length ? `<p class="chg">바뀐 항목: ${esc(ch.join(', '))}</p>` : ''}
-            ${st(c) === 'returned' && c.review_note ? `<p style="color:#ff8a80">반려 메모: ${esc(c.review_note)}</p>` : ''}</div>
+            ${st(c) !== 'published' && c.review_note ? '<p style="color:#ff8a80">↩ 반려됨 · 기간과 상관없이 다시 제출할 수 있어요</p>' : ''}</div>
           <div class="acts">
             ${pend ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">보기</a>`}
             <button class="btn sm ghost" data-rv="edit">수정</button>
@@ -335,20 +335,18 @@ App.ready.then(async user => {
     $$('.review-tabs button').forEach(b => b.onclick = () => { rvFilter = b.dataset.f; review(); });
     const bulk = async (fn, label) => {
       const ids = picks(); if (!ids.length) return toast('먼저 캐릭터를 골라 주세요.', 'err');
-      let note = '';
-      if (label === '반려') { note = await askPrompt(`선택한 ${ids.length}명을 반려할게요. 메모 (회원에게 보여요)`, ''); if (note == null) return; }
-      else if (!await askConfirm(`선택한 ${ids.length}명을 게시할까요?`)) return;
-      try { for (const id of ids) await fn(id, note); toast(`${ids.length}명 ${label}했어요`); review(); } catch (e) { toast(e.message, 'err'); }
+      if (!await askConfirm(label === '반려' ? `선택한 ${ids.length}명을 반려할까요? 작성 중으로 돌아가요.` : `선택한 ${ids.length}명을 게시할까요?`)) return;
+      try { for (const id of ids) await fn(id); toast(`${ids.length}명 ${label}했어요`); review(); } catch (e) { toast(e.message, 'err'); }
     };
     if ($('#rv-pub')) $('#rv-pub').onclick = () => bulk(id => Store.publish(id), '게시');
-    if ($('#rv-reject')) $('#rv-reject').onclick = () => bulk((id, n) => Store.reject(id, n), '반려');
+    if ($('#rv-reject')) $('#rv-reject').onclick = () => bulk(id => Store.reject(id), '반려');
     pane.querySelector('.rv-list').onclick = async e => {
       const b = e.target.closest('[data-rv]'); if (!b) return;
       const id = b.closest('.rv-row').dataset.id, c = cs.find(x => x.id === id);
       try {
         if (b.dataset.rv === 'edit') return CharEditor.open(c);
         if (b.dataset.rv === 'publish') { await Store.publish(id); toast('게시했어요 ✦'); return review(); }
-        if (b.dataset.rv === 'reject') { const n = await askPrompt('반려 메모 (회원에게 보여요)', ''); if (n == null) return; await Store.reject(id, n); toast('반려했어요'); return review(); }
+        if (b.dataset.rv === 'reject') { if (!await askConfirm(`"${((c.draft || c.data) || {}).name || '이 캐릭터'}"을(를) 반려할까요? 작성 중으로 돌아가요.`)) return; await Store.reject(id); toast('반려했어요'); return review(); }
       } catch (ex) { toast(ex.message, 'err'); }
     };
   }
