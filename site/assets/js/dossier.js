@@ -337,8 +337,21 @@ App.ready.then(async user => {
   /* ---------- 이미지 버전 ---------- */
   // 가로로 긴 그림이면 칸을 넓히고 화면 가운데에 놓아요 (세로 전신용 좁은 칸에 맞춰 작아지거나 바닥에 붙지 않게)
   const figEl = $('#fig'), figImg = $('#figimg');
-  const fitFig = () => { if (figImg.naturalWidth) figEl.classList.toggle('wide', figImg.naturalWidth > figImg.naturalHeight * 1.05); };
+  // 가장자리 흐리게: 그림 칸 안에서 실제 그림이 그려진 자리를 재서, 흐림을 그 테두리에 맞춰요 (칸 밖으로 잘린 쪽은 칸 끝에서 흐려요)
+  const fadeFit = () => {
+    if (!figEl.classList.contains('fade')) return;
+    const iw = figImg.naturalWidth, ih = figImg.naturalHeight, ew = figImg.clientWidth, eh = figImg.clientHeight; if (!iw || !ih || !ew || !eh) return;
+    const cs = getComputedStyle(figImg), fit = cs.objectFit;
+    const s = fit === 'cover' ? Math.max(ew / iw, eh / ih) : fit === 'fill' ? 0 : fit === 'none' ? 1 : Math.min(ew / iw, eh / ih);
+    const w = s ? iw * s : ew, h = s ? ih * s : eh;
+    const pos = (cs.objectPosition || '50% 50%').split(' '), f = v => /left|top/.test(v) ? 0 : /right|bottom/.test(v) ? 1 : /%$/.test(v) ? parseFloat(v) / 100 : .5;
+    const ox = (ew - w) * f(pos[0]), oy = (eh - h) * f(pos[1] || '50%');
+    const x0 = Math.max(0, ox), y0 = Math.max(0, oy), x1 = Math.min(ew, ox + w), y1 = Math.min(eh, oy + h);
+    Object.entries({ '--mx': x0, '--my': y0, '--mw': x1 - x0, '--mh': y1 - y0 }).forEach(([k, v]) => figImg.style.setProperty(k, Math.round(v) + 'px'));
+  };
+  const fitFig = () => { if (figImg.naturalWidth) figEl.classList.toggle('wide', figImg.naturalWidth > figImg.naturalHeight * 1.05); requestAnimationFrame(fadeFit); };
   figImg.addEventListener('load', fitFig); if (figImg.complete) fitFig();
+  addEventListener('resize', fadeFit);
   let imgIdx = 0;
   $$('#imgsw .th').forEach(b => b.onclick = () => {
     const i = +b.dataset.img;
