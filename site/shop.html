@@ -74,6 +74,7 @@ App.ready.then(async user => {
       const wear = it.kind === 'title' || it.kind === 'tag';
       const owned = wear && wal.items.includes(it.id), eq = owned && wal.equip[it.kind] === it.id, k = KIND[it.kind] || ['', '', ''];
       const full = it.kind === 'boost' && it.max_per && wal.boost_n >= it.max_per;
+      if (it.needs === 'cat_gift' && !owned) return '';   // 고양이에게 받는 칭호: 받은 사람에게만 보여요
       // 고양이 호감도를 가득 채워야 공개되는 칭호 (집사) — 그 전엔 이름을 가린 잠긴 카드
       if (it.needs === 'cat_full' && !wal.cat_full && !owned) return `<article class="mk-panel good so locked">
         <div class="pv"><span class="gh">${k[2]}</span><span class="ttl-chip big" style="--tc:#8a8f9c">? ? ?</span></div>
