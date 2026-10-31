@@ -791,13 +791,14 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
 .fig.al-right { left: auto; right: 0; transform: none; justify-content: flex-end; }
 .fig.al-left .fl { justify-content: flex-start; } .fig.al-right .fl { justify-content: flex-end; }
 @media (min-width: 1001px) { .fig.wide.al-left { left: 0; } .fig.wide.al-right { left: auto; right: 0; } }
-/* 가장자리 흐리게: 화면 끝에 붙지 않은 테두리를 투명하게 (왼쪽 · 오른쪽 · 위) */
-.fig.fade img { --fl: 14%; --fr: 14%; --ft: 12%;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect; }
+/* 가장자리 흐리게: 그림 네 테두리를 살짝 투명하게 (화면 끝에 붙인 쪽은 빼고)
+   그림 칸이 그림보다 커도 실제 그림 테두리에서 흐려지게 — 흐림 위치(--mx · --my · --mw · --mh)는 dossier.js 가 그림 크기를 재서 넣어요 */
+.fig.fade img { --fl: 12%; --fr: 12%; --ft: 10%; --fb: 8%; --mx: 0px; --my: 0px; --mw: 100%; --mh: 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 calc(100% - var(--fb)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 calc(100% - var(--fb)), transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: var(--mx) var(--my); mask-position: var(--mx) var(--my); -webkit-mask-size: var(--mw) var(--mh); mask-size: var(--mw) var(--mh); }
 .fig.fade.al-left img { --fl: 0%; } .fig.fade.al-right img { --fr: 0%; }
-
 /* 소지품 원본 그림 보기 (소지품 창에서 그림을 누르면) */
 .wpn-art { cursor: zoom-in; }
 .wpn-zoom { position: absolute; right: 12px; bottom: 10px; z-index: 2; font: 600 9.5px var(--mono); letter-spacing: .14em; color: rgba(255, 255, 255, .6); pointer-events: none; }
@@ -826,10 +827,7 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
 @media (max-width: 1000px) {
   .fig img { -webkit-mask-image: linear-gradient(to bottom, #000 68%, transparent 100%); mask-image: linear-gradient(to bottom, #000 68%, transparent 100%); }
   /* '가장자리 흐리게'를 켠 그림은 양옆 · 위 흐림에 아래 흐림까지 더해요 */
-  .fig.fade img {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 68%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 68%, transparent 100%);
-    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .fig.fade img { --fb: 32%; }
 }
 
 /* 컴퓨터 · 가로 그림: 화면(전신 칸)을 위아래 꽉 채워요 — 화면을 줄이거나 키워도 위아래가 비어 붕 뜨지 않아요

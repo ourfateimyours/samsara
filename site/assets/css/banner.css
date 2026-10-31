@@ -42,3 +42,27 @@
 .bn-pre button { padding: 5px 10px; border: 1px solid rgba(255, 255, 255, .25); color: #fff; font: 600 11px var(--sans); text-shadow: 0 1px 4px rgba(0, 0, 0, .7); cursor: pointer; }
 .bn-pre button:hover { border-color: #fff; }
 @media (max-width: 860px) { .bn-row { grid-template-columns: 1fr; } .bn-f .row3 { grid-template-columns: 1fr 1fr; } }
+
+/* 관리자가 만든 배너: 맑은 유리 — 고른 두 색은 은은한 빛깔로만 비쳐요 (배경이 비쳐 보여요) · 위쪽 빛 반사 + 가끔 빛 한 줄기 */
+.lb-car .slide.cus, .lb-hud .lb-car .slide.cus { color: #fff;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .03) 42%, rgba(255, 255, 255, .08)),
+    linear-gradient(var(--ga, 120deg), color-mix(in srgb, var(--g1) 42%, transparent), color-mix(in srgb, var(--g2) 26%, transparent));
+  border: 1px solid rgba(255, 255, 255, .55); backdrop-filter: blur(10px) saturate(1.4); -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 0 26px color-mix(in srgb, var(--g2) 22%, transparent), 0 0 18px color-mix(in srgb, var(--g2) 18%, transparent); }
+.lb-car .slide.cus::before { content: ''; position: absolute; left: 6%; right: 6%; top: 0; height: 44%; inset-inline: 6%; pointer-events: none; border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: linear-gradient(rgba(255, 255, 255, .2), transparent); }
+.lb-car .slide.cus::after { content: ''; position: absolute; top: -40%; bottom: -40%; width: 30%; left: -50%; transform: skewX(-20deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .22), transparent); animation: cusSweep 7s ease-in-out infinite; }
+@keyframes cusSweep { 0%, 72% { left: -50%; } 100% { left: 130%; } }
+.lb-car .slide.cus b { text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
+.lb-car .slide.cus p { color: rgba(255, 255, 255, .86); text-shadow: 0 1px 6px rgba(0, 0, 0, .45); }
+.lb-car .slide.cus .tag { background: rgba(255, 255, 255, .9); color: #15172a; }
+.lb-car .slide.cus .ghost { color: rgba(255, 255, 255, .14); }
+/* 밝은 색을 골라도 유리라서 글자는 흰색 그대로 */
+.lb-car .slide.cus.lt { color: #fff; } .lb-car .slide.cus.lt b, .lb-car .slide.cus.lt p { text-shadow: 0 1px 6px rgba(0, 0, 0, .45); } .lb-car .slide.cus.lt p { color: rgba(255, 255, 255, .86); }
+.lb-car .slide.cus.lt .tag { background: rgba(255, 255, 255, .9); color: #15172a; } .lb-car .slide.cus.lt .ghost { color: rgba(255, 255, 255, .14); }
+/* 낮: 흰 유리 위라서 글자를 진하게 */
+.lobby.is-day .lb-hud .lb-car .slide.cus { color: #3d4a58; background: linear-gradient(160deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .3) 45%, rgba(255, 255, 255, .5)), linear-gradient(var(--ga, 120deg), color-mix(in srgb, var(--g1) 30%, transparent), color-mix(in srgb, var(--g2) 20%, transparent)); border-color: #fff; }
+.lobby.is-day .lb-hud .lb-car .slide.cus b, .lobby.is-day .lb-hud .lb-car .slide.cus p { text-shadow: none; } .lobby.is-day .lb-hud .lb-car .slide.cus p { color: rgba(61, 74, 88, .78); }
+.lobby.is-day .lb-hud .lb-car .slide.cus .tag { background: #3d4a58; color: #fff; }
+@media (prefers-reduced-motion: reduce) { .lb-car .slide.cus::after { animation: none; } }
