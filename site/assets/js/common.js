@@ -115,6 +115,26 @@
 
   /* 낮 · 밤: 06시~18시는 낮 (주소 끝에 ?day=1 이면 언제든 낮 · ?day=0 이면 언제든 밤 — 미리보기용) */
   window.isDayTime = () => { const q = (location.search.match(/[?&]day=([01])/) || [])[1]; if (q) return q === '1'; const h = new Date().getHours(); return h >= 6 && h < 18; };
+  /* 별똥별: box 에 가끔 한두 개씩 (가끔 우르르) 떨어져요 · active() 가 false 면 (예: 낮) 쉬어요 · 움직임 줄이기 설정이면 안 띄워요 */
+  window.meteors = (box, active = () => true) => {
+    if (!box || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    box.classList.add('meteors');
+    const ANG = 32 * Math.PI / 180;
+    const one = (delay = 0) => setTimeout(() => {
+      const m = document.createElement('i'), big = Math.random() < .25, len = (big ? 200 : 80) + Math.random() * 140, dist = 380 + Math.random() * 620;
+      m.style.cssText = `left:${20 + Math.random() * 85}%;top:${Math.random() * 40}%;--len:${len.toFixed(0)}px;--dx:${(-Math.cos(ANG) * dist).toFixed(0)}px;--dy:${(Math.sin(ANG) * dist).toFixed(0)}px;--t:${(.7 + Math.random() * .9).toFixed(2)}s${big ? '' : ';height:1.4px'}`;
+      m.className = ['', 'lav', 'lav', 'pink', 'pink', 'rose', 'mint'][Math.floor(Math.random() * 7)];   // 파랑 · 연보라 · 연분홍 · 장밋빛 · 민트
+      box.appendChild(m); m.addEventListener('animationend', () => m.remove());
+    }, delay);
+    const shoot = () => {
+      if (!document.hidden && active() && box.childElementCount < 14) {   // 혹시 쌓여도 14개까지만
+        const n = Math.random() < .15 ? 3 + Math.floor(Math.random() * 3) : 1 + Math.floor(Math.random() * 2);   // 한 번에 1~2개 · 가끔 3~5개
+        for (let k = 0; k < n; k++) one(k * (120 + Math.random() * 380));
+      }
+      setTimeout(shoot, 500 + Math.random() * 1700);
+    };
+    setTimeout(shoot, 500);
+  };
   /* 벚꽃잎: box 안에 n 장이 바람에 흔들리며 떨어져요
      i = 떨어지는 길 (아래 + 바람 방향) · b = 좌우로 살랑 · u = 꽃잎이 뒤집히며 팔랑 · 가까운 꽃잎 몇 장은 크고 살짝 흐리게 (원근감) */
   window.sakura = (box, n = 28) => {
