@@ -775,11 +775,21 @@ body[data-page="home"] .bgm-dock { bottom: 18px; }
 .adm-sub .cnt { font-style: normal; font: 700 10px var(--mono); background: var(--red-hi); color: #fff; border-radius: 8px; padding: 1px 6px; margin-left: 4px; }
 .adm-sub .cnt[hidden] { display: none; }
 /* 캐릭터 편집: 성격 글 서식 (글씨체 · 크기 · 자간 · 행간) */
-.ps-bar { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.4fr; gap: 10px; align-items: end; }
-.ps-bar input[type=range] { width: 100%; accent-color: var(--red); }
-.ps-bar small[data-v] { font: 600 11px var(--mono); color: var(--text); }
+/* 글 서식 (성격 · 능력 · 스킬 설명): 평소엔 요약 한 줄로 접혀 있다가 누르면 펼쳐져요 */
+.ps-bar { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .02); }
+.ps-bar > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 7px 12px; font-size: 12.5px; color: var(--muted); user-select: none; }
+.ps-bar > summary::-webkit-details-marker { display: none; }
+.ps-bar > summary::after { content: '▾'; margin-left: auto; font-size: 11px; color: var(--dim); transition: transform .2s; }
+.ps-bar[open] > summary::after { transform: rotate(180deg); }
+.ps-bar .ps-ic { flex: none; padding: 1px 6px; border: 1px solid var(--line-2); border-radius: 6px; font: 600 11px var(--serif); color: var(--text); }
+.ps-bar summary b { flex: none; color: var(--text); font-weight: 600; }
+.ps-bar summary small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 11px var(--mono); color: var(--dim); }
+.ps-grid { display: grid; grid-template-columns: 1.2fr .8fr 1.3fr 1.3fr 1fr; gap: 10px; align-items: end; padding: 10px 12px 12px; border-top: 1px solid var(--line); }
+.ps-grid .field { margin: 0; } .ps-grid .field > span { font-size: 11px; }
+.ps-grid input[type=range] { width: 100%; accent-color: var(--red); }
+.ps-grid small[data-v] { font: 600 11px var(--mono); color: var(--text); }
 textarea.ps-text { white-space: pre-wrap; }
-@media (max-width: 560px) { .ps-bar { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .ps-grid { grid-template-columns: 1fr 1fr; } .ps-bar summary small { display: none; } }
 /* 회원 지갑 · 영전 지급 */
 .wal-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; margin-bottom: 12px; }
 .wal-box > div { padding: 9px 11px; border: 1px solid var(--line); background: rgba(255, 255, 255, .025); }

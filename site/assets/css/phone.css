@@ -55,6 +55,11 @@
 .ph-earth::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 18px 3px color-mix(in srgb, var(--c) 40%, transparent), inset -50px -10px 90px rgba(0, 0, 0, .75); }
 .ph-halo { box-shadow: 0 0 36px 8px color-mix(in srgb, var(--c) 42%, transparent), 0 0 110px 34px color-mix(in srgb, var(--c) 18%, transparent); animation: ph-breathe 7s ease-in-out infinite; }
 @keyframes ph-breathe { 50% { opacity: .6; } }
+/* 달 배경: 지구보다 작게 · 화면 아래쪽에 둥실 · 어두운 쪽은 우주에 녹아들어요 */
+.ph-wall.moon .ph-earth, .ph-wall.moon .ph-halo { width: 118%; left: -9%; top: 52%; }
+.ph-wall.moon .ph-earth img { width: 104%; left: -2%; top: -2%; }
+.ph-wall.moon .ph-earth::after { box-shadow: inset 0 0 14px 2px color-mix(in srgb, var(--c) 30%, transparent); }
+.ph-wall.moon .ph-halo { box-shadow: 0 0 30px 6px color-mix(in srgb, var(--c) 30%, transparent), 0 0 100px 30px color-mix(in srgb, var(--c) 14%, transparent); }
 @keyframes ph-drift { to { transform: translateY(-8px); } }
 @media (prefers-reduced-motion: reduce) { .ph-earth, .ph-halo { animation: none; } }
 .ph-island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 112px; height: 33px; border-radius: 20px; background: #000; z-index: 6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .03); }
