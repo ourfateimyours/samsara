@@ -115,6 +115,10 @@
 
   /* 낮 · 밤: 06시~18시는 낮 (주소 끝에 ?day=1 이면 언제든 낮 · ?day=0 이면 언제든 밤 — 미리보기용) */
   window.isDayTime = () => { const q = (location.search.match(/[?&]day=([01])/) || [])[1]; if (q) return q === '1'; const h = new Date().getHours(); return h >= 6 && h < 18; };
+  addEventListener('load', () => window.App && App.ready && App.ready.then(u => {
+    if (!u) return; const go = () => { if (!document.hidden) Store.touch(location.pathname.replace(/^\//, '') + location.search); };
+    go(); setInterval(go, 6e4); document.addEventListener('visibilitychange', go);
+  }));
   /* 별똥별: box 에 가끔 한두 개씩 (가끔 우르르) 떨어져요 · active() 가 false 면 (예: 낮) 쉬어요 · 움직임 줄이기 설정이면 안 띄워요 */
   window.meteors = (box, active = () => true) => {
     if (!box || matchMedia('(prefers-reduced-motion: reduce)').matches) return;

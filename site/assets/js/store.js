@@ -270,6 +270,18 @@
     async markTeleRead(me, id) {
       const all = LS.get('t:teles', []); const m = all.find(x => x.id === id && x.to_user === me);
       if (m) { m.read = true; LS.set('t:teles', all); }
+    },
+    async touch(me, page) {
+      const s = LS.get('t:seen', {}), o = s[me], now = new Date().toISOString();
+      s[me] = { page, at: now, since: o && o.page === page && Date.now() - Date.parse(o.at) < 18e4 ? o.since : now }; LS.set('t:seen', s);
+    },
+    async rptA() {
+      const us = LS.get('users', []), cs = LS.get('t:characters', []), nm = (a, id) => ((a.find(x => x.id === id) || {}).nickname), cn = id => ((cs.find(c => c.id === id) || {}).data || {}).name;
+      return LS.get('t:teles', []).map(t => ({ id: t.id, created_at: t.created_at, read: t.read, body: t.body, from_nick: t.author, to_nick: nm(us, t.to_user), from_char: cn(t.from_char), to_char: cn(t.to_char) })).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    },
+    async rptB() {
+      const us = LS.get('users', []), s = LS.get('t:seen', {});
+      return Object.entries(s).map(([id, v]) => { const u = us.find(x => x.id === id) || {}; return Object.assign({ user_id: id, nickname: u.nickname, username: u.username }, v); }).sort((a, b) => String(b.at).localeCompare(String(a.at)));
     },    /* 출석 · 지갑 · 상점 */
     async wallet(me) { return Object.assign(emptyWallet(), LS.get('t:wallets', {})[me] || {}); },
     async attendance(from, uid) { return LS.get('t:attendance', []).filter(r => (!from || r.day >= from) && (!uid || r.user_id === uid)).sort(byCreated); },
@@ -548,6 +560,9 @@
         return ok(await sb.rpc('send_tele', { p_from_char: p.from_char, p_to_char: p.to_char, p_body: p.body }));
       },
       async markTeleRead(me, id) { ok(await sb.rpc('mark_tele_read', { p_id: id })); },
+      async touch(me, page) { await sb.rpc('touch', { p: page }); },
+      async rptA() { return ok(await sb.rpc('rpt_a')) || []; },
+      async rptB() { return ok(await sb.rpc('rpt_b')) || []; },
       async wallet(me) {
         const r = ok(await sb.from('wallets').select('*').eq('user_id', me).maybeSingle());
         return r ? Object.assign(emptyWallet(), r, { items: r.items || [], equip: r.equip || {}, tickets: r.tickets || {}, boosts: r.boosts || {} }) : emptyWallet();
@@ -718,6 +733,9 @@
       return B.sendTele(u.id, u.nickname, p);
     },
     async markTeleRead(id) { const u = await this.user(); if (u) await B.markTeleRead(u.id, id); },
+    async touch(page) { const u = await this.user(); if (u) await B.touch(u.id, page).catch(() => {}); },
+    async rptA() { await this.requireAdmin(); return B.rptA(); },
+    async rptB() { await this.requireAdmin(); return B.rptB(); },
     /* 출석 · 지갑 · 상점 (영전 지급과 구매는 서버 함수에서만) */
     kstDay, streakOf, ATTEND, attendReward,
     async wallet() { const u = await this.user(); return u ? B.wallet(u.id) : emptyWallet(); },
