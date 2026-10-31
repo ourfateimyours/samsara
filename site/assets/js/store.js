@@ -658,7 +658,7 @@
       if (kind === 'publish' || kind === 'delete') return isAdmin ? { ok: true, admin: true } : { ok: false, reason: kind === 'delete' ? '삭제는 관리자만 할 수 있어요.' : '게시는 관리자만 할 수 있어요.' };
       if (kind === 'submit') {
         if (row && row.owner_id !== u.id && !isAdmin) return { ok: false, reason: '본인이 작성한 인물만 제출할 수 있어요.' };
-        if (row && row.status === 'returned') return { ok: true };   // 반려된 프로필은 고쳐서 언제든 다시 제출
+        if (row && (row.status === 'returned' || row.review_note)) return { ok: true };   // 반려된 프로필(반려 메모가 있는 것)은 고쳐서 언제든 다시 제출
         return this.can(row && row.published_at ? 'edit' : 'create', row);
       }
       if (isAdmin) return { ok: true, admin: true };
@@ -759,7 +759,7 @@
       const row = await B.get('characters', id);
       const c = await this.can('save', row); if (!c.ok) throw new Error(c.reason);
       const patch = { draft, updated_at: now() };
-      if (row.status !== 'draft' && row.status !== 'returned') patch.status = 'draft';   // 반려된 건 '반려' 그대로 (기간과 상관없이 다시 제출할 수 있게)
+      if (row.status !== 'draft') patch.status = 'draft';
       const r = await B.update('characters', id, patch);
       return r;
     },
@@ -767,7 +767,7 @@
       const u = await this.user(); const row = await B.get('characters', id);
       if (!row.draft) throw new Error('제출할 작성본이 없어요.');
       const c = await this.can('submit', row); if (!c.ok) throw new Error(c.reason);
-      const r = await B.update('characters', id, { status: 'submitted', submitted_at: now(), review_note: '' });
+      const r = await B.update('characters', id, { status: 'submitted', submitted_at: now() });   // 반려 메모는 게시할 때 지워져요
       return r;
     },
     async withdraw(id) {
@@ -785,8 +785,10 @@
     },
     async reject(id, note) {
       await this.requireAdmin(); const u = await this.user(); const row = await B.get('characters', id);
-      // 게시된 프로필을 반려하면 멤버란에서 내려가요: 게시 해제 + 게시본을 작성본으로 옮겨서 바로 고칠 수 있게
-      const r = await B.update('characters', id, { status: 'returned', review_note: String(note || '').slice(0, 300), published_at: null, draft: row.draft || row.data });
+      // 반려 = '작성 중'으로 돌려보내기 (본인 · 관리자만 보여요) · 게시 해제 + 게시본을 작성본으로 옮겨서 바로 고칠 수 있게
+      // review_note 는 회원에게 보이지 않는 반려 표시 → 기간과 상관없이 다시 제출할 수 있어요 (게시하면 지워져요)
+      const memo = String(note || '').trim().slice(0, 300) || '반려';
+      const r = await B.update('characters', id, { status: 'draft', review_note: memo, published_at: null, draft: row.draft || row.data });
       return r;
     },
 

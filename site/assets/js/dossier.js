@@ -265,7 +265,7 @@ App.ready.then(async user => {
     if (previewing && orig.published_at) acts += `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(orig.id)}">게시본 보기</a>`;
     bar.innerHTML = `<div class="pv-t"><b>${previewing ? '👁 미리보기' : '📝 게시 전 수정본이 있어요'}</b>
         <span class="pv-st s-${esc(orig.status || 'draft')}">${st[0]} ${st[1]}</span><small>${kind}${previewing ? ' · 아직 사이트에 보이지 않는 버전이에요' : ''}</small>
-        ${orig.status === 'returned' && orig.review_note ? `<em>반려 메모: ${esc(orig.review_note)}</em>` : ''}</div>
+        </div>
       <div class="pv-a">${acts}</div>`;
     document.body.appendChild(bar);
     bar.addEventListener('click', async e => {
@@ -276,8 +276,8 @@ App.ready.then(async user => {
         if (b.dataset.pv === 'withdraw') { await Store.withdraw(orig.id); toast('제출을 취소했어요. 다시 고칠 수 있어요.'); return setTimeout(() => location.reload(), 700); }
         if (b.dataset.pv === 'publish') { await Store.publish(orig.id); toast('게시했어요 ✦'); return setTimeout(() => location.href = 'character.html?id=' + encodeURIComponent(orig.id), 700); }
         if (b.dataset.pv === 'reject') {
-          const note = await askPrompt('반려 메모 (회원에게 보여요)', ''); if (note == null) return;
-          await Store.reject(orig.id, note); toast('반려했어요'); return setTimeout(() => location.reload(), 700);
+          if (!await askConfirm('반려할까요? 작성 중으로 돌아가요.')) return;
+          await Store.reject(orig.id); toast('반려했어요'); return setTimeout(() => location.reload(), 700);
         }
       } catch (ex) { toast(ex.message, 'err'); }
     });

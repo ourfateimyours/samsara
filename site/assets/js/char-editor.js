@@ -259,7 +259,7 @@ window.CharEditor = {
 
 
         ${row && row.status === 'submitted' ? '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>' : ''}
-        ${row && row.status === 'returned' && row.review_note ? `<p class="hint-text" style="color:#ff8a80">↩ 반려 메모: ${esc(row.review_note)}</p>` : ''}
+        ${row && row.status !== 'published' && row.review_note ? '<p class="hint-text" style="color:#ff8a80">↩ 반려됐어요 · 고쳐서 언제든 다시 제출할 수 있어요</p>' : ''}
         ${row && row.published_at ? '<p class="hint-text">고친 내용은 <b>작성본</b>으로 저장돼요. 게시되기 전까지 사이트에는 지금 게시된 모습이 그대로 보여요.</p>' : ''}
         <p class="err-text" id="cerr"></p>
         <div class="modal-foot">

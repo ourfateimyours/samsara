@@ -310,7 +310,8 @@
       if (!seen || seen[c.id] === next[c.id]) return; // 처음 방문이면 기록만
       const name = ((c.draft || c.data) || {}).name || '?';
       if (c.status === 'published') news.unshift({ id: c.id, t: 'pub', text: `✦ "${name}" 이(가) 게시됐어요!`, at: c.published_at || new Date().toISOString() });
-      if (c.status === 'returned') news.unshift({ id: c.id, t: 'ret', text: `↩ "${name}" 이(가) 반려됐어요${c.review_note ? ' — ' + c.review_note : ''}`, at: new Date().toISOString() });
+      // 반려 = 작성 중 + 반려 메모 (메모가 새로 생기거나 바뀌었을 때만 알려요)
+      if (c.status !== 'published' && c.review_note && c.review_note !== String(seen[c.id] || '').split('|').slice(2).join('|')) news.unshift({ id: c.id, t: 'ret', text: `↩ "${name}" 이(가) 반려됐어요 · 작성 중으로 돌아갔어요`, at: new Date().toISOString() });
     });
     if (seen) news.filter(n => !n.shown).forEach((n, i) => { n.shown = true; setTimeout(() => toast(n.text, n.t === 'ret' ? 'err' : ''), 600 + i * 900); });
     try { localStorage.setItem(KEY, JSON.stringify(next)); localStorage.setItem(NEWS, JSON.stringify(news.slice(0, 30))); } catch (e) {}
@@ -369,6 +370,14 @@
   window.App = {
     ready: (async () => {
       if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
+      // 데모 모드에서 저장 공간이 비어 있으면 예시 데이터 채우기 (demo-seed.js, 실제 사이트에선 실행 안 됨)
+      if (Store.mode === 'demo') {
+        let empty = false; try { empty = !localStorage.getItem('naru:users'); } catch (e) {}
+        if (empty) {
+          await new Promise(r => { const s = document.createElement('script'); s.src = 'assets/js/demo-seed.js'; s.onload = s.onerror = r; document.head.appendChild(s); });
+          if (window.demoSeed) { try { await window.demoSeed(); } catch (e) { console.error(e); } }
+        }
+      }
       let user = null;
       try { user = await Store.user(); } catch (e) { console.error(e); }
       // 입장 문: 로그인(승인된 회원)하지 않으면 입장 화면으로 (관리자가 "비회원 둘러보기"를 켜면 예외)
