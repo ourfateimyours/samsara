@@ -113,6 +113,21 @@
   window.askConfirm = msg => ask(msg, false);
   window.askPrompt = (msg, def) => ask(msg, true, def);
 
+  /* 낮 · 밤: 06시~18시는 낮 (주소 끝에 ?day=1 이면 언제든 낮 · ?day=0 이면 언제든 밤 — 미리보기용) */
+  window.isDayTime = () => { const q = (location.search.match(/[?&]day=([01])/) || [])[1]; if (q) return q === '1'; const h = new Date().getHours(); return h >= 6 && h < 18; };
+  /* 벚꽃잎: box 안에 n 장이 바람에 흔들리며 떨어져요
+     i = 떨어지는 길 (아래 + 바람 방향) · b = 좌우로 살랑 · u = 꽃잎이 뒤집히며 팔랑 · 가까운 꽃잎 몇 장은 크고 살짝 흐리게 (원근감) */
+  window.sakura = (box, n = 28) => {
+    if (!box) return;
+    const R = (a, b) => (a + Math.random() * (b - a)).toFixed(2);
+    box.classList.add('sakura');
+    box.innerHTML = Array.from({ length: n }, () => {
+      const near = Math.random() < .18, t = near ? R(7, 10) : R(11, 19);
+      return `<i style="--x:${R(-12, 100)}%;--y:${R(0, 90)}%;--dx:${R(60, 220)}px;--t:${t}s;--d:-${R(0, t)}s;--w:${R(2.2, 4.2)}s;--sw:${R(14, 40)}px">`
+        + `<b><u style="--s:${near ? R(16, 22) : R(7, 13)}px;--o:${near ? .5 : R(.7, .95)};--bl:${near ? 'blur(1.5px)' : 'none'};--sp:${R(3, 7)}s"></u></b></i>`;
+    }).join('');
+  };
+
 
 
   /* ---------- 부적(符) 그림 ---------- */
