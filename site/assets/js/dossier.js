@@ -329,7 +329,7 @@ App.ready.then(async user => {
       if (pq) return;
       pq = requestAnimationFrame(() => {
         pq = 0; const wide = innerWidth > 1000, figCentered = d.figAlign === 'center';   // 끝에 붙인 그림은 가운데 맞춤(-50%)을 빼요
-        lyrs.forEach(l => { const k = +l.dataset.depth; l.style.transform = `${l.id === 'fig' && wide && figCentered ? 'translateX(-50%) ' : ''}translate3d(${(-px * k).toFixed(1)}px, ${(-py * k).toFixed(1)}px, 0)`; });
+        lyrs.forEach(l => { const k = +l.dataset.depth; l.style.transform = `${l.id === 'fig' && wide && figCentered && !l.classList.contains('wide') ? 'translateX(-50%) ' : ''}translate3d(${(-px * k).toFixed(1)}px, ${(-py * k).toFixed(1)}px, 0)`; });
       });
     }, { passive: true });
   }
