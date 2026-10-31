@@ -135,13 +135,8 @@ $$('[data-emb]').forEach(el => {
 const DAY_FROM = 6, DAY_TO = 18, DAY_IMG = 'https://i.imgur.com/v8ZbESH.png';   // 낮 그림 주소 (바꾸면 낮 배경이 바뀌어요)
 const DAY_FORCE = false;   // 미리보기용: true로 바꾸면 시간과 상관없이 항상 낮 화면
 /* 낮에는 별똥별 대신 벚꽃잎: 화면 위에서 바람에 흩날리며 떨어져요 */
-(function dayFx() {
-  const box = $('#dayfx'); if (!box) return;
-  const R = (a, b) => a + Math.random() * (b - a);
-  box.innerHTML = Array.from({ length: 36 }, () => { const t = R(10, 18);
-    return `<i style="left:${R(-5, 100).toFixed(1)}%;--y:${R(5, 90).toFixed(0)}%;--s:${R(13, 24).toFixed(1)}px;--dx:${R(40, 160).toFixed(0)}px;--t:${t.toFixed(1)}s;--f:${R(1.2, 2.6).toFixed(1)}s;animation-delay:-${R(0, t).toFixed(1)}s"><b></b></i>`; }).join('');
-})();
-const isDay = () => { if (DAY_FORCE) return true; const h = new Date().getHours(); return h >= DAY_FROM && h < DAY_TO; };
+sakura($('#dayfx'), 30);
+const isDay = () => DAY_FORCE || isDayTime();   // 06~18시 · 주소 끝에 ?day=1 이면 언제든 낮
 (function dayNight() {
   // 켜 둔 채로 낮 ↔ 밤이 바뀌면: 지금 화면이 서서히 흐려지면서 새 화면이 겹쳐 떠올라요 (크로스페이드 · 처음 들어올 때는 바로)
   let cur = null;

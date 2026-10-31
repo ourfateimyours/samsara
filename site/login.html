@@ -46,13 +46,23 @@
   .glass #signup-card { animation-delay: .1s; }
   @keyframes gIn { from { opacity: 0; transform: translateY(16px) scale(.98); } }
   @media (max-width: 760px) { .glass .gate-cards { flex-direction: column; align-items: center; } .glass .auth-card, .glass #signup-card { width: 100%; max-width: 400px; } }
+  /* 낮 (06~18시): 메인과 같은 낮 그림 + 벚꽃잎 · 창은 살짝 어둡게 해서 흰 글씨가 잘 보이게 */
+  .gate-petals { position: absolute; inset: 0; z-index: 0; display: none; pointer-events: none; }   /* 배경 그림자 위 · 창 뒤 */
+  .glass .gate-inner { position: relative; z-index: 1; }
+  .glass.day .gate-petals { display: block; }
+  .glass.day .gate-video { background-image: url(https://i.imgur.com/v8ZbESH.png); filter: brightness(.95) saturate(1.05); }
+  .glass.day::after { background: radial-gradient(ellipse 70% 70% at 50% 45%, rgba(10, 20, 45, .05), rgba(10, 20, 45, .5)); }
+  .glass.day .auth-card { background: linear-gradient(160deg, rgba(20, 26, 48, .42), rgba(20, 26, 48, .26)); }
+  .glass.day .gate-head h1 { text-shadow: 0 2px 24px rgba(10, 20, 45, .55), 0 0 2px rgba(10, 20, 45, .4); }
+  .glass.day .eyebrow, .glass.day .gate-head p, .glass.day .note-text { text-shadow: 0 1px 8px rgba(10, 20, 45, .8); }
   @media (prefers-reduced-motion: reduce) { .glass .gate-video, .glass .auth-card { animation: none; } }
 </style>
 </head>
 <body data-page="login" data-noheader data-nofooter class="gate-page">
 
 <main class="gate-wrap glass">
-  <div class="gate-video gate-photo" aria-hidden="true"></div><!-- 배경: 메인과 같은 밤의 서울 그림 (assets/img/lobby-bg.webp) -->
+  <div class="gate-video gate-photo" aria-hidden="true"></div><!-- 배경: 메인과 같은 그림 (밤 assets/img/lobby-bg.webp · 06~18시엔 낮 그림) -->
+  <div class="gate-petals" id="dayfx" aria-hidden="true"></div><!-- 낮에만 벚꽃잎 -->
   <div class="gate-inner">
     <header class="gate-head">
       <div class="eyebrow" id="motto"></div>
@@ -105,6 +115,7 @@
 <script src="assets/js/store.js"></script>
 <script src="assets/js/common.js"></script>
 <script>
+if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 26); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
 App.ready.then(async user => {
   const next = (() => {
     const n = qs('next') || '';
