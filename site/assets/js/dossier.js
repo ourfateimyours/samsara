@@ -223,9 +223,9 @@ App.ready.then(async user => {
 
       <div class="win" style="--i:6"><div class="wh"><b>Archive</b><span id="nfiles"></span></div><ul class="slist" id="slist"></ul></div>
 
-      <div class="win" style="--i:7"><div class="owner"><span>BY @${esc(row.author)} · ${fmtDate(row.created_at)}</span>
-        <span style="display:flex;gap:6px">${mine ? '<button class="btn ghost sm" data-edit="basic">수정</button>' : ''}${delPerm.ok ? '<button class="btn ghost sm" id="del">삭제</button>' : ''}</span></div>
-        ${own && !isAdm ? `<div class="lock-note ${subPerm.ok ? 'open' : ''}">${subPerm.ok ? `✎ 지금 제출할 수 있어요${subPerm.until ? ' · ' + esc(dday(subPerm.until)) : ''}` : '🔒 ' + esc(subPerm.reason) + ' 작성본 저장은 언제든 돼요.'}</div>` : ''}</div>
+      ${mine || delPerm.ok || (own && !isAdm) ? `<div class="win" style="--i:7">${mine || delPerm.ok ? `<div class="owner"><span></span>
+        <span style="display:flex;gap:6px">${mine ? '<button class="btn ghost sm" data-edit="basic">수정</button>' : ''}${delPerm.ok ? '<button class="btn ghost sm" id="del">삭제</button>' : ''}</span></div>` : ''}
+        ${own && !isAdm ? `<div class="lock-note ${subPerm.ok ? 'open' : ''}">${subPerm.ok ? `✎ 지금 제출할 수 있어요${subPerm.until ? ' · ' + esc(dday(subPerm.until)) : ''}` : '🔒 ' + esc(subPerm.reason) + ' 작성본 저장은 언제든 돼요.'}</div>` : ''}</div>` : ''}
     </aside>
 
     <div class="ticker2"><div>${tickHalf}</div></div>
@@ -413,7 +413,7 @@ App.ready.then(async user => {
   }, 250);
 
   /* ---------- 아카이브 파일 ---------- */
-  const empty = '<p class="text empty-sec">— NO RECORD ON FILE —</p>';
+  const empty = '';   // 비어 있는 칸은 아무것도 안 보여요
   const SEC = [
     { t: '성격', en: 'PERSONA', r: () => d.persona ? `<div class="text ps-out" style="${personaCSS(d.persona_style)}">${esc(d.persona)}</div>` : empty },
     { t: '스킬', en: 'SKILL', r: () => `
