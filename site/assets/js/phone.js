@@ -14,6 +14,33 @@ window.Phone = (function () {
   const lockSVG = '<svg class="ph-lockic" viewBox="0 0 14 18"><rect x="1" y="7.5" width="12" height="9.5" rx="2" fill="#fff"/><path d="M3.5 7.5V5a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="#fff" stroke-width="1.8"/></svg>';
   const wifi = '<svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0zM3.6 7a6.3 6.3 0 0 1 8.8 0l-1.3 1.3a4.5 4.5 0 0 0-6.2 0zM1.2 4.6a9.7 9.7 0 0 1 13.6 0l-1.3 1.3a7.9 7.9 0 0 0-11 0z" fill="#fff"/></svg>';
 
+  /* 최근 지구: 나사 DSCOVR EPIC 이 매일 공개하는 사진 중 한국이 정면인 것 (2~3일 늦게 올라와요)
+     하루에 한 번만 물어보고 브라우저에 저장 · 못 불러오면 고정 사진(assets/img/earth.jpg) 그대로 */
+  const EPIC = 'https://epic.gsfc.nasa.gov';
+  async function epicUrl() {
+    const key = 'naru:epic', day = new Date().toDateString();
+    try { const c = JSON.parse(localStorage.getItem(key)); if (c && c.day === day) return c.url; } catch (e) {}
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 6000);
+    try {
+      const list = await (await fetch(EPIC + '/api/natural', { signal: ac.signal })).json();
+      const off = it => { const d = Math.abs(((it.centroid_coordinates || {}).lon || 0) - 127) % 360; return Math.min(d, 360 - d); };
+      const it = list.slice().sort((a, b) => off(a) - off(b))[0];
+      if (!it) return null;
+      const url = `${EPIC}/archive/natural/${it.date.slice(0, 10).replace(/-/g, '/')}/jpg/${it.image}.jpg`;
+      try { localStorage.setItem(key, JSON.stringify({ day, url })); } catch (e) {}
+      return url;
+    } catch (e) { return null; } finally { clearTimeout(t); }
+  }
+  function liveEarth(img) {
+    if (!img) return;
+    epicUrl().then(url => {
+      if (!url) return;
+      const pre = new Image();
+      pre.onload = () => { img.style.opacity = 0; setTimeout(() => { img.src = url; img.style.opacity = 1; }, 300); };
+      pre.src = url;
+    });
+  }
+
   let ov = null;
   function open(row, all, opt = {}) {
     close(true);
@@ -43,7 +70,7 @@ window.Phone = (function () {
       <div class="ph-stage"><div class="phone ph-rise">
         <div class="ph-case"><span class="ph-side a"></span><span class="ph-side b"></span><span class="ph-side c"></span><span class="ph-side d"></span><span class="ph-hole"></span>
           <div class="ph-screen off">
-            <div class="ph-wall grad" data-han="${esc(el ? el.han : '符')}"></div>
+            <div class="ph-wall space"><div class="ph-halo"></div><div class="ph-earth"><img src="assets/img/earth.jpg" alt=""></div></div>
             <div class="ph-island"></div>
             <div class="ph-status"><span>${clock}</span><span class="ph-icons"><span class="ph-sig"><i></i><i></i><i></i><i></i></span>${wifi}<span class="ph-bat"><i></i></span></span></div>
             <section class="ph-lock">
@@ -64,6 +91,7 @@ window.Phone = (function () {
       <div class="ph-cap">${opt.preview ? 'PREVIEW · 저장 전 미리보기' : 'TAP A NOTIFICATION'}</div>`;
     document.body.appendChild(ov);
     document.body.classList.add('no-scroll');
+    liveEarth($('.ph-earth img', ov));
 
     // 키링은 폰 오른쪽 위 고리에 걸려 옆으로 늘어지니, 가로 자리를 조금 더 잡아요
     const hang = 0, sideW = krOut ? 380 + 130 : 380;
