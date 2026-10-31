@@ -214,25 +214,8 @@ const isDay = () => DAY_FORCE || isDayTime();   // 06~18시 · 주소 끝에 ?da
   box.addEventListener('click', roll);
   box.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); roll(); } });
 })();
-(function meteors() {
-  const box = $('#meteors'); if (!box || REDUCED) return;
-  const ANG = 32 * Math.PI / 180;
-  const one = (delay = 0) => setTimeout(() => {
-    const m = document.createElement('i'), big = Math.random() < .25, len = (big ? 200 : 80) + Math.random() * 140, dist = 380 + Math.random() * 620;
-    m.style.cssText = `left:${20 + Math.random() * 85}%;top:${Math.random() * 40}%;--len:${len.toFixed(0)}px;--dx:${(-Math.cos(ANG) * dist).toFixed(0)}px;--dy:${(Math.sin(ANG) * dist).toFixed(0)}px;--t:${(.7 + Math.random() * .9).toFixed(2)}s${big ? '' : ';height:1.4px'}`;
-    m.className = ['', 'lav', 'lav', 'pink', 'pink', 'rose', 'mint'][Math.floor(Math.random() * 7)];   // 파랑 · 연보라 · 연분홍 · 장밋빛 · 민트
-    box.appendChild(m); m.addEventListener('animationend', () => m.remove());
-  }, delay);
-  const shoot = () => {
-    if (!document.hidden && !$('#lobby').classList.contains('is-day') && box.childElementCount < 14) {   // 혹시 쌓여도 14개까지만
-      // 한 번에 1~3개 (가끔 우르르), 간격도 무작위
-      const n = Math.random() < .15 ? 3 + Math.floor(Math.random() * 3) : 1 + Math.floor(Math.random() * 2);
-      for (let k = 0; k < n; k++) one(k * (120 + Math.random() * 380));
-    }
-    setTimeout(shoot, 500 + Math.random() * 1700);
-  };
-  setTimeout(shoot, 500);
-})();
+meteors($('#meteors'), () => !$('#lobby').classList.contains('is-day'));   // 별똥별 (낮에는 쉬어요)
+
 $('#glints').innerHTML = Array.from({ length: 12 }, (_, i) => `<i style="left:${(i * 37.7) % 100}%;top:${(i * 61.3) % 100}%;animation-delay:${(i * .43) % 6}s;--s:${.5 + (i % 5) * .22}"></i>`).join('');
 
 App.ready.then(async user => {

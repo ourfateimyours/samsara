@@ -48,6 +48,7 @@
   @media (max-width: 760px) { .glass .gate-cards { flex-direction: column; align-items: center; } .glass .auth-card, .glass #signup-card { width: 100%; max-width: 400px; } }
   /* 낮 (06~18시): 메인과 같은 낮 그림 + 벚꽃잎 · 창은 살짝 어둡게 해서 흰 글씨가 잘 보이게 */
   .gate-petals { position: absolute; inset: 0; z-index: 0; display: none; pointer-events: none; }   /* 배경 그림자 위 · 창 뒤 */
+  .gate-meteors { z-index: 0; }   /* 별똥별도 배경 그림자 위 · 창 뒤 */
   .glass .gate-inner { position: relative; z-index: 1; }
   .glass.day .gate-petals { display: block; }
   .glass.day .gate-video { background-image: url(https://i.imgur.com/v8ZbESH.png); filter: brightness(.95) saturate(1.05); }
@@ -63,6 +64,7 @@
 <main class="gate-wrap glass">
   <div class="gate-video gate-photo" aria-hidden="true"></div><!-- 배경: 메인과 같은 그림 (밤 assets/img/lobby-bg.webp · 06~18시엔 낮 그림) -->
   <div class="gate-petals" id="dayfx" aria-hidden="true"></div><!-- 낮에만 벚꽃잎 -->
+  <div class="gate-meteors" id="meteors" aria-hidden="true"></div><!-- 밤에만 별똥별 -->
   <div class="gate-inner">
     <header class="gate-head">
       <div class="eyebrow" id="motto"></div>
@@ -116,6 +118,7 @@
 <script src="assets/js/common.js"></script>
 <script>
 if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 26); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
+else meteors($('#meteors'));   // 밤이면 메인처럼 별똥별 (?day=0 으로 미리보기)
 App.ready.then(async user => {
   const next = (() => {
     const n = qs('next') || '';
