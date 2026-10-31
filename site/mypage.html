@@ -60,7 +60,7 @@ App.ready.then(async user => {
             <div class="im" style="background-image:${cssUrl(charImage(d, c.id))}"></div>
             <div><h3>${esc(d.name || '이름 없음')}<span class="pv-st s-${st}">${ic} ${lab}</span></h3>
               <p>${c.published_at ? (c.draft ? '게시본 있음 · 수정본 작성됨' : '게시됨 · ' + when(c.published_at)) : '아직 게시 전 (첫 등록)'}${st === 'submitted' && c.submitted_at ? ' · ' + when(c.submitted_at) + ' 제출' : ''}</p>
-              ${st === 'returned' && c.review_note ? `<p class="note">반려 메모: ${esc(c.review_note)}</p>` : ''}</div>
+              </div>
             <div class="acts">
               ${c.draft ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : ''}
               ${c.published_at ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">게시본 보기</a>` : ''}
@@ -83,7 +83,7 @@ App.ready.then(async user => {
       <p class="hint-text">아이디: <b>${esc(user.username || '')}</b> (아이디는 바꿀 수 없어요)</p>
       <div class="row2">
         <label class="field"><span>닉네임</span><input name="nickname" maxlength="20" value="${esc(m.nickname)}"></label>
-        <label class="field"><span>칭호 <small>영문 추천</small></span><input name="title" maxlength="30" value="${esc(m.title)}" placeholder=""></label>
+        <label class="field"><span>칭호 <small>영문 추천</small></span><input name="title" maxlength="30" value="${esc(m.title)}" placeholder="Night Archivist"></label>
       </div>
       <label class="field"><span>자기소개</span><textarea name="bio" rows="4" maxlength="300">${esc(m.bio)}</textarea></label>
       <p class="err-text" id="perr"></p>
