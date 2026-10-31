@@ -804,3 +804,30 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
 .img-full { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 24px; background: rgba(3, 2, 6, .92); cursor: zoom-out; animation: fade .25s; }
 .img-full img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
 .img-full-x { position: fixed; top: 14px; right: 18px; font: 600 11px var(--mono); letter-spacing: .2em; color: rgba(255, 255, 255, .7); }
+
+/* 전신 그림 크기: 원래 크기에 묶지 않고 화면(전신 칸)에 맞춰 자동으로 키우거나 줄여요 — 큰 모니터에서 작게 붕 뜨지 않게
+   세로 그림은 칸 높이를 꽉 채우고(폭이 넘치면 그만큼만 줄여요), 비율은 그대로 */
+.fig img { height: 100%; width: auto; max-width: 100%; max-height: none; object-fit: contain; object-position: center bottom; }
+.fig.al-left img { object-position: left bottom; } .fig.al-right img { object-position: right bottom; }
+/* 가로 그림 (컴퓨터): 넓힌 칸의 폭을 꽉 채워요 */
+@media (min-width: 1001px) {
+  .fig.wide img { width: 100%; height: auto; max-height: 100%; object-position: center; }
+  .fig.wide.al-left img { object-position: left center; } .fig.wide.al-right img { object-position: right center; }
+}
+/* 휴대폰 · 태블릿: 가로 그림도 세로 그림처럼 화면 높이를 꽉 채워요 (넘치는 양옆만 살짝 잘려요 · 어느 쪽을 보일지는 편집 창 '전신 그림 위치'를 따라가요) */
+@media (max-width: 1000px) {
+  .fig.wide { height: 64vh; min-height: 0; align-items: stretch; }
+  .fig.wide .fl { height: 100%; }
+  .fig.wide img { width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: center; }
+  .fig.wide.al-left img { object-position: left center; } .fig.wide.al-right img { object-position: right center; }
+}
+
+/* 휴대폰 · 태블릿: 전신 그림 아래쪽이 배경 속으로 흐릿하게 녹아들어요 */
+@media (max-width: 1000px) {
+  .fig img { -webkit-mask-image: linear-gradient(to bottom, #000 68%, transparent 100%); mask-image: linear-gradient(to bottom, #000 68%, transparent 100%); }
+  /* '가장자리 흐리게'를 켠 그림은 양옆 · 위 흐림에 아래 흐림까지 더해요 */
+  .fig.fade img {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 68%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%), linear-gradient(to bottom, transparent 0, #000 var(--ft), #000 68%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+}
