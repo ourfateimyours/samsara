@@ -44,11 +44,15 @@
     // 파산권: 영전이 마이너스인 사람에게 선물로만 · 50% 확률로 빚 절반 탕감, 50% 확률로 빚 전부 탕감
     { id: 'x_bankrupt', kind: 'curse', name: '파산권', price: 3000, value: '', descr: '영전이 마이너스인 사람에게만 선물할 수 있어요. 50% 확률로 빚이 반으로 줄거나, 50% 확률로 빚이 다 없어져요.', sort: 83 },
     // needs: 'cat_full' — 로비 고양이 호감도를 가득 채운 사람에게만 상점에 보여요 (본인만 살 수 있어요)
-    { id: 't36', kind: 'title', name: '집사', price: 500, value: '집사', descr: '로비 고양이의 호감도를 가득 채운 사람만 살 수 있어요. 선물은 안 돼요.', sort: 36, needs: 'cat_full' }
+    { id: 't36', kind: 'title', name: '집사', price: 500, value: '집사', descr: '로비 고양이의 호감도를 가득 채운 사람만 살 수 있어요. 선물은 안 돼요.', sort: 36, needs: 'cat_full' },
+    // needs: 'cat_gift' — 고양이 호감도 170 에서 받는 칭호 (팔지 않아요 · 받은 사람만 상점에서 달고 빼요)
+    { id: 't_cat170', kind: 'title', name: '^. .^₎⟆ ˙⋆✮', price: 0, value: '^. .^₎⟆ ˙⋆✮', descr: '로비 고양이와 아주 친해지면 받는 칭호예요.', sort: 37, stock: 0, needs: 'cat_gift' },
+    { id: 't_cat200', kind: 'title', name: '주인님', price: 0, value: '주인님', descr: '로비 고양이의 호감도를 끝까지 채우면 받는 칭호예요.', sort: 38, stock: 0, needs: 'cat_gift' }
   ]).map(i => Object.assign({ active: true, stats: {}, max_per: null, stock: null, needs: null }, i));
   /* 고양이 호감도: 누르면 +1 (하루에 최대 +5 · 날마다 0으로 돌아가지 않고 계속 쌓여요)
      삐지면 -2 (하루 한 번만) · 25 · 50 · 75 에 처음 닿으면 영전 선물 · 100 이면 '집사' 칭호 공개 */
-  const CAT = { max: 100, daily: 5, drop: 2, gifts: [25, 50, 75], gift: [10, 50] };
+  // luck: 쓰다듬을 때 5% 로 +10 · 또 5% 로 -10 · steps: 단계 선물 (60·150 비밀 내레이션 · 90 이성 +1 · 100 집사 · 170 칭호 · 200 주인님)
+  const CAT = { max: 200, full: 100, daily: 5, luck: .05, jump: 10, drop: 2, steps: [60, 90, 100, 150, 170, 200], title: 't_cat170' };
   /* 미니 게임 · 모아팡 (로비 전광판 → pang.html): 하루 한 판 · 영전 50~1000 을 걸고, 난이도는 직접 골라요
      배율은 시작할 때 몰래 뽑아요 (×1.5 70% · ×2 20% · ×4 5% · ×6 3% · ×10 2%)
      이기면 걸은 영전 × 배율을 받고 (걸은 영전 포함), 지면 같은 배율만큼 잃어요 (마이너스가 될 수도 있어요)
@@ -77,7 +81,7 @@
     while (set.has(d.toISOString().slice(0, 10))) { n++; d.setUTCDate(d.getUTCDate() - 1); }
     return n;
   };
-  const emptyWallet = () => ({ coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false });
+  const emptyWallet = () => ({ coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [] });
   const affToday = w => w.aff_day === kstDay() ? (w.aff_gain || 0) : 0;   // 오늘 올린 호감도
   const maskTele = (m, me) => m.owner_id !== me
     ? Object.assign({}, m, { owner_id: null, author: null, from_char: null }) : m;
@@ -300,6 +304,7 @@
       if (isFromTitle(it) && !gift) throw new Error('이 칭호는 선물로만 받을 수 있어요.');
       if (it.kind === 'curse' && !gift) throw new Error('파산권은 선물로만 보낼 수 있어요.');
       if (it.kind === 'curse' && !(r.coins < 0)) throw new Error('파산권은 영전이 마이너스인 사람에게만 보낼 수 있어요.');
+      if (it.needs === 'cat_gift') throw new Error('고양이에게 받는 칭호예요.');
       if (it.needs === 'cat_full' && gift) throw new Error('이 칭호는 선물할 수 없어요.');
       if (it.needs === 'cat_full' && !r.cat_full) throw new Error('고양이 호감도를 가득 채워야 살 수 있어요.');
       if (soldOut(Object.assign({}, it, { sold: soldCount(id) }))) throw new Error('품절됐어요.');
@@ -361,18 +366,38 @@
     },
     async catPet(me, up) {
       const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[me] || {}), today = kstDay();
-      let gift = 0, unlocked = false, changed = 0;
+      let gift = 0, unlocked = false, changed = 0, bonus = 0; const rewards = [];
       if (up) {
         const gain = affToday(w);
         if (gain < CAT.daily && w.aff < CAT.max) {
-          w.aff += 1; w.aff_day = today; w.aff_gain = gain + 1; changed = 1;
-          CAT.gifts.forEach(th => { if (w.aff >= th && !w.aff_gifts.includes(th)) { w.aff_gifts = w.aff_gifts.concat(th); gift += CAT.gift[0] + Math.floor(Math.random() * (CAT.gift[1] - CAT.gift[0] + 1)); } });
-          if (w.aff >= CAT.max && !w.cat_full) { w.cat_full = true; unlocked = true; }
-          w.coins += gift;
+          const roll = Math.random();
+          changed = roll < CAT.luck ? Math.min(CAT.jump, CAT.max - w.aff) : roll < CAT.luck * 2 ? -Math.min(CAT.jump, w.aff) : 1;
+          bonus = roll < CAT.luck * 2 ? (roll < CAT.luck ? 1 : -1) : 0;
+          w.aff += changed; w.aff_day = today; w.aff_gain = gain + 1;
+          // 비밀 내레이션: 데모에선 localStorage 'naru:cat_secrets' (문장 배열) · 실제 사이트에선 Supabase cat_secrets 표
+          const secrets = LS.get('cat_secrets', []), heard = w.cat_secrets || [];
+          CAT.steps.forEach(m => {
+            if (w.aff < m || w.aff_gifts.includes(m)) return;
+            if (m === 60 || m === 150) {
+              const left = secrets.map((t, i) => i).filter(i => secrets[i] && !heard.includes(i)); if (!left.length) return;
+              const i = left[Math.floor(Math.random() * left.length)]; heard.push(i); w.cat_secrets = heard;
+              rewards.push({ th: m, kind: 'lore', text: secrets[i] });
+            }
+            else if (m === 90) {
+              const c = LS.get('t:characters', []).filter(x => x.owner_id === me && x.published_at).sort((a, b) => String(a.published_at).localeCompare(String(b.published_at)))[0];
+              if (!c) return;
+              const b = Object.assign({}, w.boosts[c.id] || {}); b['이성'] = (b['이성'] || 0) + 1; w.boosts = Object.assign({}, w.boosts, { [c.id]: b });
+              rewards.push({ th: m, kind: 'stat' });
+            }
+            else if (m === CAT.full) { if (!w.cat_full) { w.cat_full = true; unlocked = true; } }
+            else if (m === 170) { if (!w.items.includes(CAT.title)) w.items = w.items.concat(CAT.title); rewards.push({ th: m, kind: 'title' }); }
+            else if (m === 200) { if (!w.items.includes('t_cat200')) w.items = w.items.concat('t_cat200'); rewards.push({ th: m, kind: 'master' }); }
+            w.aff_gifts = w.aff_gifts.concat(m);
+          });
         }
       } else if (w.aff_drop !== today && w.aff > 0) { changed = -Math.min(CAT.drop, w.aff); w.aff += changed; w.aff_drop = today; }
       ws[me] = w; LS.set('t:wallets', ws);
-      return { wallet: w, gift, unlocked, changed };
+      return { wallet: w, gift, unlocked, changed, bonus, rewards };
     },
     /* 미니 게임 (데모) — 실제 사이트의 서버 함수와 같은 방식으로 움직인 기록을 다시 돌려서 점수를 계산해요 */
     pangSettle(rows, r, score) {
@@ -560,8 +585,7 @@
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { return ok(await sb.rpc('use_snack')); },
       // 호감도 · 선물 영전은 서버에서만 계산해요 (사이트 코드를 고쳐도 하루 +5 · 선물 한 번씩을 못 넘어요)
-      async catPet(me, up) { const r = ok(await sb.rpc('cat_pet', { p_up: !!up })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}) }); },
-      // 미니 게임: 배수 뽑기 · 정산 · 하루 한 판은 전부 서버에서
+      async catPet(me, up) { const r = ok(await sb.rpc('cat_pet', { p_up: !!up })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },      // 미니 게임: 배수 뽑기 · 정산 · 하루 한 판은 전부 서버에서
       async pangStatus() { return ok(await sb.rpc('pang_status')); },
       async pangStart(me, bet, level) { return ok(await sb.rpc('pang_start', { p_bet: parseInt(bet, 10) || 0, p_level: level })); },
       // 점수는 서버 함수가 직접 계산해요 (움직인 기록만 보내요)
@@ -724,8 +748,7 @@
     async equip(kind, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.equip(u.id, kind, id); },
     async useSnack() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.useSnack(u.id); },
     /* 고양이 쓰다듬기: up=true 면 +1 (하루 +5까지) · false 면 삐짐 -2 (하루 한 번) → { wallet, gift, unlocked, changed } */
-    async catPet(up) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.catPet(u.id, up); },
-    CAT, affToday,
+    async catPet(up) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.catPet(u.id, up); },    CAT, affToday,
     /* 미니 게임: 오늘 했는지 { played, done, win, mult, delta } · 시작(영전 걸기) · 끝(점수 → 정산 결과) */
     PANG, PANG_LEVELS, PANG_MULT, pangLevel,
     async pangStatus() { const u = await this.user(); if (!u) return { played: false }; return B.pangStatus(u.id); },
