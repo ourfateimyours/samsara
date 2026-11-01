@@ -37,7 +37,7 @@
     { id: 'c_jade', kind: 'tag', name: '청자 이름표', price: 600, value: '#9fe0cf', descr: '매듭 구슬의 옥빛', sort: 63 },
     { id: 'c_plum', kind: 'tag', name: '홍매 이름표', price: 600, value: '#ffa3c8', descr: '볼터치 같은 분홍', sort: 64 },
     { id: 'c_gold', kind: 'tag', name: '금박 이름표', price: 1200, value: '#f0d58a', descr: '금박을 입힌 이름표', sort: 65 },
-    { id: 's_churu', kind: 'snack', name: '츄르', price: 200, value: '', descr: '로비 고양이에게 줄 수 있어요 (1개씩 사용)', sort: 71 },
+    { id: 's_churu', kind: 'snack', name: '츄르', price: 200, value: '', descr: '로비 고양이에게 줄 수 있어요 (1개씩 사용)', sort: 71, max_per: 5 },   // 한 사람당 츄르 5개까지
     { id: 'k_room', kind: 'ticket', name: '룸메이트 지정권', price: 300, value: '', descr: '룸메이트를 지정할 수 있는 권리예요. 사용할 땐 관리자에게 알려 주세요.', sort: 81 },
     { id: 'k_beat', kind: 'ticket', name: '심박권', price: 150, value: '', descr: '오늘 무료 심박을 쓴 뒤에도 심박을 한 번 더 보낼 수 있어요. 보내면 1장씩 줄고, 다음 날로 쌓여요.', sort: 80 },
     { id: 'b_stat', kind: 'boost', name: '스탯 증가권', price: 1000, value: '', descr: '캐릭터의 스탯 하나가 무작위로 +5 올라요. 한 사람당 10번까지.', sort: 82, max_per: 10 },
@@ -61,6 +61,8 @@
      삐지면 -2 (하루 한 번만) · 25 · 50 · 75 에 처음 닿으면 영전 선물 · 100 이면 '집사' 칭호 공개 */
   // luck: 쓰다듬을 때 5% 로 +10 · 또 5% 로 -10 · steps: 단계 선물 (60·150 비밀 내레이션 · 90 이성 +1 · 100 집사 · 170 칭호 · 200 주인님)
   const CAT = { max: 200, full: 100, daily: 5, luck: .05, jump: 10, drop: 2, steps: [60, 90, 100, 150, 170, 200], title: 't_cat170' };
+  // 츄르: 하루 한 번 · 호감도 [올라가는 양, 확률 %] (⚠ churu-schema.sql use_snack 과 같게) · 한 사람당 총 5개
+  const CHURU = { max: 5, odds: [[0, 50]].concat([1, 2, 3, 4, 5].map(n => [n, 5]), [6, 7, 8, 9, 10].map(n => [n, 3]), [11, 12, 13, 14, 15].map(n => [n, 1.4]), [16, 17, 18, 19].map(n => [n, .6]), [[20, .6]]) };
   /* 미니 게임 · 모아팡 (로비 전광판 → pang.html): 하루 한 판 · 영전 50~1000 을 걸고, 난이도는 직접 골라요
      배율은 시작할 때 몰래 뽑아요 (×1.5 70% · ×2 20% · ×4 5% · ×6 3% · ×10 2%)
      이기면 걸은 영전 × 배율을 받고 (걸은 영전 포함), 지면 같은 배율만큼 잃어요 (마이너스가 될 수도 있어요)
@@ -118,7 +120,7 @@
   const LOG_DAYS = 3; // 상점 기록은 3일 지나면 지워져요
   /* 데모: 관리자가 저장한 상점 목록 + 나중에 새로 생긴 물건 */
   const shopList = () => { const s = LS.get('t:shop', null); if (!s) return SHOP; const ids = new Set(s.map(i => i.id));
-    return s.map(i => 'stock' in i ? i : Object.assign({ stock: (SHOP.find(x => x.id === i.id) || {}).stock || null }, i)).concat(SHOP.filter(i => !ids.has(i.id))); };
+    return s.map(i => { const d = SHOP.find(x => x.id === i.id) || {}; return Object.assign({ stock: d.stock || null, max_per: d.max_per || null }, i, i.max_per == null && d.max_per ? { max_per: d.max_per } : {}); }).concat(SHOP.filter(i => !ids.has(i.id))); };
   const soldCount = id => Object.values(LS.get('t:wallets', {})).filter(w => (w.items || []).includes(id)).length;
   const streakOf = (days, today = kstDay()) => { // 오늘(또는 어제)까지 이어진 연속 출석 일수
     const set = new Set(days); let d = new Date(today + 'T00:00:00Z'), n = 0;
@@ -126,7 +128,7 @@
     while (set.has(d.toISOString().slice(0, 10))) { n++; d.setUTCDate(d.getUTCDate() - 1); }
     return n;
   };
-  const emptyWallet = () => ({ coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
+  const emptyWallet = () => ({ coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null, snack_n: 0, churu_day: null });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
   const affToday = w => w.aff_day === kstDay() ? (w.aff_gain || 0) : 0;   // 오늘 올린 호감도
   const maskTele = (m, me) => m.owner_id !== me
     ? Object.assign({}, m, { owner_id: null, author: null, from_char: null }) : m;
@@ -398,6 +400,7 @@
         opt.charName = (ch.data && ch.data.name) || '?';
       }
       if (it.kind === 'statgift') throw new Error('관리자만 선물할 수 있어요.');
+      if (it.kind === 'snack' && it.max_per && (r.snack_n || 0) >= it.max_per) throw new Error(gift ? '받는 사람이 츄르를 더 받을 수 없어요.' : '츄르는 더 살 수 없어요.');
       const price = it.kind === 'pouch' ? Math.floor(Number(opt.amount) || it.price) : it.price;   // 복주머니는 살 때 금액을 정해요
       if (it.kind === 'pouch' && !(price >= it.price)) throw new Error(`복주머니는 ${it.price} 영전부터 살 수 있어요.`);
       if (it.kind === 'pouch') {
@@ -424,7 +427,7 @@
       }
       if (it.kind === 'title' || it.kind === 'tag') { r.items.push(id); r.equip = Object.assign({}, r.equip, { [it.kind]: id });   // 사면(받으면) 바로 달아요
         if (isFromTitle(it)) r.equip.from = Object.assign({}, r.equip.from, { [id]: nick }); }
-      else if (it.kind === 'snack') r.snacks += 1;
+      else if (it.kind === 'snack') { r.snacks += 1; r.snack_n = (r.snack_n || 0) + 1; }
       else if (it.kind === 'ticket') r.tickets = Object.assign({}, r.tickets, { [id]: (r.tickets[id] || 0) + 1 });
       else if (it.kind === 'boost') {
         const st = STATS[Math.floor(Math.random() * STATS.length)], b = Object.assign({}, r.boosts[opt.char] || {});
@@ -522,16 +525,27 @@
       const us = LS.get('users', []);
       return keep.map(x => ({ id: x.id, kind: x.kind, msg: x.msg, to_nick: (us.find(u => u.id === x.to_user) || {}).nickname || '', mine: x.to_user === me }));
     },
-    async adminStatGift(me, nick, charId, stat) {
-      if (!STATS.includes(stat)) throw new Error('스탯을 골라 주세요.');
-      const ch = LS.get('t:characters', []).find(c => c.id === charId); if (!ch) throw new Error('캐릭터를 찾을 수 없어요.');
-      const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[ch.owner_id] || {}), b = Object.assign({}, w.boosts[charId] || {});
-      b[stat] = (b[stat] || 0) + 1; w.boosts = Object.assign({}, w.boosts, { [charId]: b }); ws[ch.owner_id] = w; LS.set('t:wallets', ws);
+    /* 관리자 스탯 선물 상자: 보내기 · 아직 안 연 것 · 열기 (pick 1 · 2 · 3, 3 = 안 받기)
+       어떤 스탯이 나올지는 실제 사이트에선 서버(관리자-선물-알림.sql)만 알아요 · 데모는 아무 스탯이나 */
+    async adminGiftBox(me, nick, charId) {
+      const ch = LS.get('t:characters', []).find(c => c.id === charId && c.published_at); if (!ch) throw new Error('게시된 캐릭터를 골라 주세요.');
       const tu = LS.get('users', []).find(u => u.id === ch.owner_id) || {}, log = LS.get('t:shoplog', []);
-      log.push({ id: newId(), kind: 'admin', buyer: me, buyer_nick: nick, to_user: ch.owner_id, to_nick: tu.nickname, item_id: 'g_' + STATS.indexOf(stat), item_name: `${stat} +1`, price: 0, detail: `${ch.data.name} · ${stat} +1`, created_at: now() });
-      LS.set('t:shoplog', log); return { name: ch.data.name, stat };
+      log.push({ id: newId(), kind: 'admin', buyer: me, buyer_nick: nick, to_user: ch.owner_id, to_nick: tu.nickname, item_id: 'g_box', item_name: '스탯 선물 상자', price: 0, detail: `${ch.data.name} · 아직 안 열어 봄`, created_at: now() });
+      LS.set('t:shoplog', log);
+      const gs = LS.get('t:admin_gifts', []); gs.push({ id: newId(), user_id: ch.owner_id, char_id: ch.id, char_name: ch.data.name, amount: 1, seen: false, created_at: now() }); LS.set('t:admin_gifts', gs);
+      return { name: ch.data.name };
     },
-    async badges() {
+    async myGifts(me) { return LS.get('t:admin_gifts', []).filter(g => g.user_id === me && !g.seen).map(g => ({ id: g.id, char_name: g.char_name, created_at: g.created_at })); },
+    async openGift(me, id, pick) {
+      const gs = LS.get('t:admin_gifts', []), g = gs.find(x => x.id === id && x.user_id === me && !x.seen); if (!g) throw new Error('열 수 있는 선물이 없어요.');
+      if (![1, 2, 3].includes(pick)) throw new Error('선택지를 골라 주세요.');
+      g.seen = true; g.pick = pick;
+      if (pick === 3) { LS.set('t:admin_gifts', gs); return { refused: true, name: g.char_name }; }
+      const st = STATS[Math.floor(Math.random() * STATS.length)]; g.stat = st; LS.set('t:admin_gifts', gs);
+      const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[me] || {}), b = Object.assign({}, w.boosts[g.char_id] || {});
+      b[st] = (b[st] || 0) + (g.amount || 1); w.boosts = Object.assign({}, w.boosts, { [g.char_id]: b }); ws[me] = w; LS.set('t:wallets', ws);
+      return { refused: false, name: g.char_name, stat: st, amount: g.amount || 1 };
+    },    async badges() {
       const ws = LS.get('t:wallets', {}), out = {};
       for (const uid in ws) out[uid] = { equip: ws[uid].equip || {}, boosts: ws[uid].boosts || {}, coins: ws[uid].coins || 0 };
       return out;
@@ -554,10 +568,14 @@
       if (id && !w.items.includes(id)) throw new Error('가지고 있지 않은 물건이에요.');
       w.equip = Object.assign({}, w.equip, { [kind]: id || null }); ws[me] = w; LS.set('t:wallets', ws); return w;
     },
-    async useSnack(me) {
-      const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[me] || {});
+    async useSnack(me) {   // 츄르: 하루 한 번 · 호감도 0 ~ 20 (0 이 50%) · 단계 선물은 쓰다듬기와 같아요
+      const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[me] || {}), today = kstDay();
       if (w.snacks < 1) throw new Error('츄르가 없어요. 상점에서 살 수 있어요.');
-      w.snacks -= 1; ws[me] = w; LS.set('t:wallets', ws); return w;
+      if (w.churu_day === today) throw new Error('츄르는 하루에 한 번만 줄 수 있어요. 내일 또 줘요.');
+      let roll = Math.random() * 100, changed = 0; for (const [n, p] of CHURU.odds) { if ((roll -= p) < 0) { changed = n; break; } }
+      changed = Math.max(0, Math.min(changed, CAT.max - w.aff)); w.aff += changed; w.snacks -= 1; w.churu_day = today;
+      const st = this.catSteps(me, w); ws[me] = w; LS.set('t:wallets', ws);
+      return { wallet: w, changed, unlocked: st.unlocked, rewards: st.rewards };
     },
     async catPet(me, up) {
       const ws = LS.get('t:wallets', {}), w = Object.assign(emptyWallet(), ws[me] || {}), today = kstDay();
@@ -582,30 +600,36 @@
             perks.push({ kind: 'money', stat: '재력', name: pm.name, head: pm.head, tag: `고양이가 영전 ${gift}을 물어 왔어요` });
           }
           w.aff += changed; w.aff_day = today; w.aff_gain = gain + 1;
-          // 비밀 내레이션: 데모에선 localStorage 'naru:cat_secrets' (문장 배열) · 실제 사이트에선 Supabase cat_secrets 표
-          const secrets = LS.get('cat_secrets', []), heard = w.cat_secrets || [];
-          CAT.steps.forEach(m => {
-            if (w.aff < m || w.aff_gifts.includes(m)) return;
-            if (m === 60 || m === 150) {
-              const left = secrets.map((t, i) => i).filter(i => secrets[i] && !heard.includes(i)); if (!left.length) return;
-              const i = left[Math.floor(Math.random() * left.length)]; heard.push(i); w.cat_secrets = heard;
-              rewards.push({ th: m, kind: 'lore', text: secrets[i] });
-            }
-            else if (m === 90) {
-              const c = LS.get('t:characters', []).filter(x => x.owner_id === me && x.published_at).sort((a, b) => String(a.published_at).localeCompare(String(b.published_at)))[0];
-              if (!c) return;
-              const b = Object.assign({}, w.boosts[c.id] || {}); b['이성'] = (b['이성'] || 0) + 1; w.boosts = Object.assign({}, w.boosts, { [c.id]: b });
-              rewards.push({ th: m, kind: 'stat' });
-            }
-            else if (m === CAT.full) { if (!w.cat_full) { w.cat_full = true; unlocked = true; } }
-            else if (m === 170) { if (!w.items.includes(CAT.title)) w.items = w.items.concat(CAT.title); rewards.push({ th: m, kind: 'title' }); }
-            else if (m === 200) { if (!w.items.includes('t_cat200')) w.items = w.items.concat('t_cat200'); rewards.push({ th: m, kind: 'master' }); }
-            w.aff_gifts = w.aff_gifts.concat(m);
-          });
+          const st = this.catSteps(me, w); rewards.push(...st.rewards); unlocked = st.unlocked;
         }
       } else if (w.aff_drop !== today && w.aff > 0) { changed = -Math.min(CAT.drop, w.aff); w.aff += changed; w.aff_drop = today; }
       ws[me] = w; LS.set('t:wallets', ws);
       return { wallet: w, gift, unlocked, changed, bonus, rewards, perks };
+    },
+    /* 호감도 단계 선물 (쓰다듬기 · 츄르 공통) · 처음 닿을 때 평생 한 번 */
+    catSteps(me, w) {
+      const rewards = []; let unlocked = false;
+      // 비밀 내레이션: 데모에선 localStorage 'naru:cat_secrets' (문장 배열) · 실제 사이트에선 Supabase cat_secrets 표
+      const secrets = LS.get('cat_secrets', []), heard = w.cat_secrets || [];
+      CAT.steps.forEach(m => {
+        if (w.aff < m || w.aff_gifts.includes(m)) return;
+        if (m === 60 || m === 150) {
+          const left = secrets.map((t, i) => i).filter(i => secrets[i] && !heard.includes(i)); if (!left.length) return;
+          const i = left[Math.floor(Math.random() * left.length)]; heard.push(i); w.cat_secrets = heard;
+          rewards.push({ th: m, kind: 'lore', text: secrets[i] });
+        }
+        else if (m === 90) {
+          const c = LS.get('t:characters', []).filter(x => x.owner_id === me && x.published_at).sort((a, b) => String(a.published_at).localeCompare(String(b.published_at)))[0];
+          if (!c) return;
+          const b = Object.assign({}, w.boosts[c.id] || {}); b['이성'] = (b['이성'] || 0) + 1; w.boosts = Object.assign({}, w.boosts, { [c.id]: b });
+          rewards.push({ th: m, kind: 'stat' });
+        }
+        else if (m === CAT.full) { if (!w.cat_full) { w.cat_full = true; unlocked = true; } }
+        else if (m === 170) { if (!w.items.includes(CAT.title)) w.items = w.items.concat(CAT.title); rewards.push({ th: m, kind: 'title' }); }
+        else if (m === 200) { if (!w.items.includes('t_cat200')) w.items = w.items.concat('t_cat200'); rewards.push({ th: m, kind: 'master' }); }
+        w.aff_gifts = w.aff_gifts.concat(m);
+      });
+      return { rewards, unlocked };
     },
     /* 미니 게임 (데모) — 실제 사이트의 서버 함수와 같은 방식으로 움직인 기록을 다시 돌려서 점수를 계산해요 */
     pangSettle(rows, r, score) {
@@ -972,7 +996,7 @@
       async adminWallets() { const rows = ok(await sb.from('wallets').select('*')), out = {}; rows.forEach(r => out[r.user_id] = Object.assign(emptyWallet(), r)); return out; },
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
-      async useSnack() { return ok(await sb.rpc('use_snack')); },
+      async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
       // 호감도 · 선물 영전은 서버에서만 계산해요 (사이트 코드를 고쳐도 하루 +5 · 선물 한 번씩을 못 넘어요)
       async catPet(me, up) { const r = ok(await sb.rpc('cat_pet_x', { p_up: !!up })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },      // 미니 게임: 배수 뽑기 · 정산 · 하루 한 판은 전부 서버에서
       async pangStatus() { return ok(await sb.rpc('pang_status')); },
@@ -993,7 +1017,9 @@
       async matchStatus() { return { canPlay: false, soon: true }; }, async matchRooms() { return []; },
       async matchOpen() { throw new Error('대국은 곧 열려요.'); }, async matchCancel() {}, async matchJoin() { throw new Error('대국은 곧 열려요.'); }, async matchSettle() { throw new Error('대국은 곧 열려요.'); },
       async cheersToday() { return ok(await sb.rpc('cheers_today')) || []; },
-      async adminStatGift(me, nick, charId, stat) { return ok(await sb.rpc('admin_stat_gift', { p_char: charId, p_stat: stat })); },
+      async adminGiftBox(me, nick, charId) { return ok(await sb.rpc('admin_gift_box', { p_char: charId })); },
+      async myGifts() { return ok(await sb.rpc('my_gifts')) || []; },
+      async openGift(me, id, pick) { return ok(await sb.rpc('open_gift', { p_id: id, p_pick: pick })); },
       async lessonRank(me, subj) { return ok(await sb.rpc('lesson_rank', { p_subj: subj })) || []; },
       // 캐릭터는 공개용 뷰(characters_view)로 읽어요 — 남의 작성본(draft)은 비어서 와요
       async list(t) { return ok(await sb.from(t === 'characters' ? 'characters_view' : t).select('*').order('created_at', { ascending: true })); },
@@ -1198,7 +1224,9 @@
     async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
     async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
     async cheersToday() { const u = await this.user(); if (!u) return []; return B.cheersToday(u.id); },
-    async adminStatGift(charId, stat) { await this.requireAdmin(); const u = await this.user(); cachedBadges = null; return B.adminStatGift(u.id, u.nickname, charId, stat); },
+    async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
+    async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.openGift(u.id, id, pick); },
+    async adminGiftBox(charId) { await this.requireAdmin(); const u = await this.user(); return B.adminGiftBox(u.id, u.nickname, charId); },
     PERK, POUCH, POUCH_DAY, MATCH,
     async matchStatus() { const u = await this.user(); if (!u) return { canPlay: false }; const p = await this.playOpen('match'); if (!p.open) return { canPlay: false, closed: true }; return B.matchStatus(u.id); },
     async matchRooms() { const u = await this.user(); if (!u) return []; return B.matchRooms(u.id); },
