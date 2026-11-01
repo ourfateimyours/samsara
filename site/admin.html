@@ -50,7 +50,7 @@ App.ready.then(async user => {
     return;
   }
   const ADMIN = user.grade === 'admin';   // 부관리자(staff): 심사 대기 · 회원 정보 + 영전 · 사이트 설정 · 메인 배너만
-  if (!ADMIN) { $$('.adm-tabs [data-g="shop"], .adm-tabs [data-g="play"]').forEach(b => b.remove()); $('#adm').previousElementSibling && document.querySelector('header h1') && (document.querySelector('header h1').textContent = '관리자 모드'); const hp = document.querySelector('header h1 + p'); if (hp) hp.textContent = '심사 대기 캐릭터 · 회원 영전 · 사이트 설정을 관리해요.'; }
+  if (!ADMIN) { $$('.adm-tabs [data-g="shop"], .adm-tabs [data-g="play"]').forEach(b => b.remove()); $('#adm').previousElementSibling && document.querySelector('header h1') && (document.querySelector('header h1').textContent = '부관리자 모드'); const hp = document.querySelector('header h1 + p'); if (hp) hp.textContent = '심사 대기 캐릭터 · 회원 영전 · 사이트 설정을 관리해요.'; }
   // 탭마다 새 화면판(pane)을 써요: 앞 탭이 늦게 불러와져도 지금 보는 화면을 덮어쓰지 않게
   let curPane = $('#pane');
   const toLocal = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return ''; const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
@@ -194,9 +194,8 @@ App.ready.then(async user => {
             <div class="give-row"><label class="field"><span>영전 지급 <small>빼려면 앞에 - (예: -20)</small></span><input type="number" data-f="coin" placeholder="50"></label>
               <label class="field" style="flex:2"><span>메모 <small>기록에 남아요 · 예) 이벤트 보상</small></span><input data-f="cnote" maxlength="60"></label>
               <div class="give-q">${[10, 50, 100].map(n => `<button type="button" class="icon-btn" data-qc="${n}">+${n}</button>`).join('')}<button class="btn sm" data-act="give">지급</button></div></div>
-            ${ADMIN && cs.some(c => c.published_at) ? `<div class="give-row"><label class="field"><span>스탯 아이템 선물 <small>관리자만 · 상점엔 안 보여요</small></span><select data-f="sgc">${cs.filter(c => c.published_at).map(c => `<option value="${esc(c.id)}">${esc((c.data || {}).name || '?')}</option>`).join('')}</select></label>
-              <label class="field"><span>스탯</span><select data-f="sgs">${Store.STATS.map(s => `<option>${s}</option>`).join('')}</select></label>
-              <div class="give-q"><button class="btn sm" data-act="stat">+1 선물</button></div></div>` : ''}
+            ${ADMIN && cs.some(c => c.published_at) ? `<div class="give-row"><label class="field" style="flex:2"><span>스탯 선물 상자 <small>관리자만 · 받은 사람이 메인에서 열 때 스탯이 정해져요</small></span><select data-f="sgc">${cs.filter(c => c.published_at).map(c => `<option value="${esc(c.id)}">${esc((c.data || {}).name || '?')}</option>`).join('')}</select></label>
+              <div class="give-q"><button class="btn sm" data-act="stat">🎁 상자 보내기</button></div></div>` : ''}
             <div class="row3">
               <label class="field"><span>닉네임</span><input data-f="nickname" value="${esc(m.nickname)}" ${ADMIN ? '' : 'readonly'}></label>
               <label class="field"><span>칭호</span><input data-f="title" value="${esc(m.title)}" ${ADMIN ? '' : 'readonly'}></label>
@@ -239,9 +238,9 @@ App.ready.then(async user => {
           await Store.giveCoins(id, n, f('cnote').value.trim()); toast(`${m.nickname} 님 영전 ${n > 0 ? '+' : ''}${n}`); return membersTab(id);
         }
         if (act.dataset.act === 'stat') {
-          const cid = f('sgc').value, st = f('sgs').value, cn = (chars.find(c => c.id === cid) || { data: {} }).data.name;
-          if (!await askConfirm(`${cn}에게 ${st} +1 을 선물할까요?`)) return;
-          await Store.adminStatGift(cid, st); toast(`${cn} · ${st} +1`); return membersTab(id);
+          const cid = f('sgc').value, cn = (chars.find(c => c.id === cid) || { data: {} }).data.name;
+          if (!await askConfirm(`${cn}에게 스탯 선물 상자를 보낼까요?`)) return;
+          await Store.adminGiftBox(cid); toast(`${cn}에게 선물 상자를 보냈어요 🎁`); return membersTab(id);
         }
         if (act.dataset.act === 'save') {
           await Store.adminUpdateProfile(id, { nickname: f('nickname').value.trim() || m.nickname, title: f('title').value.trim() });
