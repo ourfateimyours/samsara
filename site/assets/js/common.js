@@ -411,10 +411,11 @@
       if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
       // 데모 모드에서 저장 공간이 비어 있으면 예시 데이터 채우기 (demo-seed.js, 실제 사이트에선 실행 안 됨)
       if (Store.mode === 'demo') {
-        let empty = false; try { empty = !localStorage.getItem('naru:users'); } catch (e) {}
-        if (empty) {
+        let empty = false, noLesson = false; try { empty = !localStorage.getItem('naru:users'); noLesson = localStorage.getItem('naru:lesson_v') !== '4'; } catch (e) {}
+        if (empty || noLesson) {
           await new Promise(r => { const s = document.createElement('script'); s.src = 'assets/js/demo-seed.js'; s.onload = s.onerror = r; document.head.appendChild(s); });
-          if (window.demoSeed) { try { await window.demoSeed(); } catch (e) { console.error(e); } }
+          if (empty && window.demoSeed) { try { await window.demoSeed(); } catch (e) { console.error(e); } }
+          if (window.demoLessonSeed) { try { window.demoLessonSeed(); } catch (e) { console.error(e); } }
         }
       }
       let user = null;
@@ -439,4 +440,43 @@
       return user;
     })()
   };
+})();
+
+(function () {
+  const Q = []; let busy = false;
+  const ya = s => { const c = String(s).charCodeAt(String(s).length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 ? '이야' : '야'; };
+  const ST = { 재력: 'money', 행운: 'luck', 지력: 'int', 이성: 'rea', 근력: 'str', 술력: 'mag', 외모: 'look' };
+  const esc2 = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const show = () => {
+    if (busy || !Q.length) return; busy = true;
+    const p = Q.shift(), el = document.createElement('div'), st = p.stat || '';
+    const msg = p.kind === 'luck' ? `나는 역시 <em>행운</em>의 ${esc2(p.name || '나')}${ya(p.name || '나')}`
+      : p.kind === 'look' ? `내가 그렇게 <em>${Math.random() < .5 ? '잘생겼나' : '예쁜가'}</em>` : `<em>${esc2(st)}</em> 올리기를 잘했다`;
+    el.className = `pastme st-${ST[st] || 'money'}${Math.random() < .5 ? ' lt' : ''}`; el.setAttribute('role', 'status');
+    el.innerHTML = `<span class="pm-av"${p.head ? ` style="background-image:url('${esc2(p.head)}')"` : ''}></span><div class="pm-top"><b>과거의 나</b><small>메시지 · 지금</small></div>
+      <div class="pm-msg">${msg}</div>${p.tag ? `<span class="pm-tag">${esc2(p.tag)}</span>` : ''}`;
+    document.body.appendChild(el); void el.offsetWidth; el.classList.add('go');
+    setTimeout(() => { el.remove(); busy = false; setTimeout(show, 250); }, 6200);
+  };
+  window.pastMe = p => { if (!p) return; (Array.isArray(p) ? p : [p]).forEach(x => x && Q.push(x)); show(); };
+})();
+
+window.playClosed = (el, what) => {
+  const n = 1 + Math.floor(Math.random() * 4), nm = what === 'lesson' ? '후계자 수업' : '대국';
+  const line = what === 'lesson' ? '지금은 수업에 참여할 수 없다냐앙<br>문이 열리면 다시 와라냥' : '지금은 대국에 참여할 수 없다냐앙<br>판이 열리면 다시 와라냥';
+  el.innerHTML = `<div class="play-closed"><div class="pc-bub">${line}</div>
+    <img class="pc-cat" src="assets/img/mascot/cat${n}.webp" alt="" draggable="false" onerror="this.remove()">
+    <b>현재는 참여할 수 없어요!</b><p>${nm}은 지금 쉬는 중이에요.</p><a class="btn" href="index.html">메인으로</a></div>`;
+};
+
+(function () {
+  let on = false; try { on = localStorage.getItem('naru:asMember') === '1'; } catch (e) {}
+  if (!on || typeof App === 'undefined') return;
+  App.ready.then(u => {
+    if (!u || u.grade !== 'admin') return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'as-member';
+    b.textContent = '👁 회원 화면으로 보는 중 · 끄기';
+    b.onclick = () => { try { localStorage.removeItem('naru:asMember'); } catch (e) {} location.reload(); };
+    document.body.appendChild(b);
+  });
 })();
