@@ -44,10 +44,16 @@
 <script src="assets/js/lesson-insta.js"></script>
 <script>
 App.ready.then(async user => {
-  if (!user || user.grade !== 'admin') {
+  if (!user || !['admin', 'staff'].includes(user.grade)) {
     $('#adm').innerHTML = `<div class="empty"><div style="font:400 90px/1 var(--han);color:var(--red)">禁</div><p>관리자만 들어올 수 있어요.</p>
       ${user ? '' : '<a class="btn" href="login.html?next=admin.html">입장</a>'}</div>`;
     return;
+  }
+  const ADMIN = user.grade === 'admin';   // 부관리자(staff): 심사 대기 · 회원 정보 + 영전 · 사이트 설정 · 메인 배너만
+  if (!ADMIN) { $$('.adm-tabs [data-g="shop"], .adm-tabs [data-g="play"]').forEach(b => b.remove()); $('#adm').previousElementSibling && document.querySelector('header h1') && (document.querySelector('header h1').textContent = '부관리자 모드'); const hp = document.querySelector('header h1 + p'); if (hp) hp.textContent = '심사 대기 캐릭터 · 회원 영전 · 사이트 설정을 관리해요.'; }
+  if (ADMIN) {   // 관리자: 부관리자에게 어떻게 보이는지 미리 보기 (이 브라우저에서만)
+    $('#adm').insertAdjacentHTML('afterbegin', '<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn sm ghost" id="as-staff">👁 부관리자 화면으로 보기</button></div>');
+    $('#as-staff').onclick = () => { try { localStorage.setItem('naru:asStaff', '1'); } catch (e) {} location.reload(); };
   }
   // 탭마다 새 화면판(pane)을 써요: 앞 탭이 늦게 불러와져도 지금 보는 화면을 덮어쓰지 않게
   let curPane = $('#pane');
@@ -181,7 +187,7 @@ App.ready.then(async user => {
         return `<details class="mrow" data-id="${esc(m.id)}" ${m.id === openId ? 'open' : ''}>
           <summary><span class="sealc">${esc([...(m.seal || m.nickname)][0])}</span><b>${esc(m.nickname)}</b>
             ${m.username ? `<span class="label">@${esc(m.username)}</span>` : ''}
-            <span class="grade ${m.grade === 'admin' ? 'admin' : ''}">${m.grade === 'admin' ? '관리자' : '일반'}</span>
+            <span class="grade ${m.grade === 'admin' || m.grade === 'staff' ? 'admin' : ''}">${{ admin: '관리자', staff: '부관리자' }[m.grade] || '일반'}</span>
             ${(m.approval || 'approved') !== 'approved' ? `<span class="pv-st ${m.approval === 'pending' ? 's-submitted' : 's-returned'}">${m.approval === 'pending' ? '승인 대기' : '거절됨'}</span>` : ''}
             <span class="label">캐릭터 ${pad2(cs.length)} · 영전 ${w.coins} · 가입 ${fmtDate(m.created_at)}</span><i class="chev">⌄</i></summary>
           <div class="mbody">
@@ -192,26 +198,26 @@ App.ready.then(async user => {
             <div class="give-row"><label class="field"><span>영전 지급 <small>빼려면 앞에 - (예: -20)</small></span><input type="number" data-f="coin" placeholder="50"></label>
               <label class="field" style="flex:2"><span>메모 <small>기록에 남아요 · 예) 이벤트 보상</small></span><input data-f="cnote" maxlength="60"></label>
               <div class="give-q">${[10, 50, 100].map(n => `<button type="button" class="icon-btn" data-qc="${n}">+${n}</button>`).join('')}<button class="btn sm" data-act="give">지급</button></div></div>
-            ${cs.some(c => c.published_at) ? `<div class="give-row"><label class="field"><span>스탯 아이템 선물 <small>관리자만 · 상점엔 안 보여요</small></span><select data-f="sgc">${cs.filter(c => c.published_at).map(c => `<option value="${esc(c.id)}">${esc((c.data || {}).name || '?')}</option>`).join('')}</select></label>
+            ${ADMIN && cs.some(c => c.published_at) ? `<div class="give-row"><label class="field"><span>스탯 아이템 선물 <small>관리자만 · 상점엔 안 보여요</small></span><select data-f="sgc">${cs.filter(c => c.published_at).map(c => `<option value="${esc(c.id)}">${esc((c.data || {}).name || '?')}</option>`).join('')}</select></label>
               <label class="field"><span>스탯</span><select data-f="sgs">${Store.STATS.map(s => `<option>${s}</option>`).join('')}</select></label>
               <div class="give-q"><button class="btn sm" data-act="stat">+1 선물</button></div></div>` : ''}
             <div class="row3">
-              <label class="field"><span>닉네임</span><input data-f="nickname" value="${esc(m.nickname)}"></label>
-              <label class="field"><span>칭호</span><input data-f="title" value="${esc(m.title)}"></label>
-              <label class="field"><span>등급</span><select data-f="grade"><option value="member" ${m.grade !== 'admin' ? 'selected' : ''}>일반 회원</option><option value="admin" ${m.grade === 'admin' ? 'selected' : ''}>관리자</option></select></label>
+              <label class="field"><span>닉네임</span><input data-f="nickname" value="${esc(m.nickname)}" ${ADMIN ? '' : 'readonly'}></label>
+              <label class="field"><span>칭호</span><input data-f="title" value="${esc(m.title)}" ${ADMIN ? '' : 'readonly'}></label>
+              ${ADMIN ? '' : '<!--'}<label class="field"><span>등급</span><select data-f="grade"><option value="member" ${m.grade === 'member' || !m.grade ? 'selected' : ''}>일반 회원</option><option value="staff" ${m.grade === 'staff' ? 'selected' : ''}>부관리자</option><option value="admin" ${m.grade === 'admin' ? 'selected' : ''}>관리자</option></select></label>${ADMIN ? '' : '-->'}
             </div>
             <p class="hint-text">아이디: <b>${esc(m.username || '—')}</b> · 이메일(본인이 적은 것): ${esc(m.email || '—')}</p>
-            <div class="modal-foot" style="justify-content:flex-start;margin:0 0 18px"><button class="btn sm" data-act="save">정보 저장</button></div>
+            ${ADMIN ? '<div class="modal-foot" style="justify-content:flex-start;margin:0 0 18px"><button class="btn sm" data-act="save">정보 저장</button></div>' : '<div style="height:14px"></div>'}
             <div class="label" style="margin-bottom:8px">이 회원이 낸 캐릭터</div>
             <ul class="adm-list">${cs.length ? cs.map(c => `<li><b>${esc(((c.draft || c.data) || {}).name || '?')}</b><span class="pv-st s-${c.status || 'published'}">${{ draft: '작성 중', submitted: '심사 대기', returned: '반려', published: '게시됨' }[c.status || 'published']}</span><span>${boostTxt(w, c.id) ? `스탯 증가 ${esc(boostTxt(w, c.id))}` : fmtDate(c.created_at)}</span>
-              <a class="icon-btn" href="character.html?id=${encodeURIComponent(c.id)}${c.draft ? '&preview=1' : ''}">보기</a><button class="icon-btn" data-cedit="${esc(c.id)}">수정</button><button class="icon-btn danger" data-cdel="${esc(c.id)}">삭제</button></li>`).join('')
+              <a class="icon-btn" href="character.html?id=${encodeURIComponent(c.id)}${c.draft ? '&preview=1' : ''}">보기</a>${ADMIN ? `<button class="icon-btn" data-cedit="${esc(c.id)}">수정</button><button class="icon-btn danger" data-cdel="${esc(c.id)}">삭제</button>` : ''}</li>`).join('')
               : '<li class="dim">아직 낸 캐릭터가 없어요.</li>'}</ul>
-            <div class="row2" style="margin-top:18px;align-items:end">
+            ${ADMIN ? '' : '<!--'}<div class="row2" style="margin-top:18px;align-items:end">
               <label class="field"><span>비밀번호 변경 <small>6자 이상</small></span><input type="password" data-f="pw" autocomplete="new-password"></label>
               <div class="field"><button class="btn ghost" data-act="pw">비밀번호 바꾸기</button></div>
             </div>
             <div class="danger-zone"><div><b>탈퇴 처리</b><p>이 회원과 회원이 낸 캐릭터·쪽지·텔레파시가 모두 지워져요. 되돌릴 수 없어요.</p></div>
-              <button class="btn danger" data-act="del" ${m.id === user.id ? 'disabled title="자기 자신은 탈퇴 처리할 수 없어요"' : ''}>탈퇴시키기</button></div>
+              <button class="btn danger" data-act="del" ${m.id === user.id ? 'disabled title="자기 자신은 탈퇴 처리할 수 없어요"' : ''}>탈퇴시키기</button></div>${ADMIN ? '' : '-->'}
           </div></details>`;
       }).join('') || '<div class="empty">회원이 없어요.</div>';
     };
@@ -314,7 +320,8 @@ App.ready.then(async user => {
     const pane = curPane;
     const cs = await Store.adminCharacters();
     const st = c => c.status || 'published';
-    const tabs = [['submitted', '⏳ 심사 대기'], ['draft', '✎ 작성 중'], ['published', '✦ 게시됨'], ['all', '전체']];
+    if (!ADMIN) rvFilter = 'submitted';
+    const tabs = ADMIN ? [['submitted', '⏳ 심사 대기'], ['draft', '✎ 작성 중'], ['published', '✦ 게시됨'], ['all', '전체']] : [['submitted', '⏳ 심사 대기']];
     const list = cs.filter(c => rvFilter === 'all' || st(c) === rvFilter)
       .sort((a, b) => String(b.submitted_at || b.updated_at || b.created_at).localeCompare(String(a.submitted_at || a.updated_at || a.created_at)));
     const ST = { draft: '✎ 작성 중', submitted: '⏳ 심사 대기', returned: '↩ 반려됨', published: '✦ 게시됨' };
@@ -330,7 +337,7 @@ App.ready.then(async user => {
             ${st(c) !== 'published' && c.review_note ? '<p style="color:#ff8a80">↩ 반려됨 · 기간과 상관없이 다시 제출할 수 있어요</p>' : ''}</div>
           <div class="acts">
             ${pend ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">보기</a>`}
-            <button class="btn sm ghost" data-rv="edit">수정</button>
+            ${ADMIN ? '<button class="btn sm ghost" data-rv="edit">수정</button>' : ''}
             ${st(c) === 'submitted' || c.published_at ? '<button class="btn sm ghost" data-rv="reject">반려</button>' : ''}
             ${pend ? '<button class="btn sm" data-rv="publish">게시 ›</button>' : ''}
           </div></div>`;
@@ -363,6 +370,7 @@ App.ready.then(async user => {
 
   /* ---------- 가입 신청 ---------- */
   async function joinBadge() {
+    if (!ADMIN) return;
     try { const n = (await Store.allProfiles()).filter(p => p.approval === 'pending').length; ['#join-n', '#join-n2'].forEach(s => { const b = $(s); if (b) { b.textContent = n; b.hidden = !n; } }); } catch (e) {}
   }
   async function join() {
@@ -479,7 +487,7 @@ App.ready.then(async user => {
     </div>
     <section class="adm-card" style="margin-top:18px"><header><b>👁 회원 화면으로 보기</b>${sw('as-member', (() => { try { return localStorage.getItem('naru:asMember') === '1'; } catch (e) { return false; } })())}</header>
       <p class="hint-text">켜면 관리자도 수업 · 대국이 닫혀 있을 때 일반 회원처럼 막혀요 (메인 창 '쉬는 중' · 고양이 안내). 이 브라우저에서만 바뀌고, 켜져 있는 동안 화면 아래에 '회원 화면으로 보는 중 · 끄기'가 떠요.</p></section>
-    <section class="adm-card" style="margin-top:18px"><header><b>📊 전투력 · 스탯 평균 · 특전 단계</b><span class="label">게시된 캐릭터 기준 · 기본 스탯 + 스탯 증가 · 전투력 높은 순</span></header>
+    <section class="adm-card" style="margin-top:18px"><header><b>📊 전투력 · 스탯 평균 · 특전 단계</b><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="label">게시된 캐릭터 기준 · 전투력 높은 순</span><button class="btn sm ghost" id="sb-csv" disabled>📥 스프레드시트로 내보내기</button></span></header>
       <p class="hint-text">평균보다 <b>+1 ~ 9</b> 높으면 1단계 · <b>+10 ~ 19</b> 2단계 · <b>+20 이상</b> 3단계 · 회원은 자기 캐릭터 중 가장 높은 캐릭터로 특전을 받아요.<br>
         재력 = 출석 · 고양이 영전 보너스 / 행운 = 수업 힌트 · 다시 하기 / 외모 = 사회 · 도덕심 틀린 답 모면 / 지력 · 이성 · 근력 = 수업 점수 보너스 (특전은 하루 하나)<br>
         ⚔ 전투력 = 술력 중심 (술력×10 · 근력×4 · 지력 · 이성×3 · 재력×1.5 · 외모 · 행운×1) × 조화(스탯이 고를수록 최대 ×1.15, 치우치면 ×0.85까지) × 치명타 기대값 (확률은 행운 · 이성, 피해는 지력 · 근력)</p>
@@ -498,6 +506,20 @@ App.ready.then(async user => {
           const d = r.v[s] - b.avg[s], t = b.tierOf(d);
           return `<td class="sb-c t${t}"><b>${f(r.v[s])}</b><small>${d >= 0 ? '+' : ''}${f(d)}${t ? ` · ${t}단계` : ''}</small></td>`;
         }).join('')}</tr>`).join('')}</tbody></table>` : '<p class="dim">게시된 캐릭터가 없어요.</p>';
+      // 엑셀 · 구글 시트에서 바로 열리는 CSV (맨 앞 BOM 은 한글이 깨지지 않게)
+      $('#sb-csv').disabled = !rows.length;
+      $('#sb-csv').onclick = () => {
+        const q = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+        const head = ['순위', '캐릭터', '전투력', '치명타 확률(%)', '치명타 피해(배)', '조화(%)'].concat(b.stats, b.stats.map(s => s + ' 평균 대비'), b.stats.map(s => s + ' 특전 단계'));
+        const avgRow = ['', '평균', Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length), '', '', ''].concat(b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
+        const body = rows.map((r, i) => [i + 1, r.name, r.combat.power, f(r.combat.crit * 100), r.combat.critDmg.toFixed(2), Math.round(r.combat.harmony * 100)]
+          .concat(b.stats.map(s => f(r.v[s])), b.stats.map(s => f(r.v[s] - b.avg[s])), b.stats.map(s => b.tierOf(r.v[s] - b.avg[s]))));
+        const csv = String.fromCharCode(0xFEFF) + [head, avgRow].concat(body).map(row => row.map(q).join(',')).join('\r\n');
+        const d = new Date(), name = `전투력-스탯-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.csv`;
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name;
+        document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        toast(`${name} 을(를) 내려받았어요`);
+      };
     }).catch(e => { $('#sb').innerHTML = `<p class="dim">불러오지 못했어요 · ${esc(e.message || e)}</p>`; });
     ['lesson', 'match'].forEach(k => $('#' + k + '-on').onchange = async e => {
       const on = e.target.checked, nm = k === 'lesson' ? '후계자 수업' : '대국';
@@ -619,6 +641,7 @@ App.ready.then(async user => {
     const np = document.createElement('div'); np.id = 'pane'; curPane.replaceWith(np); curPane = np;
     TABS[t]();
   };
+  if (!ADMIN) { GROUPS.char = [['review', '심사 대기']]; GROUPS.member = [['members', '회원 정보 · 영전'], ['rptB', '홈페이지 디자인']]; }
   const openGroup = g => {
     $$('.adm-tabs button').forEach(x => x.classList.toggle('on', x.dataset.g === g));
     const subs = GROUPS[g];

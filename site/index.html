@@ -234,7 +234,7 @@ App.ready.then(async user => {
   const now = new Date(), today = Store.kstDay();
   $('#today').innerHTML = `${now.getFullYear()}.${pad2(now.getMonth() + 1)}.${pad2(now.getDate())} <span>${['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][now.getDay()]}</span>`;
   $('#nick').textContent = user.nickname;
-  if (user.grade === 'admin') $('#sb-admin').hidden = false;
+  if (user.grade === 'admin' || user.grade === 'staff') $('#sb-admin').hidden = false;
 
   let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.list('characters'), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
