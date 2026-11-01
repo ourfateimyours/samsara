@@ -1018,3 +1018,19 @@ html[data-dn="day"]::view-transition-old(root) { animation-name: dnToLight; }
 
 .hr-pane.closed { opacity: .5; filter: grayscale(.5); cursor: not-allowed; }
 .hr-pane.closed .hr-spark { display: none; }
+
+/* 관리자 선물 상자: 고양이 오른쪽 옆 미연시 선택지 · 흰 띠 (자리는 index.html 이 고양이 위치를 보고 정해요) */
+.nr-choices { position: absolute; z-index: 4; width: 230px; display: grid; gap: 8px; pointer-events: auto; }
+.nr-choices.below { width: min(320px, calc(100% - 24px)); }
+.nr-choices button { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 18px; border: 0; cursor: pointer; text-align: left;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .14) 40%, rgba(255, 255, 255, 0) 92%);
+  color: #fff; font: 500 14px/1.45 'IBM Plex Sans KR', var(--sans); letter-spacing: .01em; word-break: keep-all; text-shadow: 0 1px 5px rgba(0, 0, 0, .55);
+  opacity: 0; transform: translateX(-12px); transition: opacity .4s, transform .3s, background .25s; transition-delay: calc(var(--i) * 100ms); }
+.nr-choices button::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #fff; box-shadow: 0 0 10px #fff; }
+.nr-choices.on button { opacity: 1; transform: none; }
+.nr-choices button i { flex: none; width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid #fff; transition: background .2s, box-shadow .2s; }
+.nr-choices.on button:hover, .nr-choices button:focus-visible { outline: none; transition-delay: 0s; transform: translateX(4px);
+  background: linear-gradient(90deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .2) 45%, rgba(255, 255, 255, 0) 95%); }
+.nr-choices button:hover i { background: #fff; box-shadow: 0 0 8px #fff; }
+@media (prefers-reduced-motion: reduce) { .nr-choices button { transition: none; } }
+@media (max-width: 640px) { .nr-choices button { font-size: 13.5px; padding: 9px 12px 9px 15px; } }
