@@ -50,7 +50,7 @@ App.ready.then(async user => {
     return;
   }
   const ADMIN = user.grade === 'admin';   // 부관리자(staff): 심사 대기 · 회원 정보 + 영전 · 사이트 설정 · 메인 배너만
-  if (!ADMIN) { $$('.adm-tabs [data-g="shop"], .adm-tabs [data-g="play"]').forEach(b => b.remove()); $('#adm').previousElementSibling && document.querySelector('header h1') && (document.querySelector('header h1').textContent = '부관리자 모드'); const hp = document.querySelector('header h1 + p'); if (hp) hp.textContent = '심사 대기 캐릭터 · 회원 영전 · 사이트 설정을 관리해요.'; }
+  if (!ADMIN) { $$('.adm-tabs [data-g="shop"], .adm-tabs [data-g="play"]').forEach(b => b.remove()); $('#adm').previousElementSibling && document.querySelector('header h1') && (document.querySelector('header h1').textContent = '관리자 모드'); const hp = document.querySelector('header h1 + p'); if (hp) hp.textContent = '심사 대기 캐릭터 · 회원 영전 · 사이트 설정을 관리해요.'; }
   // 탭마다 새 화면판(pane)을 써요: 앞 탭이 늦게 불러와져도 지금 보는 화면을 덮어쓰지 않게
   let curPane = $('#pane');
   const toLocal = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return ''; const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
