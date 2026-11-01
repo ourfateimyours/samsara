@@ -290,7 +290,7 @@
       h.className = 'site-header';
       h.innerHTML = `
         <a class="brand" href="index.html">${SITE_MARK}<span class="bn">${esc(C.siteName || '')}<small>${esc(C.siteNameKo || '')}</small></span></a>
-        <nav class="nav">${NAV.concat(user && user.grade === 'admin' ? [['admin', 'admin.html', '관리', '管']] : []).map(([k, href, label, han, ext]) =>
+        <nav class="nav">${NAV.concat(user && (user.grade === 'admin' || user.grade === 'staff') ? [['admin', 'admin.html', '관리', '管']] : []).map(([k, href, label, han, ext]) =>
           `<a href="${href}" class="${k === page ? 'on' : ''}"${ext ? ' target="_blank" rel="noopener"' : ''}><i>${han}</i>${label}</a>`).join('')}</nav>
         <div class="auth">${user
           ? `<button class="mail-btn tele-btn" data-tele-open aria-label="심박 텔레파시" title="심박 텔레파시">♥<b class="mail-badge" hidden></b></button><a class="who" href="mypage.html" title="마이 페이지">${esc(user.nickname)}</a><button class="btn ghost sm" data-logout>로그아웃</button>`
@@ -477,6 +477,19 @@ window.playClosed = (el, what) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'as-member';
     b.textContent = '👁 회원 화면으로 보는 중 · 끄기';
     b.onclick = () => { try { localStorage.removeItem('naru:asMember'); } catch (e) {} location.reload(); };
+    document.body.appendChild(b);
+  });
+})();
+
+/* ---------- 관리자 '부관리자 화면으로 보기'가 켜져 있으면 화면 위에 알려 줘요 (누르면 꺼요) ---------- */
+(function () {
+  let on = false; try { on = localStorage.getItem('naru:asStaff') === '1'; } catch (e) {}
+  if (!on || typeof App === 'undefined') return;
+  App.ready.then(u => {
+    if (!u || u.realGrade !== 'admin') return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'as-member';
+    b.textContent = '👁 부관리자 화면으로 보는 중 · 끄기';
+    b.onclick = () => { try { localStorage.removeItem('naru:asStaff'); } catch (e) {} location.reload(); };
     document.body.appendChild(b);
   });
 })();

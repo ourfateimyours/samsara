@@ -180,10 +180,11 @@ window.CharEditor = {
     try { others = (await Store.list('characters')).filter(c => !row || c.id !== row.id); } catch (e) {}
     // 스탯은 처음 한 번 적고 나면 관리자만 고칠 수 있어요 (게시된 기록에 스탯이 있으면 잠김)
     const pub = row && row.data ? normChar(row.data) : null;
-    const statLocked = !isAdmin && !!(pub && parseKV(pub.stats).some(([, v]) => v !== ''));
+    // 한 번 게시된 적이 있으면 (작성 중으로 돌아가도) 회원 수정 창엔 스탯 탭이 아예 안 보여요 · 관리자만 고쳐요
+    const statLocked = !isAdmin && !!(row && row.data && Object.keys(row.data).length);
     const statMap = Object.fromEntries(parseKV(d.stats));
     const TABS = [['basic', '기본'], ['img', '이미지'], ['song', '테마곡'], ['skill', '능력·스킬'], ['persona', '성격·프로필'],
-      ['stat', '스탯'], ['items', '소지품'], ['rel', '관계란']];
+      ['stat', '스탯'], ['items', '소지품'], ['rel', '관계란']].filter(([k]) => !(statLocked && k === 'stat'));
     const m = openModal(`
       <h2>${row ? '인물 기록 수정' : '새 인물 봉인'}</h2>
       <div class="etabs">${TABS.map(([k, l], i) => `<button type="button" data-t="${k}" class="${i ? '' : 'on'}">${l}</button>`).join('')}</div>

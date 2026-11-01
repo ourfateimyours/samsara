@@ -155,6 +155,7 @@
   const idEmail = id => `${id}@${cfg.idEmailDomain || 'member.hongbu.site'}`;
 
   /* 사이트 설정 기본값 */
+  const STAFF_SETTINGS = ['bgm_on', 'bgm_title', 'bgm_url', 'signup_open', 'public_view', 'lobby_banners'];   // 부관리자가 바꿀 수 있는 설정
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
@@ -261,10 +262,18 @@
     async removeGrant(id) { LS.set('t:grants', LS.get('t:grants', []).filter(g => g.id !== id)); },
     /* 관리자 전용 회원 관리 */
     async setGrade(id, grade) {
+      if (!['member', 'staff', 'admin'].includes(grade)) throw new Error('등급을 골라 주세요.');
       const users = LS.get('users', []); const u = users.find(x => x.id === id);
       if (!u) throw new Error('회원을 찾을 수 없어요.');
       if (grade !== 'admin' && u.grade === 'admin' && users.filter(x => x.grade === 'admin').length < 2) throw new Error('관리자가 최소 한 명은 있어야 해요.');
       u.grade = grade; LS.set('users', users);
+    },
+    /* 부관리자 심사: 심사 대기인 것만 게시 · 반려 */
+    async staffReview(id, action, note) {
+      const row = LS.get('t:characters', []).find(c => c.id === id); if (!row) throw new Error('캐릭터를 찾을 수 없어요.');
+      if (row.status !== 'submitted') throw new Error('심사 대기 중인 캐릭터만 처리할 수 있어요.');
+      if (action === 'publish') return this.update('characters', id, { data: row.draft || row.data, draft: null, status: 'published', published_at: now(), review_note: '', updated_at: now() });
+      return this.update('characters', id, { status: 'draft', review_note: String(note || '').trim().slice(0, 300) || '반려', published_at: null, draft: row.draft || row.data });
     },
     async setPassword(id, pw) {
       const users = LS.get('users', []); const u = users.find(x => x.id === id);
@@ -913,6 +922,7 @@
       async addGrant(g) { return ok(await sb.from('edit_grants').insert(g).select().single()); },
       async removeGrant(id) { ok(await sb.from('edit_grants').delete().eq('id', id)); },
       async setGrade(id, grade) { ok(await sb.from('profiles').update({ grade }).eq('id', id)); },
+      async staffReview(id, action, note) { return ok(await sb.rpc('staff_review', { p_id: id, p_action: action, p_note: note || '' })); },
       async setPassword(id, pw) { return adminFn({ action: 'set_password', user_id: id, password: pw }); },
       async deleteUser(id) { return adminFn({ action: 'delete_user', user_id: id }); },
       async teles() { return ok(await sb.from('tele_box').select('*').order('created_at', { ascending: true })); },
@@ -1025,10 +1035,16 @@
     mode: remote ? 'supabase' : 'demo',
     DAILY, dayStart, DEFAULT_SETTINGS,
     async user() {
-      if (cachedUser === undefined) cachedUser = await B.user();
+      if (cachedUser === undefined) {
+        cachedUser = await B.user();
+        let asStaff = false; try { asStaff = localStorage.getItem('naru:asStaff') === '1'; } catch (e) {}   // 관리자 '부관리자 화면으로 보기'
+        if (cachedUser && cachedUser.grade === 'admin' && asStaff) cachedUser = Object.assign({}, cachedUser, { grade: 'staff', realGrade: 'admin' });
+      }
       return cachedUser;
     },
     async isAdmin() { const u = await this.user(); return !!(u && u.grade === 'admin'); },
+    /* 부관리자(staff) 포함: 심사 대기 · 회원 정보 · 영전 지급 · 사이트 설정 · 메인 배너만 */
+    async isStaff() { const u = await this.user(); return !!(u && (u.grade === 'admin' || u.grade === 'staff')); },
     checkId, checkPw,
     async usernameAvailable(id) { id = checkId(id); return B.usernameAvailable(id); },
     async signUp(id, pw, nickname, contact) {
@@ -1045,7 +1061,7 @@
     async signOut() { await B.signOut(); cachedUser = null; },
     /* 명부: 승인된 회원만 (관리자 페이지는 allProfiles) */
     async profiles() { return (await B.profiles()).filter(p => (p.approval || 'approved') === 'approved'); },
-    async allProfiles() { await this.requireAdmin(); return B.profiles(); },
+    async allProfiles() { await this.requireStaff(); return B.profiles(); },
     async setApproval(id, approval) { await this.requireAdmin(); return B.setApproval(id, approval); },
     async updateProfile(patch) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
@@ -1057,7 +1073,11 @@
 
     /* 사이트 설정 */
     async settings(fresh) { if (fresh || !cachedSettings) cachedSettings = await B.settings(); return cachedSettings; },
-    async saveSettings(patch) { await this.requireAdmin(); const s = await B.saveSettings(patch); cachedSettings = null; return s; },
+    async saveSettings(patch) {
+      await this.requireStaff();
+      if (!(await this.isAdmin()) && Object.keys(patch).some(k => !STAFF_SETTINGS.includes(k))) throw new Error('이 설정은 관리자만 바꿀 수 있어요.');
+      const s = await B.saveSettings(patch); cachedSettings = null; return s;
+    },
     windowState,
 
     /* 권한
@@ -1094,6 +1114,7 @@
 
     /* 관리자 전용 */
     async requireAdmin() { if (!(await this.isAdmin())) throw new Error('관리자만 할 수 있어요.'); },
+    async requireStaff() { if (!(await this.isStaff())) throw new Error('관리자만 할 수 있어요.'); },
     async grants() { cachedGrants = await B.grants(); return cachedGrants; },
     async addGrant(g) { await this.requireAdmin(); cachedGrants = null; return B.addGrant(g); },
     async removeGrant(id) { await this.requireAdmin(); cachedGrants = null; return B.removeGrant(id); },
@@ -1115,7 +1136,7 @@
     async markTeleRead(id) { const u = await this.user(); if (u) await B.markTeleRead(u.id, id); },
     async touch(page) { const u = await this.user(); if (u) await B.touch(u.id, page).catch(() => {}); },
     async rptA() { await this.requireAdmin(); return B.rptA(); },
-    async rptB() { await this.requireAdmin(); return B.rptB(); },
+    async rptB() { await this.requireStaff(); return B.rptB(); },
     /* 출석 · 지갑 · 상점 (영전 지급과 구매는 서버 함수에서만) */
     kstDay, streakOf, ATTEND, attendReward,
     async wallet() { const u = await this.user(); return u ? B.wallet(u.id) : emptyWallet(); },
@@ -1133,7 +1154,7 @@
     async badges() { if (!(await this.user())) return {}; if (!cachedBadges) cachedBadges = await B.badges().catch(() => ({})); return cachedBadges; },
     async shopLog() { await this.requireAdmin(); return B.shopLog(); },
     /* 관리자: 모든 회원 지갑 { user_id: wallet } · 영전 지급(음수면 회수) */
-    async adminWallets() { await this.requireAdmin(); return B.adminWallets(); },
+    async adminWallets() { await this.requireStaff(); return B.adminWallets(); },
     async statBoard() {
       await this.requireAdmin();
       const [chars, ws] = await Promise.all([this.list('characters'), B.adminWallets()]);
@@ -1143,7 +1164,7 @@
       return { stats: STATS, avg, tierOf, rows: pub.map(c => { const v = Object.fromEntries(STATS.map(st => [st, val(c, st)]));
         return { id: c.id, name: c.data.name, color: c.data.color || '', v, combat: combatOf(v) }; }).sort((a, b) => b.combat.power - a.combat.power) };
     },
-    async giveCoins(to, amount, note) { await this.requireAdmin(); const u = await this.user(); cachedBadges = null; return B.giveCoins(u.id, u.nickname, to, amount, note); },
+    async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); cachedBadges = null; return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */
     statBonus(badge, items, charId) {
       const out = {}; if (!badge) return out;
@@ -1201,7 +1222,10 @@
     async charNames() { return (await B.charNames()).filter(r => r.published_at); },
     get: (t, id) => B.get(t, id),
     async myCharacters() { const u = await this.user(); if (!u) return []; return (await B.list('characters')).filter(r => r.owner_id === u.id); },
-    async adminCharacters() { await this.requireAdmin(); return B.list('characters'); },
+    async adminCharacters() {
+      await this.requireStaff(); const rows = await B.list('characters');
+      return (await this.isAdmin()) ? rows : rows.filter(c => c.published_at || c.status === 'submitted');   // 부관리자: 게시된 것 + 심사 대기만
+    },
 
     /* 작성본 저장 (언제나). 새 캐릭터면 만들어요. 제출·반려 상태였다면 다시 "작성 중"으로 */
     async saveDraft(id, draft) {
@@ -1213,6 +1237,8 @@
       }
       const row = await B.get('characters', id);
       const c = await this.can('save', row); if (!c.ok) throw new Error(c.reason);
+      // 한 번 게시된 캐릭터의 스탯은 관리자만 바꿔요 (작성 중으로 돌아가도 게시 때 스탯 그대로 · 서버도 똑같이 막아요)
+      if (u.grade !== 'admin' && row.data && Object.keys(row.data).length) draft = Object.assign({}, draft, { stats: row.data.stats || '' });
       const patch = { draft, updated_at: now() };
       if (row.status !== 'draft') patch.status = 'draft';
       const r = await B.update('characters', id, patch);
@@ -1233,13 +1259,17 @@
       return r;
     },
     async publish(id) {
-      await this.requireAdmin(); const u = await this.user(); const row = await B.get('characters', id);
+      await this.requireStaff();
+      if (!(await this.isAdmin())) return B.staffReview(id, 'publish');
+      const u = await this.user(); const row = await B.get('characters', id);
       const data = row.draft || row.data;
       const r = await B.update('characters', id, { data, draft: null, status: 'published', published_at: now(), review_note: '', updated_at: now() });
       return r;
     },
     async reject(id, note) {
-      await this.requireAdmin(); const u = await this.user(); const row = await B.get('characters', id);
+      await this.requireStaff();
+      if (!(await this.isAdmin())) return B.staffReview(id, 'reject', note);
+      const u = await this.user(); const row = await B.get('characters', id);
       // 반려 = '작성 중'으로 돌려보내기 (본인 · 관리자만 보여요) · 게시 해제 + 게시본을 작성본으로 옮겨서 바로 고칠 수 있게
       // review_note 는 회원에게 보이지 않는 반려 표시 → 기간과 상관없이 다시 제출할 수 있어요 (게시하면 지워져요)
       const memo = String(note || '').trim().slice(0, 300) || '반려';

@@ -10,7 +10,7 @@ App.ready.then(async user => {
 
   // 게시 전 캐릭터는 본인·관리자만 볼 수 있어요
   const isAdm = !!(user && user.grade === 'admin');
-  const canSeeDraft = !!(row && user && (row.owner_id === user.id || isAdm));
+  const canSeeDraft = !!(row && user && (row.owner_id === user.id || isAdm || (user.grade === 'staff' && row.status === 'submitted')));   // 부관리자: 심사 대기만
   if (row && !row.published_at && !canSeeDraft) row = null;
   const orig = row;
   // 미리보기: 작성본으로 화면을 그려요 (?preview=1 이거나 아직 게시 전이면 자동)
@@ -216,7 +216,7 @@ App.ready.then(async user => {
 
       ${d.danger !== '' || d.rank ? `<div class="win" style="--i:2"><div class="dl"><span>DANGER LV. ${esc(d.rank || '')}</span><span class="bar"><i id="dbar"></i></span><b>${d.danger === '' ? '—' : d.danger + '%'}</b></div></div>` : ''}
 
-      <div class="win" style="--i:4"><div class="wh"><b>Stats</b>${mine && (isAdm || !statVals.some(v => v !== '')) ? '<button class="plus" data-edit="stat" title="스탯 적기">+</button>' : ''}</div>
+      <div class="win" style="--i:4"><div class="wh"><b>Stats</b>${mine && (isAdm || !(orig && orig.data && Object.keys(orig.data).length)) ? '<button class="plus" data-edit="stat" title="스탯 적기">+</button>' : ''}</div>
         <div class="pstats">${STAT_KEYS.map((k, i) => { const v = statVals[i], b = bonus[k] || 0, n = statTot[i];
           const shown = v === '' && !b ? '—' : (b ? String(n) : esc(v));
           return `<div style="--k:${i}"><span>${esc(k)}</span><i class="bar" style="--w:${Math.max(0, Math.min(100, n / statMax * 100))}%"><b></b>${b ? `<b class="bn" style="--l:${Math.max(0, Math.min(100, (n - b) / statMax * 100))}%;--w:${Math.min(100, b / statMax * 100)}%"></b>` : ''}</i><em>${shown === '—' ? shown : `<i class="sv" data-n="${n}">${shown}</i>`}${b ? `<sup class="bn">+${b}</sup>` : ''}</em></div>`; }).join('')}</div></div>
