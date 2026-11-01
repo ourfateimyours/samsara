@@ -52,6 +52,14 @@
     <a class="rb" href="admin.html" id="sb-admin" hidden><span class="ci" data-emb="admin"></span><b>관리</b></a>
   </nav>
 
+  <!-- 왼쪽 버튼 옆: 후계자 수업 · 대국 (홀로그램 유리 두 장 · 폰에선 미니 게임 아래로 옮겨져요) -->
+  <aside class="lb-heir" id="heir" aria-label="후계자 수업 · 대국">
+      <a class="hr-pane" id="hr-lesson" href="lesson.html" aria-label="후계자 수업 · 하루 한 과목"><i class="hr-spark" aria-hidden="true"></i>
+        <span class="hr-han" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.2c2.8-1 5.8-.8 9 1.2 3.2-2 6.2-2.2 9-1.2v12.6c-2.8-1-5.8-.8-9 1.2-3.2-2-6.2-2.2-9-1.2z"/><path d="M12 7.4v12.6"/><path d="M6 10.2c1.4-.3 2.8-.1 4 .5M6 13.4c1.4-.3 2.8-.1 4 .5" opacity=".6"/><path d="M18.4 1.6l.55 1.45 1.45.55-1.45.55-.55 1.45-.55-1.45-1.45-.55 1.45-.55z" fill="currentColor" stroke="none"/></svg></span><span class="hr-txt"><small>ACADEMY</small><b>후계자 수업</b></span><em class="hr-st" id="hr-lesson-st">오늘 1회</em></a>
+      <a class="hr-pane" id="hr-match" href="match.html" aria-label="대국 · 이틀에 1판"><i class="hr-spark" aria-hidden="true"></i>
+        <span class="hr-han" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" opacity=".5"/><circle cx="9" cy="9" r="2.7" fill="currentColor"/><circle cx="15" cy="15" r="2.7" fill="#14122a" stroke-width="1.6"/></svg></span><span class="hr-txt"><small>DUEL</small><b>대국</b></span><em class="hr-st" id="hr-match-st">…</em></a>
+  </aside>
+
   <!-- 오른쪽 위: 배너 — 비스듬히 걸린 HUD 창 (관리자 페이지 '메인 배너' 에서 만든 배너 + 등록 기간 · 출석) -->
   <aside class="lb-hud" id="hud" aria-label="소식">
     
@@ -127,7 +135,10 @@ $$('[data-emb]').forEach(el => {
 (function oneRow() {
   const mq = matchMedia('(max-width: 760px)'), side = $('.lb-side'), dock = $('.lb-dock');
   const sideBtns = [...side.children];
-  const apply = () => { if (mq.matches) sideBtns.forEach(b => dock.appendChild(b)); else sideBtns.forEach(b => side.appendChild(b)); };
+  const heir = $('#heir'), lobbyEl = heir.parentNode, hud = $('#hud');
+  const placeHeir = () => { if (!mq.matches) { heir.style.left = (side.offsetLeft + side.offsetWidth + 24) + 'px'; heir.style.top = (side.offsetTop + 4) + 'px'; } else heir.style.left = heir.style.top = ''; };
+  const apply = () => { if (mq.matches) { sideBtns.forEach(b => dock.appendChild(b)); hud.appendChild(heir); } else { sideBtns.forEach(b => side.appendChild(b)); lobbyEl.appendChild(heir); } placeHeir(); };
+  addEventListener('resize', placeHeir); setTimeout(placeHeir, 600);
   apply(); mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
 })();
 /* 별똥별 — 사진 속 방향(오른쪽 위 → 왼쪽 아래, 약 32°)으로 가끔 떨어져요 */
@@ -309,7 +320,7 @@ App.ready.then(async user => {
     if (Store.affToday(wal) >= Store.CAT.daily) return likeToast('<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
     petBusy = true;
     try {
-      const r = await Store.catPet(true); wal = r.wallet; affShow();
+      const r = await Store.catPet(true); wal = r.wallet; affShow(); if (window.pastMe) pastMe(r.perks);   // 재력 · 행운 특전
       // 5% 로 +10 · 또 5% 로 -10 (서버에서 정해요)
       if (r.bonus > 0) { likeToast(`<b>♥</b> 호감도가 크게 올라갑니다 +${r.changed}`, 'gift'); speak('사실 비밀이 있다냥 나는 서문 가문 사람들 중 니가 제일 좋다냥!'); }
       else if (r.bonus < 0) { likeToast(`<b>💔</b> 호감도가 떨어졌습니다 ${r.changed}`, 'down'); fig.classList.add('sulk'); setTimeout(() => fig.classList.remove('sulk'), 1600); speak('캬아아아갓컁앜ㅋ앙카앙ㄱ컄ㅇ아아악'); }
@@ -330,7 +341,27 @@ App.ready.then(async user => {
     } catch (e) { toast(e.message); }
     finally { petBusy = false; }
   });  /* 미니 게임 전광판: 오늘 이미 했으면 자물쇠 (서버 기록 기준이라 새로고침해도 그대로) */
-  Store.pangStatus().then(p => {
+const shutPane = (pane, st, what) => {
+  const a = $(pane); if (!a) return; a.classList.add('closed'); $(st).textContent = '쉬는 중'; a.setAttribute('aria-disabled', 'true');
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const line = what === 'lesson' ? '지금은 수업에 참여할 수 없다냐앙 문이 열리면 다시 와라냥' : '지금은 대국에 참여할 수 없다냐앙 판이 열리면 다시 와라냥';
+    if (catGone) toast('현재는 참여할 수 없어요!'); else speak(line);
+  });
+};
+Store.playOpen('lesson').then(p => { if (!p.open) shutPane('#hr-lesson', '#hr-lesson-st', 'lesson'); else if (!p.on) $('#hr-lesson').title = '닫혀 있지만 관리자라서 들어갈 수 있어요'; }).catch(() => {});
+Store.matchStatus().then(s => {
+  const el = $('#hr-match-st'); if (!el) return;
+  if (s.closed) { shutPane('#hr-match', '#hr-match-st', 'match'); return; }
+  if (s.soon) { el.textContent = '곧 열려요'; return; }
+  if (!s.hasChar) { el.textContent = '캐릭터 필요'; return; }
+  if (s.canPlay) { el.textContent = 'GO!'; el.classList.add('go'); return; }
+  const d = new Date(s.nextAt); el.textContent = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}부터`;
+  $('#hr-match').classList.add('done');
+}).catch(() => {});Store.lessonStatus().then(s => {
+  const t = s && s.today; if (!t || $('#hr-lesson').classList.contains('closed')) return;
+  $('#hr-lesson').classList.add('done'); $('#hr-lesson-st').textContent = `${t.grade} 修了`;
+}).catch(() => {});Store.pangStatus().then(p => {
     if (!p || !p.played) return;
     const b = $('#pang'); b.classList.add('locked'); b.removeAttribute('href'); b.setAttribute('aria-disabled', 'true');
     $('#pang-go').textContent = '🔒 내일 다시';

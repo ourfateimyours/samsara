@@ -139,6 +139,7 @@ App.ready.then(async user => {
       const r = await Store.checkIn($('#say').value);
       await loadAll(); renderAll();
       st.classList.add('thud'); setTimeout(() => st.classList.remove('thud'), 700);
+      if (r.perk && window.pastMe) setTimeout(() => pastMe(r.perk), 900);   // 재력 특전: 출석 영전 +50%
       $('#gain').innerHTML = `DAY ${r.day} · <b>+${r.gained}</b> 靈錢 · 지금 <b>${r.coins}</b> 영전 · ${r.streak}일 연속`;
       toast(r.day === 7 ? `7일째 출석! +${r.gained} 영전` : `출석 완료! DAY ${r.day} · +${r.gained} 영전`);
     } catch (e) { toast(e.message, 'err'); }

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>후계자 수업 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,400;1,400;1,500&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/lesson.css">
+</head>
+<body data-page="lesson" class="ls-astra" data-nofooter>
+
+<main class="ls-wrap" id="main"><div class="ls-msg">불러오는 중…</div></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script src="assets/js/lesson-insta.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=lesson.html'); return; }
+  const main = $('#main'), L = Store.LESSONS, G = Store.GRADES;
+  const po = await Store.playOpen('lesson').catch(() => ({ open: false }));   // 관리자가 닫아 두면 고양이가 안내해요 (관리자는 들어가요)
+  if (!po.open) { playClosed(main, 'lesson'); return; }
+  if (!po.on) toast('수업이 닫혀 있지만 관리자라서 들어왔어요.');
+  const CARD = {
+    kor: { wm: '國', en: 'WANTED · 人物 問答', how: ['흐린 두상 · 글 단서를 보고 인물 맞히기', '빨리 맞힐수록 점수 ↑ · 연속 정답 콤보', '목숨 3개 · 문제당 12초'] },
+    soc: { wm: '社', en: 'FAMILY MESSENGER', how: ['부모 세대 문자에 가문 분위기에 맞게 답장', '1초 안 보너스 · 3초 무난 · 5초 넘으면 차감', '문자 5통'] },
+    mor: { wm: '德', en: 'SERVICE · 好 感', how: ['랜덤 인물 옆에서 수발 들기', '행동 카드 3장 중 하나 · 맞으면 호감도 ♥', '부탁당 5초 · ♥ 가득이면 점수 +20%'] },
+    art: { wm: '藝', en: 'INSTAGRAM STORY', how: ['인물의 셀피 스토리를 보고 반응 남기기', '고른 반응에 따라 DM 답장이 달라요', '대박 · 무난 · 망함'] }
+  };
+  const KEYS = Object.keys(L), ABC = 'ABCD';
+  const av = (c, cls = 'ls-av') => `<span class="${cls}" style="${c && c.head ? `background-image:url('${esc(c.head)}');` : ''}${c && c.color ? `border-color:${esc(c.color)}` : ''}"></span>`;
+  const pop = (txt, bad) => { const p = document.createElement('div'); p.className = 'ls-pop' + (bad ? ' bad' : ''); p.textContent = txt; document.body.appendChild(p); setTimeout(() => p.remove(), 950); };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const num = n => (n || 0).toLocaleString('ko-KR');
+  const shuffleArr = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const gwa = s => { const c = String(s).charCodeAt(String(s).length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 ? '과의' : '와의'; };
+
+  let [status, chars, badges, items] = await Promise.all([Store.lessonStatus().catch(() => ({ today: null })), Store.list('characters').catch(() => []),
+    Store.badges().catch(() => ({})), Store.shopItems(true).catch(() => [])]);
+  const mine = chars.filter(c => c.owner_id === user.id && c.published_at && c.data && c.data.name);
+  let cur = (status.today && mine.find(c => c.id === status.today.char_id)) || mine[0];
+  try { const s = localStorage.getItem('naru:lesson:char'); if (!status.today && mine.find(c => c.id === s)) cur = mine.find(c => c.id === s); } catch (e) {}
+  let rankTab = (status.today && status.today.subj) || 'kor';
+
+  const statsOf = c => {
+    const base = Object.fromEntries(parseKV(c.data.stats)), b = Store.statBonus(badges[user.id], items, c.id);
+    return Store.STATS.map(k => [k, (parseFloat(base[k]) || 0) + (b[k] || 0)]);
+  };
+
+  const ICO = {
+    kor: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.2"/><path d="M15.2 15.2 21 21"/><path d="M8 9.2c.6-1.4 1.8-2.1 3.3-2.1" opacity=".6"/></svg>',
+    soc: '<svg viewBox="0 0 24 24"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 20 17h-9l-4.5 3.5V17H4a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 4 5.5z"/><path d="M7.5 10.2h9M7.5 13h5.5" opacity=".6"/></svg>',
+    mor: '<svg viewBox="0 0 24 24"><path d="M4 10h13v3.5a6.5 6.5 0 0 1-13 0z"/><path d="M17 11.2h1.6a2.4 2.4 0 0 1 0 4.8H16.4"/><path d="M8 3.5c-.8 1.2.8 1.8 0 3M12 3.5c-.8 1.2.8 1.8 0 3" opacity=".6"/><path d="M3 21h15"/></svg>',
+    art: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>'
+  };
+  const AC = { kor: '#9fd4ff', soc: '#8ff0c4', mor: '#ffb3c9', art: '#dcb8ff' }, AD = { kor: '#2f86d6', soc: '#1d9e6e', mor: '#de4f7a', art: '#8f55e0' };   // AC: 옅은 빛깔 · AD: 글자 · 선에 쓰는 진한 빛깔
+  function home() {
+    const t = status.today;
+    if (!mine.length) { main.innerHTML = `<div class="gl ls-msg">게시된 캐릭터가 있어야 수업을 들을 수 있어요.<br><a class="ls-btn" style="display:inline-block;margin-top:16px" href="index.html">로비로</a></div>`; return; }
+    main.innerHTML = `<div class="gm-head">
+        <div><h1 class="ls-ttl">후계자 수업</h1></div>
+        <div class="gm-today ${t ? 'off' : ''}"><span class="gm-orb"></span><div><b>${t ? '오늘 수업 완료' : '1회 남음'}</b></div><em>00:00 KST 초기화</em></div></div>
+      <section class="gm-hero" id="me"></section>
+      <div class="gm-sec"><span>✦ 수업 선택</span><i></i></div>
+      <div class="gm-cards">${KEYS.map((k, i) => {
+        const l = L[k], c = CARD[k], done = t && t.subj === k;
+        return `<button type="button" class="gm-card ${done ? 'done' : ''}" data-s="${k}" ${t && !done ? 'disabled' : ''} style="--ac:${AC[k]};--ad:${AD[k]}">
+          <span class="gm-corner" aria-hidden="true"></span><span class="gm-no">0${i + 1}</span>
+          <span class="gm-ico">${ICO[k]}</span><h3>${l.title}</h3><small class="gm-en">${l.name}</small>
+          <ul class="gm-how">${c.how.map(h => `<li>${h}</li>`).join('')}</ul>
+          <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${t.grade} · 결과 보기` : t ? '🔒 내일' : '시작 ▸'}</span></div>
+          ${done ? `<span class="gm-seal">${t.grade}</span>` : ''}</button>`; }).join('')}</div>
+      <section class="gm-rank"><span class="rk-corner a" aria-hidden="true">${STAR}</span><span class="rk-corner b" aria-hidden="true">${STAR}</span><header><div><h2>오늘의 수업 랭킹</h2></div>
+          <div class="gm-tabs">${KEYS.map(k => `<button type="button" data-r="${k}" class="${k === rankTab ? 'on' : ''}" style="--ac:${AC[k]};--ad:${AD[k]}">${L[k].name}</button>`).join('')}</div></header>
+        ${Store.mode === 'demo' ? `<div class="rk-demo">데모 미리보기 · 내가 <button type="button" data-pv="1">1등</button><button type="button" data-pv="2">2등</button><button type="button" data-pv="3">3등</button><button type="button" data-pv="5">5등</button><button type="button" data-pv="0">끄기</button></div>` : ''}
+        <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
+    if (Store.mode === 'demo' && t) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
+      $('.gm-today', main).insertAdjacentHTML('beforeend', '<button type="button" class="ls-btn" id="demo-reset">데모 · 다시 하기</button>');
+      $('#demo-reset').onclick = () => { try { localStorage.setItem('naru:t:lessons', JSON.stringify(JSON.parse(localStorage.getItem('naru:t:lessons') || '[]').filter(x => !(x.user_id === user.id && x.day === Store.kstDay())))); } catch (e) {} location.reload(); };
+    }
+    drawMe(); drawRank(); drawCheers();
+    $$('.gm-card', main).forEach(b => b.onclick = () => {
+      if (b.classList.contains('done')) return result(t);
+      if (!b.disabled) start(b.dataset.s);
+    });
+    $$('.gm-tabs button', main).forEach(b => b.onclick = () => { rankTab = b.dataset.r; $$('.gm-tabs button', main).forEach(x => x.classList.toggle('on', x === b)); drawRank(); });
+    $$('.rk-demo button', main).forEach(b => b.onclick = () => { rankPv = +b.dataset.pv; $$('.rk-demo button', main).forEach(x => x.classList.toggle('on', x === b && rankPv > 0)); drawRank(); });
+  }
+  const CHEER = { pencil: ['✏ 연필심', '#ffb36b'], sharp: ['✒ 샤프심', '#7ab8ff'], eraser: ['지우개', '#ff7aa8'] };
+  const burst = (el, n = 16) => {
+    const b = document.createElement('div'); b.className = 'chb'; const hc = el.dataset.hc || '#ff7aa8';
+    b.innerHTML = Array.from({ length: n }, (_, i) => { const a = Math.PI * 2 * i / n + Math.random() * .4, d = 70 + Math.random() * 70, s = Math.random() < .55;
+      return `<i class="${s ? 's' : 'h'}" style="--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 20}px;--sc:${.6 + Math.random() * .9};--rt:${(Math.random() - .5) * 300}deg;--hc:${hc};animation-delay:${Math.random() * .12}s"></i>`; }).join('');
+    el.appendChild(b); setTimeout(() => b.remove(), 1400);
+  };
+  async function drawCheers() {
+    document.getElementById('cheer-layer')?.remove();
+    const list = await Store.cheersToday().catch(() => []); if (!list.length) return;
+    const layer = document.createElement('div'); layer.id = 'cheer-layer'; layer.setAttribute('aria-label', '오늘의 응원 쪽지');
+    const H = Math.max(main.offsetTop + main.offsetHeight, innerHeight), W = document.documentElement.clientWidth;
+    layer.style.height = H + 'px'; document.body.appendChild(layer);
+    const hash = s => { let h = 2166136261; for (const ch of String(s)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
+    layer.innerHTML = list.map(x => {
+      const k = CHEER[x.kind] ? x.kind : 'pencil', h = hash(x.id), left = h % Math.max(1, W - 190), top = 90 + (hash(x.id + 'y') % Math.max(1, H - 300)), rot = (h % 13) - 6;
+      const to = x.to_nick ? `<span class="to">to. ${esc(x.to_nick)}${x.mine ? ' (나)' : ''}</span>` : '';
+      return k === 'eraser'
+        ? `<div class="ch-note eraser" data-hc="${CHEER[k][1]}" style="left:${left}px;top:${top}px;--r:${rot}deg"><div class="sleeve"><span>ERASER</span><span>♡</span></div><div class="body"><p>${esc(x.msg)}</p>${to}</div></div>`
+        : `<div class="ch-note ${k}" data-hc="${CHEER[k][1]}" style="left:${left}px;top:${top}px;--r:${rot}deg"><span class="kind">${CHEER[k][0]}</span><p>${esc(x.msg)}</p>${to}</div>`;
+    }).join('');
+    $$('.ch-note', layer).forEach((n, i) => {
+      setTimeout(() => { n.classList.add('in'); setTimeout(() => burst(n), 260); }, 300 + i * 320);
+      // 끌어서 옮기기 (그냥 누르면 별 · 하트)
+      let sx, sy, ox, oy, moved = false;
+      n.onpointerdown = e => { sx = e.clientX; sy = e.clientY; ox = n.offsetLeft; oy = n.offsetTop; moved = false; n.setPointerCapture(e.pointerId); n.classList.add('drag'); };
+      n.onpointermove = e => { if (sx == null) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) + Math.abs(dy) > 4) moved = true; n.style.left = ox + dx + 'px'; n.style.top = oy + dy + 'px'; };
+      n.onpointerup = () => { sx = null; n.classList.remove('drag'); if (!moved) burst(n, 20); };
+    });
+  }  function drawMe() {
+    const d = cur.data, locked = !!status.today, hi = locked ? L[status.today.subj].stat : '', st = statsOf(cur), tot = st.reduce((a, [, v]) => a + v, 0);
+    const box = $('#me'); box.style.setProperty('--cc', d.color || '#c4b6ff');
+    box.innerHTML = `<div class="gm-avw">${av(d, 'ls-av gm-av')}<span class="gm-ring" aria-hidden="true"></span></div>
+      <div class="gm-id">${d.team ? `<small>${esc(d.team)}</small>` : ''}<b>${esc(d.name)}</b>
+        <span class="gm-pow">스탯 합계 <em>${num(tot)}</em></span></div>
+      <div class="gm-stats">${st.map(([k, v]) => `<div class="gm-st ${k === hi ? 'hl' : ''}"><span>${k}</span><b>${num(v)}</b><i style="--w:${Math.max(2, Math.min(100, v))}%"></i></div>`).join('')}</div>`;
+  }
+  let rankPv = 0;
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 0c.9 6.6 4.4 10.1 11 11-6.6.9-10.1 4.4-11 11-.9-6.6-4.4-10.1-11-11 6.6-.9 10.1-4.4 11-11z"/></svg>';
+  async function drawRank() {
+    const pod = $('#pod'), ol = $('#rk'), mineBox = $('#rkme'); if (!ol) return; const want = rankTab;
+    let rows = await Store.lessonRank(want).catch(() => []); if (want !== rankTab) return;
+    if (rankPv) {
+      const others = chars.filter(c => c.published_at && c.owner_id !== user.id).map(c => ({ name: c.data.name, color: c.data.color || '', head: c.data.head || '' }));
+      const fake = Array.from({ length: 7 }, (_, i) => Object.assign({}, others[i % Math.max(1, others.length)] || { name: '후계자 ' + (i + 1) }, { score: 9800 - i * 1250 }));
+      const meRow = { name: cur.data.name, color: cur.data.color || '', head: cur.data.head || '', me: true };
+      fake[0].msg = '(예시) 오늘의 수석 자리는 내 거야'; meRow.msg = (() => { try { return localStorage.getItem('naru:lesson:msg') || '(예시) 내가 쓴 한마디가 여기 흘러요'; } catch (e) { return ''; } })();
+      fake.splice(rankPv - 1, 0, meRow); fake.forEach((r, i) => { if (r.me) r.score = (fake[i - 1] ? fake[i - 1].score - 600 : 10400); });
+      rows = fake.slice(0, 8);
+    }
+    const top = rows[0] ? rows[0].score || 1 : 1, myIdx = rows.findIndex(r => r.me);
+    const run = rows[0] ? `✦&nbsp; ${rows[0].msg ? `<q>${esc(rows[0].msg)}</q>` : '오늘의 수석이 정해졌어요'} &nbsp;` : '';   // 1등이 쓴 한마디만 흘러요 (이름 · 점수는 아래 깃발에)
+    mineBox.innerHTML = (myIdx >= 0 ? `<div class="rk-me-chip"><span class="rk-me-star">${STAR}</span><div><small>나의 순위</small><b>${myIdx + 1}<i>위</i></b></div>
+        <div class="rk-me-sc"><small>${myIdx ? `${myIdx}위까지 ${num(rows[myIdx - 1].score - rows[myIdx].score)}점` : '점수'}</small><b>${num(rows[myIdx].score)}</b></div></div>` : '')
+      + (run ? `<div class="rk-run" aria-label="오늘의 수석 ${esc(rows[0].name)}"><div class="rk-track"><span>${run}</span></div></div>`
+        : `<span class="rk-me-star off">${STAR}</span><p>아직 오늘 ${L[want].name} 수업 기록이 없어요.</p>`);
+    mineBox.classList.toggle('on', myIdx >= 0); mineBox.classList.toggle('gold', myIdx === 0);
+    const cell = (r, n) => !r ? `<div class="rk-c p${n} empty"><div class="rk-card"><span class="rk-num">${n}</span><span class="ls-av rk-av"></span><b>비어 있어요</b><em>—</em></div></div>`
+      : `<div class="rk-c p${n} ${r.me ? 'me' : ''}" style="--cc:${esc(r.color || '#c4b6ff')}">
+          <span class="rk-beam" aria-hidden="true"></span>${n === 1 ? `<span class="rk-star" aria-hidden="true">${STAR}</span>` : ''}
+          <div class="rk-card"><span class="rk-num">${n}</span>
+          <span class="rk-avw">${av(r, 'ls-av rk-av')}${r.me ? '<span class="rk-tag">나</span>' : ''}</span>
+          <b>${esc(r.name)}</b><em>${num(r.score)}</em><small>${n === 1 ? '오늘의 수석' : n === 2 ? '차석' : '삼석'}</small></div></div>`;    pod.innerHTML = cell(rows[1], 2) + cell(rows[0], 1) + cell(rows[2], 3);
+    ol.innerHTML = rows.slice(3).map((r, i) => `<li class="${r.me ? 'me' : ''}" style="--cc:${esc(r.color || '#c4b6ff')}"><span class="n">${i + 4}</span>${av(r)}<span class="nm">${esc(r.name)}${r.me ? ' <i>나</i>' : ''}</span>
+        <span class="bar"><i style="--w:${Math.max(4, Math.round(r.score / top * 100))}%"></i></span><b>${num(r.score)}</b></li>`).join('')
+      || (rows.length ? '' : `<li class="ls-none">아직 오늘 ${L[want].name} 수업을 들은 사람이 없어요. 첫 번째 주인공이 되어 보세요.</li>`);
+  }
+  let tick = null;
+  const timer = (secs, onEnd) => {
+    clearInterval(tick); const t0 = Date.now(), ring = $('#ring');
+    const draw = () => { const left = Math.max(0, secs * 1000 - (Date.now() - t0)); if (ring) { ring.style.setProperty('--p', left / (secs * 10)); ring.textContent = Math.ceil(left / 1000); ring.classList.toggle('hot', left < 3000); } return left; };
+    draw(); tick = setInterval(() => { const left = draw(); if (window.lsTick) window.lsTick(Date.now() - t0); if (!left) { clearInterval(tick); onEnd(); } }, 100);
+    return () => Date.now() - t0;
+  };
+  const stop = () => { clearInterval(tick); window.lsTick = null; };
+
+  let busy = false;
+  const askStart = subj => new Promise(done => {
+    const l = L[subj], box = document.createElement('div'); box.className = 'ls-modal';
+    let last = ''; try { last = localStorage.getItem('naru:lesson:msg') || ''; } catch (e) {}
+    box.innerHTML = `<div class="ls-mbox" role="dialog" aria-modal="true" aria-labelledby="ls-mt" style="--ac:${AC[subj]}">
+        <span class="ls-mico">${ICO[subj]}</span><h3 id="ls-mt">「${l.title}」 수업을 시작할까요?</h3>
+        <p>${esc(cur.data.name)}${gwa(cur.data.name).slice(0, 1) === '과' ? '으로' : '로'} 들어요 · 하루 한 과목 · 중간에 나가면 그때까지 점수로 끝나요</p>
+        <label class="ls-mfield"><span>✦ 1등이 되면 전광판에 흐를 한마디 <small>선택 · 40자</small></span>
+          <input type="text" id="ls-msg" maxlength="40" placeholder="예) 오늘의 수석은 나야" value="${esc(last)}"><em id="ls-cnt">${last.length} / 40</em></label>
+        <div class="ls-macts"><button type="button" class="ls-btn" data-x>취소</button><button type="button" class="ls-btn w" data-go>수업 시작 ▸</button></div></div>`;
+    document.body.appendChild(box);
+    const inp = $('#ls-msg', box), close = v => { box.remove(); done(v); };
+    inp.oninput = () => { $('#ls-cnt', box).textContent = inp.value.length + ' / 40'; };
+    $('[data-x]', box).onclick = () => close(null); box.onclick = e => { if (e.target === box) close(null); };
+    $('[data-go]', box).onclick = () => { const v = inp.value.trim(); try { localStorage.setItem('naru:lesson:msg', v); } catch (e) {} close({ msg: v }); };
+    box.onkeydown = e => { if (e.key === 'Escape') close(null); if (e.key === 'Enter') $('[data-go]', box).click(); };
+    setTimeout(() => inp.focus(), 30);
+  });
+  async function start(subj) {
+    if (busy) return; busy = true;
+    const ok = await askStart(subj); if (!ok) { busy = false; return; }
+    let s; try { s = await Store.lessonStart(subj, cur.id, ok.msg); } catch (e) { toast(e.message, 'err'); busy = false; return; }
+    busy = false;    const st = { subj, score: 0, combo: 0, lives: s.lives, hearts: s.hearts, love: s.love, log: [], hint: s.hint || 0, retry: s.retry || 0 };
+    play(st, s.q);
+  }
+  let curSt = null;
+  function play(st, q) { curSt = st; document.getElementById('cheer-layer')?.remove(); ({ kor, soc, mor, art })[st.subj](st, q); }   // 수업 중엔 응원 쪽지를 치워요
+  // 행운 특전 1단계 · 힌트: 오답 보기 하나를 흐리게
+  main.addEventListener('click', async e => {
+    const b = e.target.closest('#ls-hint'); if (!b || !curSt || !(curSt.hint > 0)) return;
+    b.disabled = true;
+    try {
+      const h = await Store.lessonHint(); curSt.hint = h.hint;
+      const op = $(`[data-i="${h.remove}"]`, main); if (op) { op.classList.add('hinted'); op.disabled = true; }
+      b.remove(); pastMe(h.perk);
+    } catch (err) { toast(err.message, 'err'); b.disabled = false; }
+  });
+  async function answer(st, choice, again) {
+    stop(); let r;
+    try { r = await Store.lessonAnswer(choice); } catch (e) { toast(e.message, 'err'); return null; }
+    if (r.retry) {   // 행운 특전 2단계 · 다시 하기: 고른 오답만 막고 같은 문제를 새 시간으로
+      st.retry = r.retryLeft; $$('[data-i]', main).forEach(b => { b.disabled = b.classList.contains('hinted'); });
+      const w = $(`[data-i="${r.wrong}"]`, main); if (w) { w.classList.remove('right'); w.classList.add('wrong', 'hinted'); w.disabled = true; }
+      pastMe(r.perk); if (again) again(); return null;
+    }
+    Object.assign(st, { score: r.score, combo: r.combo, lives: r.lives });
+    if (r.spared) setTimeout(() => pastMe(r.perk), 700);   // 외모 특전: 틀린 답을 한 번 봐줬어요 → 과거의 나 문자
+    return r;
+  }
+  async function next(st, r, delay) {
+    await wait(delay);
+    if (r.result) { status.today = r.result; if (r.result.perk) setTimeout(() => pastMe(r.result.perk), 1400); return result(r.result, st); }   // 스탯 보정이 붙었으면 과거의 나에게서 문자
+    let q; try { q = await Store.lessonNext(); } catch (e) { toast(e.message, 'err'); return; }
+    play(st, q);
+  }
+  const hud = (st, extra = '') => `<div class="ls-hud"><span class="t">${L[st.subj].title}<span>${L[st.subj].han}</span></span>${extra}
+    ${st.hint > 0 ? '<button type="button" class="ls-hint" id="ls-hint">💡 힌트</button>' : ''}<span class="ls-combo">${st.combo > 1 ? st.combo + ' COMBO' : ''}</span><span class="score"><small>SCORE</small><b id="sc">${num(st.score)}</b></span><span class="ls-ring" id="ring">0</span></div>`;
+
+  const KIND = { head: ['頭', 'HEAD'], body: ['身', 'FULL BODY'], item: ['物', 'BELONGING'], persona: ['性', 'PERSONA'], song: ['曲', 'THEME SONG'], quote: ['言', 'QUOTE'], skill: ['術', 'ABILITY'] };
+  function kor(st, q) {
+    const lives = `<span class="ls-lives">${[0, 1, 2].map(i => `<i class="${i < st.lives ? '' : 'x'}"></i>`).join('')}</span>`, kd = KIND[q.kind] || ['?', ''];
+    const art = q.kind === 'head' ? `<span class="face blur" id="face" style="background-image:url('${esc(q.media)}')"></span>`
+      : q.kind === 'body' ? `<span class="face pic"><img id="sil" src="${esc(q.media)}" alt="" referrerpolicy="no-referrer"><span class="tiles" id="tiles">${'<i></i>'.repeat(20)}</span></span>`
+      : q.kind === 'item' ? `<span class="face pic light"><img src="${esc(q.media)}" alt="" referrerpolicy="no-referrer"></span>`
+      : q.kind === 'song' ? `<span class="face disc"><i></i><iframe id="yt" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(q.media)}?autoplay=1&start=40&controls=0&playsinline=1" allow="autoplay; encrypted-media" title="테마곡" tabindex="-1"></iframe></span>`
+      : `<span class="face clue">${kd[0]}</span>`;
+    main.innerHTML = `<div class="gl ls-play">${hud(st, lives)}
+      <div class="wanted"><div class="poster">${art}<span class="cap">WANTED · No.${String(q.no).padStart(2, '0')}</span></div>
+        <div class="clue"><small>WANTED ${String(q.no).padStart(2, '0')} / ${String(q.total).padStart(2, '0')} · ${kd[1]}</small><p>${esc(q.ask)}</p>
+          ${q.text ? `<blockquote class="ls-quote">${esc(q.text)}</blockquote>` : ''}${q.kind === 'song' ? '<div class="ls-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' : ''}
+          <div class="hint">${q.hints.map(h => `<span>${esc(h)}</span>`).join('')}</div>
+          <div class="ls-ops">${q.opts.map((o, i) => `<button type="button" class="ls-op" data-i="${i}"><span class="k">${ABC[i]}</span>${esc(o)}</button>`).join('')}</div>
+          <div class="ls-pts" id="pts"></div></div></div></div>`;
+    const face = $('#face'), sil = $('#sil'), secs = q.secs;
+    if (face) window.lsTick = ms => face.style.setProperty('--bl', Math.max(0, 12 - ms / 1000 * 1.4) + 'px');
+    const tiles = shuffleArr($$('#tiles i', main)); if (tiles.length) window.lsTick = ms => { const n = Math.floor(Math.min(1, ms / (secs * 1000) * 1.25) * tiles.length); tiles.forEach((t, k) => t.classList.toggle('off', k < n)); };
+    sil && (sil.onerror = () => sil.replaceWith(Object.assign(document.createElement('b'), { className: 'face clue', textContent: kd[0] })));
+    const go = async i => {
+      $$('.ls-op', main).forEach(b => b.disabled = true);
+      const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
+      if (face) face.style.setProperty('--bl', '0px'); tiles.forEach(t => t.classList.add('off'));
+      $$('.ls-op', main).forEach((b, k) => { if (k === r.ok) b.classList.add('right'); else if (k === i) b.classList.add('wrong'); });
+      $('#pts').innerHTML = r.right ? `정답 <b>+${num(r.gain)}</b>` : i < 0 ? '시간 초과 · 목숨 −1' : '틀렸어요 · 목숨 −1';
+      pop(r.right ? '+' + num(r.gain) : '✕', !r.right);
+      next(st, r, q.kind === 'song' ? 1800 : 1300);
+    };
+    $$('.ls-op', main).forEach(b => b.onclick = () => go(+b.dataset.i));
+    timer(q.secs, () => go(-1));
+  }
+  function soc(st, q) {
+    const now = new Date(), hm = `${now.getHours() < 12 ? '오전' : '오후'} ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, '0')}`;
+    st.logs = st.logs || {}; const log = st.logs[q.from] = st.logs[q.from] || []; log.push({ in: q.msg });
+    const bub = m => m.in ? `<div class="im in">${esc(m.in)}</div>` : m.out ? `<div class="im out">${esc(m.out)}</div>` : `<div class="im in scold">${esc(m.scold)}</div>`;
+    main.innerHTML = `<div class="msg-wrap"><div class="phone2 ios"><div class="scr">
+        <div class="im-bar"><span class="im-back">‹ <b>${st.logs ? Object.keys(st.logs).length : 1}</b></span>
+          <div class="im-who"><span class="im-av">${esc(q.from.slice(0, 1))}</span><b>${esc(q.from)} ›</b></div><span class="im-cam" aria-hidden="true"></span></div>
+        <div class="chat" id="chat"><time>iMessage<br>오늘 ${hm}</time>${log.map(bub).join('')}</div>
+        <div class="replies">${q.opts.map((o, i) => `<button type="button" data-i="${i}">${esc(o)}</button>`).join('')}</div>
+        <div class="im-input"><span class="im-plus">+</span><span class="im-field">iMessage</span></div></div></div>
+      <div class="msg-side">${hud(st)}<div class="tone" id="tone">
+        <div data-t="fast"><b>0 ~ 1초</b> 정답이면 보너스 · 최대 +1,500</div><div data-t="ok"><b>1 ~ 3초</b> 무난 · 빠를수록 더</div>
+        <div data-t="slow"><b>3 ~ 5초</b> 핀잔 · +400 ~ 700</div><div data-t="late"><b>5초 넘음 · 틀린 답</b> −500</div></div>
+        <p class="ls-pts" style="text-align:left">${esc(q.house)} · ${q.no} / ${q.total}통</p></div></div>`;
+    const chat = $('#chat'); chat.scrollTop = chat.scrollHeight;
+    const go = async i => {
+      $$('.replies button', main).forEach(b => b.disabled = true);
+      const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
+      $$('.replies button', main).forEach((b, k) => { if (k === r.ok) b.classList.add('right'); else if (k === i) b.classList.add('wrong'); });
+      $$('#tone div').forEach(d => d.classList.toggle('on', d.dataset.t === r.tier || (r.tier === 'wrong' && d.dataset.t === 'late')));
+      if (i >= 0) { log.push({ out: q.opts[i] }); chat.insertAdjacentHTML('beforeend', bub({ out: q.opts[i] }) + '<small class="im-read">읽음</small>'); }
+      if (r.scold) { log.push({ scold: r.scold }); setTimeout(() => { chat.insertAdjacentHTML('beforeend', bub({ scold: r.scold })); chat.scrollTop = chat.scrollHeight; }, 450); }
+      chat.scrollTop = chat.scrollHeight; $('#sc').textContent = num(r.score);
+      pop(r.spared ? '모면' : (r.gain > 0 ? '+' : '') + num(r.gain), !r.spared && r.gain <= 0);
+      next(st, r, r.spared ? 2200 : 1500);
+    };
+    $$('.replies button', main).forEach(b => b.onclick = () => go(+b.dataset.i));
+    timer(q.secs, () => go(-1));
+  }
+  function mor(st, q) {
+    const H = L.mor.hearts, w = q.who;
+    main.innerHTML = `<div class="gl vn" style="--cc:${esc(w.color || '#fff')}"><div class="vn-stage"><span class="ls-ring" id="ring">0</span>
+        <span class="score"><small>SCORE</small><b id="sc">${num(st.score)}</b></span>${av(w)}
+        <div class="vn-aff">${esc(w.name)}${gwa(w.name)} 호감도<span class="hearts" id="hearts">${Array.from({ length: H }, (_, i) => `<i class="${i < st.hearts ? '' : 'x'}"></i>`).join('')}</span></div>
+        <div class="vn-aff sub">${st.love ? '♥ 가득 · 이번 시봉 점수 +20%' : `♥ ${H}개를 채우면 이 인물 시봉 점수 +20%`} · ${q.no} / ${q.total}</div></div>
+      <div class="vn-box"><span class="nm" style="background:${esc(w.color || '#fff')};color:#fff">${esc(w.name)}</span><p id="line">${esc(q.line)}</p></div>
+      <div class="vn-acts">${q.opts.map((o, i) => `<button type="button" data-i="${i}"><small>${ABC[i]}</small><span>${esc(o)}</span></button>`).join('')}</div></div>`;
+    const go = async i => {
+      $$('.vn-acts button', main).forEach(b => b.disabled = true);
+      const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
+      $$('.vn-acts button', main).forEach((b, k) => { if (k === r.ok) b.classList.add('right'); else if (k === i) b.classList.add('wrong'); });
+      st.hearts = r.hearts; $$('#hearts i').forEach((h, k) => h.classList.toggle('x', k >= st.hearts));
+      $('#line').textContent = r.react || (r.right ? '…고마워.' : i < 0 ? '…됐어.' : '…');
+      $('#sc').textContent = num(r.score);
+      pop(r.right ? '♥ +' + num(r.gain) : r.spared ? '모면' : '✕', !r.right && !r.spared);
+      next(st, r, r.spared ? 2200 : 1600);
+    };
+    $$('.vn-acts button', main).forEach(b => b.onclick = () => go(+b.dataset.i));
+    timer(q.secs, () => go(-1));
+  }
+
+  function art(st, q) {
+    const w = q.who;
+    main.innerHTML = `<div class="st-wrap"><div class="story" id="story">
+        <img class="shot" src="${esc(q.img)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'사진을 불러올 수 없어요'}))">
+        <div class="prog">${Array.from({ length: q.total }, (_, k) => `<i class="${k < q.no - 1 ? 'd' : ''}" ${k === q.no - 1 ? 'id="bar"' : ''}></i>`).join('')}</div>
+        <div class="who">${av(w)}<b>${esc(w.handle || w.name)}</b><small>${esc(q.ago || '')}</small></div>
+        ${q.sticker ? `<div class="cap">${esc(q.sticker)}</div>` : ''}<div class="burst" id="burst"></div>
+        <div class="send"><span>메시지 보내기…</span><span style="flex:none;border:0;padding:0;font-size:20px;background:none">♡</span></div></div>
+      <div class="st-side">${hud(st)}<p class="ls-pts" style="text-align:left;margin:-6px 0 12px">STORY ${q.no} / ${q.total}</p><div class="st-replies">${q.opts.map((o, i) => `<button type="button" data-i="${i}"><span class="e">${esc(o[0])}</span>"${esc(o[1])}"</button>`).join('')}</div>
+        <div class="dm" id="dm"><small>DM · 반응을 고르면 답장이 와요</small></div></div></div>`;
+    const bar = $('#bar'); window.lsTick = ms => bar.style.setProperty('--sx', Math.min(1, ms / (q.secs * 1000)));
+    const go = async i => {
+      $$('.st-replies button', main).forEach(b => b.disabled = true);
+      if (i >= 0) { $$('.st-replies button', main)[i].classList.add('right'); const b = $('#burst'); b.textContent = q.opts[i][0]; b.classList.add('go'); }
+      const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
+      const cls = r.res === '대박' ? '' : r.res === '무난' ? 'mid' : 'bad';
+      setTimeout(() => { $('#dm').innerHTML = `<small>DM · ${esc(w.handle || w.name)}</small><span class="res ${cls}">${esc(r.res)}</span><br>${r.dm ? `<span class="bub in">${esc(r.dm)}</span>` : '<span class="bub in" style="opacity:.5">(읽음)</span>'}`; }, 700);
+      next(st, r, 3200);
+    };
+    $$('.st-replies button', main).forEach(b => b.onclick = () => go(+b.dataset.i));
+    timer(q.secs, () => go(-1));
+  }
+
+  function result(t, st) {
+    stop(); const l = L[t.subj], g = G.indexOf(t.grade);
+    const line = t.subj === 'kor' ? `SCORE ${num(t.score)} · ${t.right} / ${t.total} · MAX ${t.combo_max} COMBO`
+      : t.subj === 'art' ? `SCORE ${num(t.score)} · ${t.res}` : `SCORE ${num(t.score)} · ${t.right} / ${t.total}`;
+    main.innerHTML = `<div class="gl ls-res"><div class="ls-grades">${G.map((x, i) => `<span class="${i === g ? 'on' : ''}">${x}</span>`).join('')}</div>
+      <div class="ls-seal">${t.grade}</div><h3>${l.title} · ${t.grade}등</h3><div class="sc">${line}</div>
+      <div class="ls-gain"><span>${l.stat}</span><b>${t.delta > 0 ? '+' + t.delta : t.delta < 0 ? '−' + -t.delta : '±0'}</b>${t.before != null ? `<em>${num(t.before)} → ${num(t.after)}</em>` : ''}</div>
+      ${t.rank ? `<div class="ls-rk">오늘의 ${l.name} 랭킹 <b>${t.rank}위</b></div>` : ''}
+      <div class="acts"><button type="button" class="ls-btn" id="back">수업 목록으로</button><a class="ls-btn w" href="index.html">로비로</a></div></div>`;
+    $('#back').onclick = async () => { badges = await Store.badges().catch(() => badges); rankTab = t.subj; home(); };
+  }
+
+  home();
+});
+</script>
+</body>
+</html>

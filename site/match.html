@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대국 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@300;400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/match.css">
+</head>
+<body data-page="match" class="mt-noir" data-nofooter>
+
+<main class="mt-wrap">
+  <!-- 로비: 방 목록 · 방 열기 -->
+  <section class="mt-view" id="v-lobby">
+    <div class="mt-head"><div><h1>대국</h1></div><span class="mt-today" id="st"><span class="mt-orb"></span><b>불러오는 중…</b></span></div>
+    <p class="mt-demo-note" id="demo-note" hidden>데모: 내 방에 '연습 상대 부르기'를 누르거나 다른 방에 들어가면, 연습 상대(컴퓨터)와 둬요. 실제 사이트에선 진짜 회원끼리 둬요.</p>
+    <div class="lobby"><div class="rooms" id="rooms"></div>
+      <aside class="gl open" id="open">
+        <div class="tabhd"><span class="tab"><i></i>방 열기</span><span class="ln"><i></i><i></i><i></i></span></div>
+        <label class="lb">게임</label>
+        <div class="seg" id="o-game"><button type="button" class="on" data-g="gomoku">오목</button><button type="button" data-g="chess">체스</button></div>
+        <label class="lb">베팅 · 내가 걸 것 (상대는 들어올 때 따로 골라요)</label>
+        <div class="seg" id="o-bet"><button type="button" data-b="stat">⚔ 술력</button><button type="button" data-b="msg">✉ 메시지</button><button type="button" class="on" data-b="coin">💰 영전</button></div>
+        <div id="o-body"></div>
+        <div class="ft"><span class="left" id="o-left"></span><button type="button" class="mt-btn w" id="o-go">방 열기</button></div>
+      </aside></div>
+  </section>
+
+  <!-- 대국판 -->
+  <section class="mt-view" id="v-game" hidden>
+    <div class="mt"><div class="boardwrap"><div id="board"></div><div class="toast-fx" id="fx"></div></div>
+      <aside class="side">
+        <div class="gl pl" id="p-opp"><div class="tabhd"><span class="tab"><i></i>상대</span><span class="ln"></span></div><span class="av" id="opp-av"></span><div><b id="opp-nm"></b><small id="opp-side"></small></div><div class="clock"><small>남은 시간</small><b id="opp-clock">10:00</b></div></div>
+        <div class="gl betbar"><div class="tabhd"><span class="tab"><i></i>베팅</span><span class="ln"></span></div><span class="bb"><small>나</small><span class="chip" id="bet-me"></span></span><span class="bb"><small>상대</small><span class="chip" id="bet-opp"></span></span></div>
+        <div class="gl skills"><h4 class="tabhd"><span class="tab"><i></i>스킬</span><span class="ln"></span><span id="uses">남은 횟수 2</span></h4>
+          <button type="button" class="sk" id="sk1"><span class="ic" id="ic1"></span><span><b id="sk1-nm"></b><small id="sk1-ds"></small></span></button>
+          <button type="button" class="sk" id="sk2"><span class="ic" id="ic2"></span><span><b id="sk2-nm"></b><small id="sk2-ds"></small></span></button></div>
+        <div class="gl pl" id="p-me"><div class="tabhd"><span class="tab"><i></i>나</span><span class="ln"></span></div><span class="av" id="me-av"></span><div><b id="me-nm"></b><small id="me-side"></small></div><div class="clock"><small>남은 시간</small><b id="me-clock">10:00</b></div></div>
+        <div class="gl log" id="log"></div>
+        <div class="dev" id="dev" hidden><button type="button" id="ff">⏩ (데모) 9분 빨리 감기</button><button type="button" id="gg">🏳 (데모) 기권</button><button type="button" id="gw">🏆 (데모) 승리</button><button type="button" id="gd">🤝 (데모) 무승부</button></div>
+      </aside></div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="mt-view" id="v-res" hidden><div class="res-wrap res" id="res"></div></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=match.html'); return; }
+  const po = await Store.playOpen('match').catch(() => ({ open: false }));   // 관리자가 닫아 두면 고양이가 안내해요 (관리자는 들어가요)
+  if (!po.open) { playClosed($('.mt-wrap'), 'match'); return; }
+  if (!po.on) toast('대국이 닫혀 있지만 관리자라서 들어왔어요.');
+  const M = Store.MATCH, DEMO = Store.mode === 'demo';
+  const GO = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" opacity=".5"/><circle cx="9" cy="9" r="2.7" fill="currentColor"/><circle cx="15" cy="15" r="2.7" fill="#14122a"/></svg>';
+  const KN = '<svg viewBox="0 0 24 24"><path d="M7 21h11M8.5 18h8l-.6-4.5c2.4-1.8 3.1-4.8 1.6-7.6C16.2 3.4 13 2.5 10.6 3.4L9.4 2l-.7 2.3C6.3 5.8 5 8.5 5.6 11.2L8 12.4l2.6-1.6L9.3 14z"/><circle cx="10.8" cy="7" r=".8" fill="currentColor"/></svg>';
+  const IC = { erase: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>', again: '<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7"/></svg>', frost: '<svg viewBox="0 0 24 24"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/></svg>' };
+  const BET = { coin: '💰 영전', stat: '⚔ 술력', msg: '✉ 개인 메시지' };
+  const betAmt = b => b.kind === 'coin' ? b.amount.toLocaleString() : b.kind === 'stat' ? String(b.amount) : '?';
+  const ago = iso => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 6e4)); return m < 1 ? '방금' : m + '분 전'; };
+  const show = id => ['v-lobby', 'v-game', 'v-res'].forEach(v => $('#' + v).hidden = v !== id);
+  if (DEMO) $('#demo-note').hidden = false;
+
+  let status, game = 'gomoku', betKind = 'coin';
+  async function lobby() {
+    show('v-lobby');
+    status = await Store.matchStatus().catch(() => ({ canPlay: false }));
+    const wal = await Store.wallet().catch(() => ({ coins: 0 }));
+    $('#st').innerHTML = `<span class="mt-orb"></span><b>${status.soon ? '곧 열려요' : !status.hasChar ? '게시된 캐릭터가 필요해요' : status.canPlay ? '지금 둘 수 있어요' : '다음 대국까지 기다려요'}</b><em>${status.canPlay || !status.nextAt ? '이틀에 1판' : new Date(status.nextAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 부터'}</em>`;
+    if (DEMO && !status.canPlay && status.hasChar) {   // 데모 전용: 이틀 제한 풀기 (실제 사이트엔 안 나와요)
+      $('#st').insertAdjacentHTML('beforeend', '<button type="button" class="mt-btn w" id="demo-reset" style="margin-left:8px;padding:5px 10px;font-size:11px">데모 · 다시 하기</button>');
+      $('#demo-reset').onclick = async () => {
+        for (const r of (await Store.matchRooms().catch(() => [])).filter(r => r.mine)) await Store.matchCancel(r.id).catch(() => {});   // 열어 둔 내 방 베팅은 돌려받고
+        try { localStorage.setItem('naru:t:matches', '[]'); } catch (e) {} toast('데모 대국 기록을 지웠어요. 다시 둘 수 있어요.'); lobby();
+      };
+    }
+    const rooms = ROOMS = await Store.matchRooms().catch(() => []);
+    $('#rooms').innerHTML = rooms.map(r => `<article class="gl room ${r.mine ? 'wait' : ''}"><div class="tabhd"><span class="tab"><i></i>${r.mine ? '내 방' : r.game === 'chess' ? '체스' : '오목'}</span><span class="ln"></span></div><span class="g ${r.game === 'chess' ? 'ch' : ''}">${r.game === 'chess' ? KN : GO}</span>
+        <div><b>${r.mine ? `내 ${r.game === 'chess' ? '체스' : '오목'} 방 · 상대를 기다리는 중…` : `${esc(r.name)}의 ${r.game === 'chess' ? '체스' : '오목'} 방`}</b>
+          <small class="rm-sub">${r.mine ? `${M.wait}분 뒤에 저절로 닫혀요 · ${ago(r.created_at)} 열림` : `${esc(r.name)}의 방 · ${ago(r.created_at)} 열림`}</small>
+          <div class="bet"><span class="chip">${r.mine ? '내가 건 것' : '건 것'} · ${chipOf(r.bet)}</span></div></div>
+        ${r.mine ? `<span style="display:flex;gap:6px;flex-wrap:wrap">${DEMO ? `<button type="button" class="mt-btn w" data-join="${esc(r.id)}" data-mine="1">연습 상대 부르기</button>` : ''}<button type="button" class="mt-btn" data-cancel="${esc(r.id)}">닫기</button></span>`
+          : `<button type="button" class="mt-btn w" data-join="${esc(r.id)}" data-kind="${r.bet.kind}" ${status.canPlay ? '' : 'disabled title="이틀에 1판이에요"'}>들어가기</button>`}</article>`).join('')
+      || '<div class="gl mt-cool"><b>열린 방이 없어요</b>오른쪽에서 방을 열고 상대를 기다려 보세요.</div>';
+    $('#o-go').disabled = !status.canPlay || rooms.some(r => r.mine);
+    betUI(wal);
+  }
+  function betUI(wal) {
+    const body = $('#o-body'), left = $('#o-left');
+    if (betKind === 'stat') { body.innerHTML = `<label class="lb">걸 술력 · ${M.stat[0]} ~ ${M.stat[1]}</label><div class="amt"><input type="range" min="${M.stat[0]}" max="${M.stat[1]}" value="2" id="o-r"><b id="o-v">2</b></div>`; left.textContent = '이기면 상대 술력을 가져와요'; }
+    if (betKind === 'coin') { body.innerHTML = `<label class="lb">걸 영전 · ${M.coin[0].toLocaleString()} ~ ${M.coin[1].toLocaleString()}</label><div class="amt"><input type="range" min="${M.coin[0]}" max="${M.coin[1]}" step="500" value="3000" id="o-r"><b id="o-v">3,000</b></div>`; left.textContent = `가진 영전 ${(wal ? wal.coins : 0).toLocaleString()}`; }
+    if (betKind === 'msg') { body.innerHTML = `<label class="lb">내 개인 메시지 · 지면 상대에게 공개돼요</label><textarea id="o-msg" maxlength="300" placeholder="대국마다 새로 써요"></textarea><p class="hint">지면 내 메시지가 상대에게 공개돼요 · 비기면 공개 안 해요</p>`; left.textContent = ''; }
+    const r = $('#o-r'); if (r) r.oninput = () => $('#o-v').textContent = (+r.value).toLocaleString();
+  }
+  $('#o-game').onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return; game = b.dataset.g; $$('#o-game button').forEach(x => x.classList.toggle('on', x === b)); };
+  $('#o-bet').onclick = async e => { const b = e.target.closest('[data-b]'); if (!b) return; betKind = b.dataset.b; $$('#o-bet button').forEach(x => x.classList.toggle('on', x === b)); betUI(await Store.wallet().catch(() => null)); };
+  $('#o-go').onclick = async () => {
+    const amount = $('#o-r') ? +$('#o-r').value : 0, msg = $('#o-msg') ? $('#o-msg').value : '';
+    try { await Store.matchOpen(game, { kind: betKind, amount }, msg); toast('방을 열었어요. 상대를 기다려요.'); lobby(); } catch (e) { toast(e.message, 'err'); }
+  };
+  const chipOf = b => `${BET[b.kind]}${b.kind === 'msg' ? '' : ' ' + betAmt(b)}`;
+  function askBet(room, wal) {
+    return new Promise(done => {
+      let kind = 'coin';
+      const d = document.createElement('div'); d.className = 'mt-ask';
+      d.innerHTML = `<div class="gl mt-ask-box"><div class="tabhd"><span class="tab"><i></i>내 베팅</span><span class="ln"><i></i><i></i><i></i></span></div>
+        <div class="vs-bet"><small>${esc(room.name)}이(가) 건 것</small><span class="chip">${chipOf(room.bet)}</span></div>
+        <label class="lb">내가 걸 것 · 상대와 달라도 돼요</label>
+        <div class="seg" data-k><button type="button" data-b="stat">⚔ 술력</button><button type="button" data-b="msg">✉ 메시지</button><button type="button" class="on" data-b="coin">💰 영전</button></div>
+        <div data-body></div>
+        <div class="ft"><span class="cnt" data-left></span><span style="display:flex;gap:8px"><button type="button" class="mt-btn" data-x>취소</button><button type="button" class="mt-btn w" data-ok>들어가기</button></span></div></div>`;
+      document.body.appendChild(d);
+      const body = d.querySelector('[data-body]'), left = d.querySelector('[data-left]');
+      const draw = () => {
+        if (kind === 'stat') { body.innerHTML = `<label class="lb">걸 술력 · ${M.stat[0]} ~ ${M.stat[1]}</label><div class="amt"><input type="range" min="${M.stat[0]}" max="${M.stat[1]}" value="2"><b>2</b></div>`; left.textContent = '지면 내 술력을 잃어요'; }
+        if (kind === 'coin') { body.innerHTML = `<label class="lb">걸 영전 · ${M.coin[0].toLocaleString()} ~ ${M.coin[1].toLocaleString()}</label><div class="amt"><input type="range" min="${M.coin[0]}" max="${M.coin[1]}" step="500" value="${M.coin[0]}"><b>${M.coin[0].toLocaleString()}</b></div>`; left.textContent = `가진 영전 ${(wal ? wal.coins : 0).toLocaleString()}`; }
+        if (kind === 'msg') { body.innerHTML = `<label class="lb">내 개인 메시지 · 지면 상대에게 공개돼요</label><textarea maxlength="300" placeholder="대국마다 새로 써요"></textarea>`; left.textContent = '0 / 300'; const ta = body.querySelector('textarea'); ta.oninput = () => left.textContent = ta.value.length + ' / 300'; setTimeout(() => ta.focus(), 10); }
+        const r = body.querySelector('input[type=range]'); if (r) r.oninput = () => body.querySelector('.amt b').textContent = (+r.value).toLocaleString();
+      };
+      draw();
+      d.querySelector('[data-k]').onclick = e => { const b = e.target.closest('[data-b]'); if (!b) return; kind = b.dataset.b; d.querySelectorAll('[data-k] button').forEach(x => x.classList.toggle('on', x === b)); draw(); };
+      const close = v => { d.remove(); document.removeEventListener('keydown', esc_); done(v); };
+      const esc_ = e => { if (e.key === 'Escape') close(null); };
+      document.addEventListener('keydown', esc_);
+      d.onclick = e => { if (e.target === d || e.target.closest('[data-x]')) close(null); };
+      d.querySelector('[data-ok]').onclick = () => {
+        const ta = body.querySelector('textarea'), r = body.querySelector('input[type=range]');
+        if (kind === 'msg' && !ta.value.trim()) { toast('개인 메시지를 적어야 들어갈 수 있어요.', 'err'); ta.focus(); return; }
+        close({ bet: { kind, amount: r ? +r.value : 0 }, msg: ta ? ta.value : '' });
+      };
+      setTimeout(() => d.classList.add('on'), 10);
+    });
+  }
+  let ROOMS = [];
+  $('#rooms').onclick = async e => {
+    const c = e.target.closest('[data-cancel]'); if (c) { try { await Store.matchCancel(c.dataset.cancel); toast('방을 닫고 베팅을 돌려받았어요.'); lobby(); } catch (err) { toast(err.message, 'err'); } return; }
+    const j = e.target.closest('[data-join]'); if (!j) return;
+    let pick = { msg: '', bet: null };
+    if (!j.dataset.mine) { const room = ROOMS.find(r => r.id === j.dataset.join); pick = await askBet(room, await Store.wallet().catch(() => null)); if (!pick) return; }
+    try { const g = await Store.matchJoin(j.dataset.join, pick.msg, pick.bet); start(g); } catch (err) { toast(err.message, 'err'); }
+  };
+  const fx = text => { const e = $('#fx'); e.textContent = text; e.classList.remove('go'); void e.offsetWidth; e.classList.add('go'); };
+  const log = (html, cls) => { const l = $('#log'); l.insertAdjacentHTML('beforeend', `<p class="${cls || ''}">${html}</p>`); l.scrollTop = l.scrollHeight; };
+  function clockOf(el, card, onOut) {
+    let left = M.turn, t = null;
+    const draw = () => { el.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; card.classList.toggle('low', left <= 60); };
+    return { start() { this.stop(); left = M.turn; draw(); t = setInterval(() => { left--; draw(); if (left <= 0) { this.stop(); onOut(); } }, 1000); }, stop() { clearInterval(t); t = null; }, ff(s) { left = Math.max(1, left - s); draw(); } };
+  }
+  const avStyle = f => f.head ? `background-image:url('${esc(f.head)}');background-size:cover;background-position:center` : '';
+  let G = null;   // 지금 대국
+  function start(g) {
+    G = g; show('v-game'); $('#log').innerHTML = ''; $('#dev').hidden = !DEMO;
+    $('#me-nm').textContent = g.me.name; $('#opp-nm').textContent = g.opp.name; $('#me-av').style.cssText = avStyle(g.me); $('#opp-av').style.cssText = avStyle(g.opp);
+    $('#bet-me').textContent = chipOf(g.myBet); $('#bet-opp').textContent = chipOf(g.oppBet);
+    $('#sk1-nm').textContent = '「' + g.me.skills[0] + '」'; $('#sk2-nm').textContent = '「' + g.me.skills[1] + '」';
+    (g.game === 'chess' ? chess : gomoku)(g);
+  }
+  async function finish(result, why) {
+    let r; try { r = await Store.matchSettle(G.id, result); } catch (e) { toast(e.message, 'err'); r = { detail: '' }; }
+    setTimeout(() => {
+      show('v-res'); const win = result === 'win', draw = result === 'draw';
+      const ico = draw ? '<path d="M5 9.5h14M5 14.5h14"/>' : win ? '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>' : '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" opacity=".35"/><path d="M4 20L20 4"/>';
+      $('#res').innerHTML = `<div class="gl rs ${draw ? 'draw' : win ? 'win' : 'lose'}"><div class="tabhd"><span class="tab"><i></i>대국 결과</span><span class="ln"><i></i><i></i><i></i></span><span class="code">${draw ? '무승부' : win ? '승리' : '패배'}</span></div>
+          <div class="rs-badge"><span class="rs-por" style="${avStyle(G.me)}"></span><svg class="rs-ic" viewBox="0 0 24 24">${ico}</svg></div>
+          <div class="rs-body"><h3>${esc(G.opp.name)}${draw ? '와(과) 무승부' : win ? '에게 승리했어요' : '에게 졌어요'}</h3>
+            <div class="sc">${G.game === 'chess' ? '체스' : '오목'} · ${esc(why)}</div><div class="gain"><span>베팅</span><b class="${/[0-9]/.test(r.detail || '') ? '' : 'txt'}">${esc(r.detail || '')}</b></div></div>
+          <div class="rs-ft"><span class="rs-uid">MATCH · ${esc(String(G.id || '').slice(-6).toUpperCase())}</span><button type="button" class="mt-btn w" id="back">대국 로비로</button></div></div>
+        ${r.loot != null ? `<div class="gl rs-loot"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(G.opp.name)}의 봉인된 메시지</small><p>${esc(r.loot)}</p><div class="from">― ${esc(G.opp.name)}</div></div></div>` : ''}`;
+      $('#back').onclick = lobby;
+    }, 1300);
+  }
+
+  function gomoku(g) {
+    const N = 15, el = $('#board'), meCard = $('#p-me'), oppCard = $('#p-opp');
+    const ME = g.first === 'me' ? 1 : 2, OP = 3 - ME;
+    $('#me-side').innerHTML = `<span class="stone-ic ${ME === 1 ? 'b' : 'w'}"></span>${ME === 1 ? '흑 · 선수' : '백 · 후수'}`; $('#opp-side').innerHTML = `<span class="stone-ic ${OP === 1 ? 'b' : 'w'}"></span>${OP === 1 ? '흑 · 선수' : '백 · 후수'}`;
+    $('#ic1').innerHTML = IC.erase; $('#ic2').innerHTML = IC.again; $('#sk1-ds').textContent = '지우기 · 상대 돌 하나를 없애요'; $('#sk2-ds').textContent = '한 번 더 · 이번 차례에 두 번 둬요';
+    el.className = 'go-board';
+    let b = Array(N * N).fill(0), turn = 1, over = false, mode = null, extra = false, frost = new Set(), uses = 2, used = -1, last = -1, aiN = 0, aiUsed = false;
+    const clock = clockOf($('#me-clock'), meCard, () => end('lose', '10분 동안 두지 않아 자동 패배'));
+    const at = (x, y) => (x < 0 || y < 0 || x >= N || y >= N) ? -1 : b[y * N + x];
+    const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    const line = (i, p, dx, dy) => { const x = i % N, y = (i / N) | 0; let n = 1, open = 0, cells = [i]; for (const s of [1, -1]) { let k = 1; while (at(x + dx * k * s, y + dy * k * s) === p) { cells.push((y + dy * k * s) * N + x + dx * k * s); n++; k++; } if (at(x + dx * k * s, y + dy * k * s) === 0) open++; } return { n, open, cells }; };
+    const winAt = (i, p) => { for (const [dx, dy] of DIRS) { const l = line(i, p, dx, dy); if (l.n >= 5) return l.cells; } return null; };
+    const VAL = (n, o) => n >= 5 ? 1e6 : n === 4 ? (o === 2 ? 5e4 : o ? 4e3 : 0) : n === 3 ? (o === 2 ? 3e3 : o ? 150 : 0) : n === 2 ? (o === 2 ? 120 : o ? 15 : 0) : (o ? 2 : 0);
+    const score = (i, p) => { b[i] = p; let s = 0; for (const [dx, dy] of DIRS) { const l = line(i, p, dx, dy); s += VAL(l.n, l.open); } b[i] = 0; return s; };
+    const cands = () => { const out = []; for (let i = 0; i < N * N; i++) { if (b[i]) continue; const x = i % N, y = (i / N) | 0; let near = false; for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (at(x + dx, y + dy) > 0) { near = true; break; } if (near) out.push(i); } return out.length ? out : [7 * N + 7]; };
+    const best = p => { let bi = -1, bs = -1; for (const i of cands()) { if (frost.has(i) && p === ME) continue; const s = score(i, p) * 1.1 + score(i, 3 - p) + Math.random(); if (s > bs) { bs = s; bi = i; } } return bi; };
+    function render(win) {
+      el.classList.toggle('erase', mode === 'erase');
+      el.innerHTML = b.map((v, i) => { const x = i % N, y = (i / N) | 0, star = [3, 7, 11].includes(x) && [3, 7, 11].includes(y);
+        const cls = ['c', x === 0 && 'l', x === N - 1 && 'r', y === 0 && 't', y === N - 1 && 'bt', star && 'star', frost.has(i) && 'frost'].filter(Boolean).join(' ');
+        return `<button type="button" class="${cls}" data-i="${i}">${star ? '<i class="dot"></i>' : ''}${v ? `<span class="st ${v === 1 ? 'b' : 'w'}${i === last ? ' last' : ''}${win && win.includes(i) ? ' win' : ''}"></span>` : '<span class="ghost"></span>'}</button>`; }).join('');
+      meCard.classList.toggle('turn', turn === ME && !over); oppCard.classList.toggle('turn', turn === OP && !over);
+      $('#uses').textContent = '남은 횟수 ' + uses;
+      ['sk1', 'sk2'].forEach((id, k) => { const s = $('#' + id); s.disabled = over || turn !== ME || uses < 1 || used === k; s.classList.toggle('armed', (k === 0 && mode === 'erase') || (k === 1 && extra)); });
+    }
+    function end(result, why, cells) { if (over) return; over = true; clock.stop(); render(cells); finish(result, why); }
+    function place(i, p) { b[i] = p; last = i; const w = winAt(i, p); if (w) { end(p === ME ? 'win' : 'lose', p === ME ? '다섯 줄 완성' : `${g.opp.name}이(가) 다섯 줄 완성`, w); return true; } if (!b.includes(0)) { end('draw', '판이 가득 찼어요'); return true; } return false; }
+    function toAI() { frost = new Set(); turn = OP; clock.stop(); render(); setTimeout(ai, 650); }
+    function ai() {
+      if (over) return; aiN++;
+      if (!aiUsed && aiN === 5) { aiUsed = true; const t = best(ME), x = t % N, y = (t / N) | 0;   // 상대도 한 번 스킬: 내가 노리는 자리 주변 3×3 얼리기
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(x + dx, y + dy) === 0) frost.add((y + dy) * N + x + dx);
+        fx(`${g.opp.name} · 「${g.opp.skills[0]}」`); log(`<b>${esc(g.opp.name)}</b>이(가) 「${esc(g.opp.skills[0])}」을(를) 썼다! 다음 차례에 파란 칸에는 둘 수 없어요`, 'fx'); turn = ME; render(); clock.start(); return; }
+      const i = best(OP); if (place(i, OP)) return; turn = ME; render(); clock.start();
+    }
+    el.onclick = e => {
+      const c = e.target.closest('[data-i]'); if (!c || over || turn !== ME) return; const i = +c.dataset.i;
+      if (mode === 'erase') { if (b[i] !== OP) return; b[i] = 0; mode = null; uses--; used = 0; c.insertAdjacentHTML('beforeend', '<span class="poof"></span>');
+        fx(`「${g.me.skills[0]}」 · 돌 하나가 사라졌다`); log(`<b>나</b> · 「${esc(g.me.skills[0])}」으로 상대 돌 하나를 지웠어요`, 'fx'); setTimeout(toAI, 450); return; }
+      if (b[i] || frost.has(i)) return;
+      if (place(i, ME)) return;
+      if (extra) { extra = false; log(`<b>나</b> · 「${esc(g.me.skills[1])}」 한 번 더!`, 'fx'); render(); return; }
+      toAI();
+    };
+    $('#sk1').onclick = () => { if (!b.includes(OP)) return toast('지울 상대 돌이 아직 없어요.'); mode = mode === 'erase' ? null : 'erase'; render(); };
+    $('#sk2').onclick = () => { if (extra) return; extra = true; uses--; used = 1; fx(`「${g.me.skills[1]}」 · 이번 차례에 두 번`); render(); };
+    $('#ff').onclick = () => { if (turn === ME && !over) clock.ff(540); };
+    $('#gg').onclick = () => end('lose', '기권'); $('#gw').onclick = () => end('win', '데모 승리'); $('#gd').onclick = () => end('draw', '데모 무승부');
+    log(`대국 시작 · ${ME === 1 ? '내가 흑(선수)' : `${esc(g.opp.name)}이(가) 흑(선수)`}이에요`);
+    render(); if (turn === ME) clock.start(); else { setTimeout(ai, 800); }
+  }
+
+  function chess(g) {
+    const el = $('#board'), meCard = $('#p-me'), oppCard = $('#p-opp');
+    if (typeof Chess === 'undefined') { el.outerHTML = '<p class="gl" style="padding:20px">체스 규칙 코드를 불러오지 못했어요 (인터넷 연결 확인)</p>'; return; }
+    const MY = g.first === 'me' ? 'w' : 'b', OPC = MY === 'w' ? 'b' : 'w';
+    $('#me-side').textContent = MY === 'w' ? '♔ 백 · 선수' : '♚ 흑 · 후수'; $('#opp-side').textContent = OPC === 'w' ? '♔ 백 · 선수' : '♚ 흑 · 후수';
+    $('#ic1').innerHTML = IC.frost; $('#ic2').innerHTML = IC.again; $('#sk1-ds').textContent = '얼리기 · 상대 기물 하나를 한 차례 묶어요'; $('#sk2-ds').textContent = '한 번 더 · 이번 차례에 두 번 움직여요';
+    el.className = 'ch-board';
+    const GL = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }, VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 }, F = 'abcdefgh';
+    const ch = new Chess(); let sel = null, over = false, aim = false, extra = false, uses = 2, used = -1, frozenOp = null, frozenMe = null, last = null, aiN = 0, aiUsed = false;
+    const clock = clockOf($('#me-clock'), meCard, () => end('lose', '10분 동안 두지 않아 자동 패배'));
+    const setTurn = c => { const f = ch.fen().split(' '); f[1] = c; f[3] = '-'; ch.load(f.join(' ')); };
+    const kingSq = c => { for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const p = ch.board()[r][f]; if (p && p.type === 'k' && p.color === c) return F[f] + (8 - r); } };
+    const flip = MY === 'b';
+    function render() {
+      const bd = ch.board(), tg = sel ? ch.moves({ square: sel, verbose: true }) : [], chk = ch.in_check() ? kingSq(ch.turn()) : null;
+      el.classList.toggle('aim', aim);
+      const rows = flip ? [...bd].reverse().map(r => [...r].reverse()) : bd;
+      el.innerHTML = rows.map((row, ri) => row.map((p, fi) => { const r = flip ? 7 - ri : ri, f = flip ? 7 - fi : fi, sq = F[f] + (8 - r), t = tg.find(m => m.to === sq);
+        const cls = ['q', (r + f) % 2 ? 'dk' : 'lt', sel === sq && 'sel', t && 'tg', t && t.captured && 'cap', last && (last.from === sq || last.to === sq) && 'last', chk === sq && 'chk', (frozenOp === sq || frozenMe === sq) && 'frost'].filter(Boolean).join(' ');
+        return `<button type="button" class="${cls}" data-s="${sq}">${p ? `<span class="pc ${p.color}">${GL[p.type]}︎</span>` : ''}${fi === 7 ? `<span class="co f">${8 - r}</span>` : ''}${ri === 7 ? `<span class="co r">${F[f]}</span>` : ''}</button>`; }).join('')).join('');
+      const mine = ch.turn() === MY && !over;
+      meCard.classList.toggle('turn', mine); oppCard.classList.toggle('turn', !mine && !over);
+      $('#uses').textContent = '남은 횟수 ' + uses;
+      ['sk1', 'sk2'].forEach((id, k) => { const s = $('#' + id); s.disabled = !mine || uses < 1 || used === k || ch.in_check(); s.classList.toggle('armed', (k === 0 && aim) || (k === 1 && extra)); });
+    }
+    function end(result, why) { if (over) return; over = true; clock.stop(); render(); finish(result, why); }
+    const checkEnd = () => { if (ch.in_checkmate()) { end(ch.turn() === MY ? 'lose' : 'win', '체크메이트'); return true; } if (ch.in_draw() || ch.in_stalemate()) { end('draw', ch.in_stalemate() ? '스테일메이트' : '무승부'); return true; } return false; };
+    function toAI() { sel = null; clock.stop(); render(); setTimeout(ai, 600); }
+    function ai() {
+      if (over) return; aiN++;
+      if (!aiUsed && aiN === 4 && !ch.in_check()) {
+        setTurn(MY); const opts = [...new Set(ch.moves({ verbose: true }).filter(m => m.piece !== 'k').map(m => m.from))];
+        if (opts.length > 1) { aiUsed = true; frozenMe = opts[Math.floor(Math.random() * opts.length)];
+          fx(`${g.opp.name} · 「${g.opp.skills[0]}」`); log(`<b>${esc(g.opp.name)}</b>이(가) 「${esc(g.opp.skills[0])}」을(를) 썼다! ${frozenMe} 기물이 이번 차례에 못 움직여요`, 'fx'); render(); clock.start(); return; }
+        setTurn(OPC);
+      }
+      let ms = ch.moves({ verbose: true }); const free = ms.filter(m => m.from !== frozenOp); if (free.length) ms = free; frozenOp = null;
+      ms.sort((a, c) => (VAL[c.captured] || 0) - (VAL[a.captured] || 0) + (Math.random() - .5) * .8);
+      const m = ms[0]; last = ch.move(m); log(`${esc(g.opp.name)} · ${m.san}`);
+      if (checkEnd()) return; render(); clock.start();
+    }
+    el.onclick = e => {
+      const q = e.target.closest('[data-s]'); if (!q || over || ch.turn() !== MY) return; const sq = q.dataset.s, p = ch.get(sq);
+      if (aim) { if (!p || p.color !== OPC || p.type === 'k') return; frozenOp = sq; aim = false; uses--; used = 0;
+        fx(`「${g.me.skills[0]}」 · 얼어붙었다`); log(`<b>나</b> · 「${esc(g.me.skills[0])}」으로 ${sq} 기물을 얼렸어요`, 'fx'); setTurn(OPC); toAI(); return; }
+      if (sel) { const m = ch.moves({ square: sel, verbose: true }).find(x => x.to === sq);
+        if (m) { last = ch.move({ from: sel, to: sq, promotion: 'q' }); sel = null; frozenMe = null; log(`나 · ${last.san}`);
+          if (checkEnd()) return;
+          if (extra) { extra = false; if (ch.in_check()) log(`체크를 건 수라서 「${esc(g.me.skills[1])}」는 여기서 끝나요`, 'fx'); else { setTurn(MY); log(`<b>나</b> · 「${esc(g.me.skills[1])}」 한 번 더!`, 'fx'); render(); return; } }
+          toAI(); return; } }
+      sel = p && p.color === MY && sq !== frozenMe ? sq : null; render();
+    };
+    $('#sk1').onclick = () => { aim = !aim; sel = null; render(); };
+    $('#sk2').onclick = () => { if (extra) return; extra = true; uses--; used = 1; fx(`「${g.me.skills[1]}」 · 이번 차례에 두 번`); render(); };
+    $('#ff').onclick = () => { if (ch.turn() === MY && !over) clock.ff(540); };
+    $('#gg').onclick = () => end('lose', '기권'); $('#gw').onclick = () => end('win', '데모 승리'); $('#gd').onclick = () => end('draw', '데모 무승부');
+    log(`대국 시작 · ${MY === 'w' ? '내가 백(선수)' : `${esc(g.opp.name)}이(가) 백(선수)`}이에요`);
+    render(); if (MY === 'w') clock.start(); else setTimeout(ai, 800);
+  }
+
+  lobby();
+});
+</script>
+</body>
+</html>
