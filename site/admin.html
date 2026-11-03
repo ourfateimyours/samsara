@@ -490,11 +490,11 @@ App.ready.then(async user => {
     };
     Store.statBoard().then(b => {
       const f = n => Math.round(n * 10) / 10;
-      const rows = b.rows;   // 전투력 높은 순
+      const rows = b.rows, cnt = rows.filter(r => !r.nostat);   // 전투력 높은 순 · 스탯 없는 제출본은 표에만 (평균에선 빠져요)
       const pw = r => `<td class="sb-pw"><b>${r.combat.power.toLocaleString()}</b><small>${esc(r.combat.note || '')}</small></td>`;
       $('#sb').innerHTML = rows.length ? `<table class="adm-table sb-table"><thead><tr><th>순위</th><th>캐릭터</th><th>⚔ 전투력</th>${b.stats.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody>
-        <tr class="avg"><td></td><td>평균 (${rows.length}명)</td><td>${Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length).toLocaleString()}</td>${b.stats.map(s => `<td>${f(b.avg[s])}</td>`).join('')}</tr>
-        ${rows.map((r, i) => `<tr class="${i ? '' : 'sb-top'}"><td class="sb-rk">${i ? i + 1 : '👑 1'}</td><td><b>${esc(r.name)}</b>${r.pending ? ' <small class="sb-pend">심사 대기</small>' : ''}</td>${pw(r)}${b.stats.map(s => {
+        <tr class="avg"><td></td><td>평균 (${cnt.length}명)</td><td>${cnt.length ? Math.round(cnt.reduce((a, r) => a + r.combat.power, 0) / cnt.length).toLocaleString() : 0}</td>${b.stats.map(s => `<td>${f(b.avg[s])}</td>`).join('')}</tr>
+        ${rows.map((r, i) => `<tr class="${i ? '' : 'sb-top'}"><td class="sb-rk">${i ? i + 1 : '👑 1'}</td><td><b>${esc(r.name)}</b>${r.pending ? ' <small class="sb-pend">심사 대기</small>' : ''}${r.nostat ? ' <small class="sb-pend" style="color:#ff8a80;border-color:rgba(255,138,128,.4)">스탯 미입력</small>' : ''}</td>${pw(r)}${b.stats.map(s => {
           const d = r.v[s] - b.avg[s], t = (r.tiers || {})[s] || 0;
           return `<td class="sb-c t${t}"><b>${f(r.v[s])}</b><small>${d >= 0 ? '+' : ''}${f(d)}${t ? ` · ${t}단계` : ''}</small></td>`;
         }).join('')}</tr>`).join('')}</tbody></table>` : '<p class="dim">게시된 캐릭터가 없어요.</p>';
@@ -503,7 +503,7 @@ App.ready.then(async user => {
       $('#sb-csv').onclick = () => {
         const q = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
         const head = ['순위', '캐릭터', '전투력'].concat(b.xcols, b.stats, b.stats.map(s => s + ' 평균 대비'), b.stats.map(s => s + ' 특전 단계'));
-        const avgRow = ['', '평균', Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length)].concat(b.xcols.map(() => ''), b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
+        const avgRow = ['', '평균', (cnt.length ? Math.round(cnt.reduce((a, r) => a + r.combat.power, 0) / cnt.length) : 0)].concat(b.xcols.map(() => ''), b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
         const body = rows.map((r, i) => [i + 1, r.name, r.combat.power].concat(r.combat.x || [])
           .concat(b.stats.map(s => f(r.v[s])), b.stats.map(s => f(r.v[s] - b.avg[s])), b.stats.map(s => (r.tiers || {})[s] || 0)));
         const csv = String.fromCharCode(0xFEFF) + [head, avgRow].concat(body).map(row => row.map(q).join(',')).join('\r\n');
