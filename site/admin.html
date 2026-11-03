@@ -482,10 +482,7 @@ App.ready.then(async user => {
     </div>
     <section class="adm-card" style="margin-top:18px"><header><b>👁 회원 화면으로 보기</b>${sw('as-member', (() => { try { return localStorage.getItem('naru:asMember') === '1'; } catch (e) { return false; } })())}</header>
       <p class="hint-text">켜면 관리자도 수업 · 대국이 닫혀 있을 때 일반 회원처럼 막혀요 (메인 창 '쉬는 중' · 고양이 안내). 이 브라우저에서만 바뀌고, 켜져 있는 동안 화면 아래에 '회원 화면으로 보는 중 · 끄기'가 떠요.</p></section>
-    <section class="adm-card" style="margin-top:18px"><header><b>📊 전투력 · 스탯 평균 · 특전 단계</b><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="label">게시된 캐릭터 기준 · 전투력 높은 순</span><button class="btn sm ghost" id="sb-csv" disabled>📥 스프레드시트로 내보내기</button></span></header>
-      <p class="hint-text">평균보다 <b>+1 ~ 9</b> 높으면 1단계 · <b>+10 ~ 19</b> 2단계 · <b>+20 이상</b> 3단계 · 회원은 자기 캐릭터 중 가장 높은 캐릭터로 특전을 받아요.<br>
-        재력 = 출석 · 고양이 영전 보너스 / 행운 = 수업 힌트 · 다시 하기 / 외모 = 사회 · 도덕심 틀린 답 모면 / 지력 · 이성 · 근력 = 수업 점수 보너스 (특전은 하루 하나)<br>
-        ⚔ 전투력 = 술력 중심 (술력×10 · 근력×4 · 지력 · 이성×3 · 재력×1.5 · 외모 · 행운×1) × 조화(스탯이 고를수록 최대 ×1.15, 치우치면 ×0.85까지) × 치명타 기대값 (확률은 행운 · 이성, 피해는 지력 · 근력)</p>
+    <section class="adm-card" style="margin-top:18px"><header><b>📊 전투력 · 스탯 평균 · 특전 단계</b><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="label">게시된 캐릭터 + 심사 대기(제출한 작성본) 기준 · 전투력 높은 순</span><button class="btn sm ghost" id="sb-csv" disabled>📥 스프레드시트로 내보내기</button></span></header>
       <div class="sb-wrap" id="sb"><p class="dim">불러오는 중…</p></div></section>`;
     $('#as-member').onchange = e => {
       try { if (e.target.checked) localStorage.setItem('naru:asMember', '1'); else localStorage.removeItem('naru:asMember'); } catch (ex) {}
@@ -494,10 +491,10 @@ App.ready.then(async user => {
     Store.statBoard().then(b => {
       const f = n => Math.round(n * 10) / 10;
       const rows = b.rows;   // 전투력 높은 순
-      const pw = r => `<td class="sb-pw"><b>${r.combat.power.toLocaleString()}</b><small>치명 ${f(r.combat.crit * 100)}% · ×${r.combat.critDmg.toFixed(2)} · 조화 ${Math.round(r.combat.harmony * 100)}%</small></td>`;
+      const pw = r => `<td class="sb-pw"><b>${r.combat.power.toLocaleString()}</b><small>${esc(r.combat.note || '')}</small></td>`;
       $('#sb').innerHTML = rows.length ? `<table class="adm-table sb-table"><thead><tr><th>순위</th><th>캐릭터</th><th>⚔ 전투력</th>${b.stats.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody>
         <tr class="avg"><td></td><td>평균 (${rows.length}명)</td><td>${Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length).toLocaleString()}</td>${b.stats.map(s => `<td>${f(b.avg[s])}</td>`).join('')}</tr>
-        ${rows.map((r, i) => `<tr class="${i ? '' : 'sb-top'}"><td class="sb-rk">${i ? i + 1 : '👑 1'}</td><td><b>${esc(r.name)}</b></td>${pw(r)}${b.stats.map(s => {
+        ${rows.map((r, i) => `<tr class="${i ? '' : 'sb-top'}"><td class="sb-rk">${i ? i + 1 : '👑 1'}</td><td><b>${esc(r.name)}</b>${r.pending ? ' <small class="sb-pend">심사 대기</small>' : ''}</td>${pw(r)}${b.stats.map(s => {
           const d = r.v[s] - b.avg[s], t = b.tierOf(d);
           return `<td class="sb-c t${t}"><b>${f(r.v[s])}</b><small>${d >= 0 ? '+' : ''}${f(d)}${t ? ` · ${t}단계` : ''}</small></td>`;
         }).join('')}</tr>`).join('')}</tbody></table>` : '<p class="dim">게시된 캐릭터가 없어요.</p>';
@@ -505,9 +502,9 @@ App.ready.then(async user => {
       $('#sb-csv').disabled = !rows.length;
       $('#sb-csv').onclick = () => {
         const q = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
-        const head = ['순위', '캐릭터', '전투력', '치명타 확률(%)', '치명타 피해(배)', '조화(%)'].concat(b.stats, b.stats.map(s => s + ' 평균 대비'), b.stats.map(s => s + ' 특전 단계'));
-        const avgRow = ['', '평균', Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length), '', '', ''].concat(b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
-        const body = rows.map((r, i) => [i + 1, r.name, r.combat.power, f(r.combat.crit * 100), r.combat.critDmg.toFixed(2), Math.round(r.combat.harmony * 100)]
+        const head = ['순위', '캐릭터', '전투력'].concat(b.xcols, b.stats, b.stats.map(s => s + ' 평균 대비'), b.stats.map(s => s + ' 특전 단계'));
+        const avgRow = ['', '평균', Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length)].concat(b.xcols.map(() => ''), b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
+        const body = rows.map((r, i) => [i + 1, r.name, r.combat.power].concat(r.combat.x || [])
           .concat(b.stats.map(s => f(r.v[s])), b.stats.map(s => f(r.v[s] - b.avg[s])), b.stats.map(s => b.tierOf(r.v[s] - b.avg[s]))));
         const csv = String.fromCharCode(0xFEFF) + [head, avgRow].concat(body).map(row => row.map(q).join(',')).join('\r\n');
         const d = new Date(), name = `전투력-스탯-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.csv`;

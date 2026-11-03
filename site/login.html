@@ -51,7 +51,7 @@
   .gate-meteors { z-index: 0; }   /* 별똥별도 배경 그림자 위 · 창 뒤 */
   .glass .gate-inner { position: relative; z-index: 1; }
   .glass.day .gate-petals { display: block; }
-  .glass.day .gate-video { background-image: url(https://i.imgur.com/v8ZbESH.png); filter: brightness(.95) saturate(1.05); }
+  .glass.day .gate-video { background-image: url(assets/img/lobby-day.webp); filter: brightness(.95) saturate(1.05); }
   .glass.day::after { background: radial-gradient(ellipse 70% 70% at 50% 45%, rgba(10, 20, 45, .05), rgba(10, 20, 45, .5)); }
   .glass.day .auth-card { background: linear-gradient(160deg, rgba(20, 26, 48, .42), rgba(20, 26, 48, .26)); }
   .glass.day .gate-head h1 { text-shadow: 0 2px 24px rgba(10, 20, 45, .55), 0 0 2px rgba(10, 20, 45, .4); }
@@ -117,7 +117,7 @@
 <script src="assets/js/store.js"></script>
 <script src="assets/js/common.js"></script>
 <script>
-if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 26); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
+if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 13); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
 else meteors($('#meteors'));   // 밤이면 메인처럼 별똥별 (?day=0 으로 미리보기)
 App.ready.then(async user => {
   const next = (() => {

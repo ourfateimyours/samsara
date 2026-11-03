@@ -9,7 +9,7 @@
 <meta name="description" content="콘셉트 밴드 삼사라">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/lobby.css">
@@ -144,10 +144,10 @@ $$('[data-emb]').forEach(el => {
 /* 별똥별 — 사진 속 방향(오른쪽 위 → 왼쪽 아래, 약 32°)으로 가끔 떨어져요 */
 /* 낮 · 밤 배경: 06시~18시는 낮 그림(DAY_IMG), 나머지는 밤 그림(assets/img/lobby-bg.webp)
    낮에는 별똥별 · 반짝이를 쉬어요. 낮 그림 파일이 없으면 밤 그림 그대로 */
-const DAY_FROM = 6, DAY_TO = 18, DAY_IMG = 'https://i.imgur.com/v8ZbESH.png';   // 낮 그림 주소 (바꾸면 낮 배경이 바뀌어요)
+const DAY_FROM = 6, DAY_TO = 18, DAY_IMG = 'assets/img/lobby-day.webp';   // 낮 그림 주소 (바꾸면 낮 배경이 바뀌어요)
 const DAY_FORCE = false;   // 미리보기용: true로 바꾸면 시간과 상관없이 항상 낮 화면
 /* 낮에는 별똥별 대신 벚꽃잎: 화면 위에서 바람에 흩날리며 떨어져요 */
-sakura($('#dayfx'), 30);
+sakura($('#dayfx'), 15);
 const isDay = () => DAY_FORCE || isDayTime();   // 06~18시 · 주소 끝에 ?day=1 이면 언제든 낮
 (function dayNight() {
   // 켜 둔 채로 낮 ↔ 밤이 바뀌면: 지금 화면이 서서히 흐려지면서 새 화면이 겹쳐 떠올라요 (크로스페이드 · 처음 들어올 때는 바로)
@@ -460,7 +460,7 @@ Store.matchStatus().then(s => {
       const t = b.equip && b.equip.title && item(b.equip.title);
       const head = d.head, img = head || charImage(ch.data || {}, ch.id);   // 두상이 없으면 전신 그림의 윗부분을 두상처럼
       return `<a class="hc ${head ? '' : 'nohead'}" href="character.html?id=${encodeURIComponent(ch.id)}" style="--c:${esc(d.color)}" aria-label="${i + 1}위 ${esc(d.name)} · 영전 ${coins}">
-        <span class="hc-bg"></span><span class="hc-sub" style="background-image:${cssUrl(img)}"></span>
+        <span class="hc-bg"></span><span class="hc-sub" style="background-image:${cssUrl((headMp4(img) || {}).poster || img)}"></span>
         <span class="hc-laser"></span><span class="hc-star"></span><span class="hc-star b"></span><span class="hc-glare"></span>
         <span class="hc-txt"><span class="hc-rk">No.<b>${i + 1}</b></span><span class="hc-emb">${LOGO}</span>
           <span class="hc-bt">${t ? `<small>${esc(Store.titleText(t, b.equip))}</small>` : ''}<b>${esc(d.name || '?')}</b>
