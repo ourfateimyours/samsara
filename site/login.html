@@ -118,7 +118,7 @@
 <script src="assets/js/common.js"></script>
 <script>
 if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 13); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
-else meteors($('#meteors'));   // 밤이면 메인처럼 별똥별 (?day=0 으로 미리보기)
+else { $('.gate-wrap').classList.add('night'); meteors($('#meteors')); }   // 밤이면 밤 배경 + 별똥별 (?day=0 으로 미리보기) · 배경은 지금 시간 것 하나만 받아요
 App.ready.then(async user => {
   const next = (() => {
     const n = qs('next') || '';

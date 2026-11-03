@@ -154,7 +154,7 @@ const isDay = () => DAY_FORCE || isDayTime();   // 06~18시 · 주소 끝에 ?da
   // 켜 둔 채로 낮 ↔ 밤이 바뀌면: 지금 화면이 서서히 흐려지면서 새 화면이 겹쳐 떠올라요 (크로스페이드 · 처음 들어올 때는 바로)
   let cur = null;
   const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const flip = day => { $('#lobby').classList.toggle('is-day', day); document.body.classList.toggle('lobby-day', day); cur = day; };   // 낮에는 화면 색도 밝은 테마로
+  const flip = day => { $('#lobby').classList.toggle('is-day', day); $('#lobby').classList.toggle('is-night', !day); document.body.classList.toggle('lobby-day', day); cur = day; };   // 낮에는 화면 색도 밝은 테마로
   // 넘어가는 동안: 카메라 노출이 바뀌듯 지금 화면은 어두워지거나(밤) 밝게 바래고(낮), 새 화면이 부드럽게 내려앉아요
   const sweep = day => {
     if (cur === null || REDUCE) return flip(day);
