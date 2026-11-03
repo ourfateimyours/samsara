@@ -294,8 +294,6 @@ App.ready.then(async user => {
     const r = fig.getBoundingClientRect(); n.style.left = (r.left + r.width / 2) + 'px'; n.style.top = (r.top + r.height * .28) + 'px';
     document.body.appendChild(n); setTimeout(() => n.remove(), 1700);
   };
-  /* 고양이 호감도 (기록자 카드 막대): 누르면 +1 · 하루에 +5까지 (날이 바뀌어도 계속 쌓여요) · 삐지면 -2 (하루 한 번)
-     쓰다듬을 때 5% 로 +10 · 5% 로 -10 · 최대 200 · 단계 선물: 60 · 150 비밀 내레이션 / 90 이성 +1 / 100 집사 / 170 칭호 / 200 주인님 — 계산은 Store.catPet (Supabase 에선 서버) */
   const affShow = () => {
     const a = Math.max(0, Math.min(Store.CAT.max, wal.aff || 0));
     $('#bar').style.width = (a / Store.CAT.max * 100) + '%';
@@ -335,7 +333,6 @@ App.ready.then(async user => {
     petBusy = true;
     try {
       const r = await Store.catPet(true); wal = r.wallet; affShow(); if (window.pastMe) pastMe(r.perks);   // 재력 · 행운 특전
-      // 5% 로 +10 · 또 5% 로 -10 (서버에서 정해요)
       if (r.bonus > 0) { likeToast(`<b>♥</b> 호감도가 크게 올라갑니다 +${r.changed}`, 'gift'); speak('사실 비밀이 있다냥 나는 서문 가문 사람들 중 니가 제일 좋다냥!'); }
       else if (r.bonus < 0) { likeToast(`<b>💔</b> 호감도가 떨어졌습니다 ${r.changed}`, 'down'); fig.classList.add('sulk'); setTimeout(() => fig.classList.remove('sulk'), 1600); speak('캬아아아갓컁앜ㅋ앙카앙ㄱ컄ㅇ아아악'); }
       else likeToast(r.changed > 0 ? '<b>♥</b> 호감도가 올라갑니다 +1' : '<b>♥</b> 오늘 호감도는 다 올랐어요 · 내일 또 와요');
@@ -414,6 +411,7 @@ Store.matchStatus().then(s => {
     try {   // 츄르: 하루 한 번 · 호감도는 서버가 정해요
       const r = await Store.useSnack(); wal = r.wallet; churu(); affShow(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]);
       if (r.changed > 0) likeToast(`<b>♥</b> 호감도가 올라갑니다 +${r.changed}`, r.changed >= 10 ? 'gift' : '');
+      else { likeToast('<b>♡</b> 냠냠… 호감도는 그대로', 'flat'); setTimeout(() => speak(['맛만 봤다냐앙 다음엔 더 줘라냥', '배가 덜 고팠다냐앙', '음… 오늘은 그냥 그렇다냐앙'][Math.floor(Math.random() * 3)]), 1800); }
       catEvents(r, 2400);
     }
     catch (e) { toast(e.message); }
