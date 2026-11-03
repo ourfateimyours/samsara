@@ -103,7 +103,7 @@ function listEditor(box, items, fields, addLabel, blank, max) {
       if (f.type === 'img') return `<div class="img-pick"><div class="thumb" style="background-image:${cssUrl(v)}"></div><div class="ctrl">
         <input class="input" type="url" inputmode="url" data-k="${f.k}" placeholder="이미지 외부 링크 https://…" value="${esc(String(v || '').startsWith('data:') ? '' : v)}">
         <small class="hint-text" style="margin:0">이미지는 외부 링크로만 넣을 수 있어요 (이미지 주소 복사 → 붙여넣기)</small></div></div>`;
-      return `<input class="input ${f.narrow ? 'narrow' : ''}" data-k="${f.k}" placeholder="${esc(f.ph || '')}" value="${esc(v)}" ${f.max ? `maxlength="${f.max}"` : ''}>`;
+      return `<input class="input ${f.narrow ? 'narrow' : ''}" data-k="${f.k}" placeholder="${esc(f.ph || '')}" value="${esc(v)}" ${f.max ? `maxlength="${f.max}"` : ''} ${f.ro ? 'disabled title="관리자가 정해요"' : ''}>`;
     };
     el.innerHTML = `<div class="le-row">${tops.map(ctl).join('')}<button type="button" class="icon-btn" data-up title="위로">↑</button><button type="button" class="icon-btn" data-rm aria-label="삭제">×</button></div>${fulls.map(ctl).join('')}${rowKeys.map(k => `<div class="le-row">${fields.filter(f => f.row === k).map(ctl).join('')}</div>`).join('')}`;
     // 이미지 칸: 업로드하면 data URL 을 숨은 값으로 보관
@@ -197,7 +197,7 @@ window.CharEditor = {
           <div class="row3">
             <label class="field"><span>가문 * <small>멤버란이 이 가문으로 나뉘어요</small></span><select name="team"><option value="">— 가문 선택 —</option>${HOUSES.map(h => `<option ${h === d.team ? 'selected' : ''}>${h}</option>`).join('')}</select></label>
             <label class="field"><span>소속 기관</span><input name="org" maxlength="30" value="${esc(d.org)}"></label>
-            <label class="field"><span>위험 등급</span><select name="rank"><option value="">—</option>${RANKS.map(r => `<option ${r === d.rank ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
+            <label class="field"><span>위험 등급 ${isAdmin ? '' : '<small>관리자가 정해요</small>'}</span><select name="rank" ${isAdmin ? '' : 'disabled'}><option value="">—</option>${RANKS.map(r => `<option ${r === d.rank ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
           </div>
           <label class="field"><span>한마디</span><textarea name="quote" rows="2" maxlength="200">${esc(d.quote)}</textarea></label>
           <div class="row3">
@@ -218,7 +218,7 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="img">
-          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) 500×500 (1:1) · GIF 가능 · 2MB 이하 추천</small></span>
+          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) · GIF 가능 · 2MB 이하 추천</small></span>
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
@@ -242,7 +242,7 @@ window.CharEditor = {
         <div class="epane" data-p="skill">
           <div class="row3">
             <label class="field"><span>능력 이름 <small>한자 추천</small></span><input name="a_name" value="${esc(d.ability.name)}"></label>
-            <label class="field"><span>위험도 % <small>0~100</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}"></label>
+            <label class="field"><span>위험도 % <small>${isAdmin ? '0~100' : '관리자가 정해요'}</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}" ${isAdmin ? '' : 'disabled'}></label>
           </div>
           ${pstyleBar('as_', d.ability.style, '능력 · 스킬 글 서식')}
           <label class="field"><span>능력 설명 <small>위 서식 그대로 프로필에 나와요 · 스킬 설명도 같은 서식이에요 · 능력 설명엔 글 서식 태그를 쓸 수 없어요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
@@ -266,7 +266,7 @@ window.CharEditor = {
         <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
-        ${row && row.status === 'submitted' ? '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>' : ''}
+        ${row && row.status === 'submitted' ? (isAdmin ? '<p class="hint-text" style="color:#ffcf6b">⏳ 심사 대기 중이에요. 관리자가 고쳐 저장해도 심사 대기 그대로예요 (반려는 반려 버튼으로).</p>' : '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>') : ''}
         ${row && row.status !== 'published' && row.review_note ? '<p class="hint-text" style="color:#ff8a80">↩ 반려됐어요 · 고쳐서 언제든 다시 제출할 수 있어요</p>' : ''}
         ${row && row.published_at ? '<p class="hint-text">고친 내용은 <b>작성본</b>으로 저장돼요. 게시되기 전까지 사이트에는 지금 게시된 모습이 그대로 보여요.</p>' : ''}
         <p class="err-text" id="cerr"></p>
@@ -288,7 +288,7 @@ window.CharEditor = {
 
     const getImgs = listEditor($('#e-img', m), d.images, [{ k: 'url', type: 'img', full: true }], '이미지 추가', true, 1);   // 전신은 한 장만
     const getSkills = listEditor($('#e-skill', m), d.skills, [
-      { k: 'name', ph: '스킬 이름', max: 30 }, { k: 'lv', ph: 'LV', narrow: true, max: 3 },
+      { k: 'name', ph: '스킬 이름', max: 30 }, { k: 'lv', ph: 'LV', narrow: true, max: 3, ro: !isAdmin },
       { k: 'desc', type: 'textarea', ph: '설명', rows: 2, full: true }], '스킬 추가', !row);
     const getItems = listEditor($('#e-items', m), d.items, [
       { k: 'name', ph: '소지품 이름', max: 30 },

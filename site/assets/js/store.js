@@ -440,17 +440,24 @@
     /* 작성본 저장 (언제나). 새 캐릭터면 만들어요. 제출·반려 상태였다면 다시 "작성 중"으로 */
     async saveDraft(id, draft) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
+      const admin = u.grade === 'admin';
+      // 위험도 · 위험 등급 · 스킬 레벨은 관리자만 (회원이 저장하면 전에 있던 값 그대로 · 서버도 똑같이 막아요)
+      const keepAdminOnly = (d, prev) => { prev = prev || {}; const lvOf = n => ((prev.skills || []).find(s => s && s.name === n) || {}).lv || '';
+        return Object.assign({}, d, { danger: prev.danger == null ? '' : prev.danger, rank: prev.rank || '', skills: (d.skills || []).map(s => Object.assign({}, s, { lv: lvOf(s.name) })) }); };
       if (!id) {
         const c = await this.can('save', null); if (!c.ok) throw new Error(c.reason);   // 등록을 잠그면 새 캐릭터를 못 만들어요
+        if (!admin) draft = keepAdminOnly(draft, {});
         const r = await B.insert('characters', { owner_id: u.id, author: u.nickname, data: {}, draft, status: 'draft', published_at: null, submitted_at: null, review_note: '' });
         return r;
       }
       const row = await B.get('characters', id);
       const c = await this.can('save', row); if (!c.ok) throw new Error(c.reason);
       // 한 번 게시된 캐릭터의 스탯은 관리자만 바꿔요 (작성 중으로 돌아가도 게시 때 스탯 그대로 · 서버도 똑같이 막아요)
-      if (u.grade !== 'admin' && row.data && Object.keys(row.data).length) draft = Object.assign({}, draft, { stats: row.data.stats || '' });
+      if (!admin && row.data && Object.keys(row.data).length) draft = Object.assign({}, draft, { stats: row.data.stats || '' });
+      if (!admin) draft = keepAdminOnly(draft, row.draft || row.data);
       const patch = { draft, updated_at: now() };
-      if (row.status !== 'draft') patch.status = 'draft';
+      // 회원이 고치면 '작성 중'으로 · 관리자가 심사 대기 프로필을 고치면 심사 대기 그대로 (반려 버튼으로만 반려)
+      if (row.status !== 'draft' && !(admin && row.status === 'submitted')) patch.status = 'draft';
       const r = await B.update('characters', id, patch);
       return r;
     },
