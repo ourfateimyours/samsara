@@ -254,7 +254,7 @@ body.archive-theme.dossier-page { background: #050608; }
 .roster .r-stage.pcards { top: 118px; bottom: 92px; height: auto; left: 64px; right: 64px; display: flex; justify-content: center; align-items: center; gap: 22px; }
 .roster .r-stage.pcards ~ .r-floor { opacity: 0; }
 .roster .r-stage.pcards .pcard {
-  --w: clamp(150px, min(calc((100vw - 260px) / 5 - 22px), calc((100dvh - 250px) * 5 / 8)), 340px);
+  --w: clamp(150px, min(calc((100vw - 260px) / 5 - 22px), calc((100dvh - 250px) * 5 / 8)), 240px);
   position: relative; display: block; flex: 0 0 auto; width: var(--w); height: auto; margin: 0; padding: 0;
   background: none; border: 0; text-align: left; cursor: pointer; isolation: isolate; overflow: visible; filter: none; transform: none;
   animation: pcIn .7s ease both; animation-delay: calc(.15s + var(--i) * .08s); }
