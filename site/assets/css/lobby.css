@@ -301,7 +301,7 @@
 .lobby .rb.big .ci { width: 96px; height: 96px; } @media (max-width: 1180px) { .lobby .rb.big .ci { width: 76px; height: 76px; } } @media (max-width: 760px) { .lobby .rb.big .ci { width: 58px; height: 58px; } }
 
 /* ---------- 낮 배경 (06시~18시) ---------- */
-.lobby.is-day .lb-bg .photo { background-image: url(https://i.imgur.com/v8ZbESH.png); }
+.lobby.is-day .lb-bg .photo { background-image: url(../img/lobby-day.webp); }
 .lobby.is-day .lb-bg .shade { background:
     linear-gradient(180deg, rgba(10, 18, 48, .55) 0%, rgba(10, 18, 48, .08) 20%, transparent 45%, rgba(10, 18, 48, .28) 72%, rgba(8, 12, 34, .78) 100%),
     linear-gradient(90deg, rgba(10, 18, 48, .45), transparent 28%, transparent 72%, rgba(10, 18, 48, .45)); }

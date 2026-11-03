@@ -221,7 +221,7 @@ body.archive-theme.dossier-page { background: #050608; }
 /* ================================================================
    두상(움짤) 액자 카드 — 마우스를 올리면 캐릭터 색 빛이 테두리를 따라 한 바퀴 '샥'
    ================================================================ */
-.rcard img.head { filter: none !important; object-fit: cover !important; object-position: center 18% !important; }
+.rcard img.head, .rcard video.head { filter: none !important; object-fit: cover !important; object-position: center 18% !important; }
 .cwrap .sweep { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 3; overflow: visible; pointer-events: none; }
 .cwrap .sweep polygon { fill: none; stroke: var(--fc); stroke-linejoin: round; }
 .cwrap .sweep .ring { stroke-width: 1.4; opacity: 0; transition: opacity .5s ease; }
@@ -273,9 +273,9 @@ body.archive-theme.dossier-page { background: #050608; }
 .pcard .pc-fs::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: linear-gradient(rgba(4, 5, 6, .78) 0%, rgba(4, 5, 6, 0) 26%, rgba(4, 5, 6, 0) 50%, rgba(4, 5, 6, .94) 100%); }
 .pcard .pc-f { position: absolute; inset: 0; overflow: hidden; }
-.roster .r-stage.pcards .pcard .pc-f img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; object-position: center 18%;
+.roster .r-stage.pcards .pcard .pc-f img, .roster .r-stage.pcards .pcard .pc-f video { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; object-position: center 18%;
   -webkit-box-reflect: unset; filter: none; transition: filter .8s var(--ez), scale 1.1s var(--ez); pointer-events: none; }
-.roster .r-stage.pcards .pcard:hover .pc-f img, .roster .r-stage.pcards .pcard:focus-visible .pc-f img { scale: 1.08; filter: none; }
+.roster .r-stage.pcards .pcard:hover .pc-f img, .roster .r-stage.pcards .pcard:focus-visible .pc-f img, .roster .r-stage.pcards .pcard:hover .pc-f video, .roster .r-stage.pcards .pcard:focus-visible .pc-f video { scale: 1.08; filter: none; }
 .roster .r-stage.pcards .pcard.dummy .pc-f img { object-fit: contain; object-position: 50% 100%; }
 .roster .r-stage.pcards .pcard .pc-f img.sil { filter: brightness(0) drop-shadow(0 0 1.5px var(--fc)) drop-shadow(0 0 10px color-mix(in srgb, var(--fc) 55%, transparent)) !important; }
 .pcard .pc-t { position: absolute; left: 16px; right: 16px; top: 16px; z-index: 3; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; pointer-events: none; }
