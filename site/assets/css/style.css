@@ -1059,7 +1059,7 @@ body[data-page="home"] .bgm-dock, body[data-page="home"] .mail-fab { backdrop-fi
 .site-header.scrolled, body:not([data-page="home"]) .site-header { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(7, 6, 9, .93); }
 .modal-back { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 2, 5, .88); }
 .bgm-dock, .mail-fab { backdrop-filter: none; -webkit-backdrop-filter: none; }
-.gate-photo { background: #05060f url(../img/lobby-bg.webp) 60% 40% / cover no-repeat; }   /* 로그인 배경: 영상 대신 메인과 같은 그림 */
+.gate-photo { background: #05060f 60% 40% / cover no-repeat; } .gate-wrap.night .gate-photo { background-image: url(../img/lobby-bg.webp); }   /* 로그인 배경: 영상 대신 메인과 같은 그림 */
 
 /* 별똥별 (window.meteors 가 띄워요) — 로비 밤 화면 · 로그인 밤 화면 · 오른쪽 위 → 왼쪽 아래 (그림 속 방향, 약 32°)
    렉을 줄이려고 그림자 필터 없이 머리 쪽 빛(box-shadow)만 */
