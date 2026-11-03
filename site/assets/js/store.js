@@ -105,14 +105,6 @@
   const POUCH_DAY = 3;
   const MATCH = { cool: 48, wait: 30, coin: [1000, 5000], stat: [1, 5], turn: 600 };   // 대국: 이틀(48시간)에 1판 · 방 30분 · 영전 1,000~5,000 · 술력 1~5 · 한 수 10분
   const tierOf = d => d >= 20 ? 3 : d >= 10 ? 2 : d >= 1 ? 1 : 0;
-  const COMBAT_W = { 술력: 10, 근력: 4, 지력: 3, 이성: 3, 재력: 1.5, 외모: 1, 행운: 1 };
-  const combatOf = v => {
-    const g = k => Math.max(0, Number(v[k]) || 0), xs = Object.keys(COMBAT_W).map(g), m = xs.reduce((a, b) => a + b, 0) / xs.length;
-    const dev = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / xs.length), harmony = m > 0 ? Math.max(0, Math.min(1, 1 - dev / m)) : 0;
-    const base = Object.entries(COMBAT_W).reduce((a, [k, w]) => a + g(k) * w, 0);
-    const crit = Math.min(.6, .05 + g('행운') * .0025 + g('이성') * .001), critDmg = 1.5 + g('지력') * .005 + g('근력') * .003;
-    return { power: Math.round(base * (.85 + .3 * harmony) * (1 + crit * (critDmg - 1)) * 10), harmony, crit, critDmg };
-  };
   const statBase = (data, st) => parseFloat((String((data || {}).stats || '').match(new RegExp(st + '\\s*[:：]\\s*(-?[\\d.]+)')) || [])[1]) || 0;
   const rollMult = t => { let r = Math.random() * 100; for (const [m, p] of t) if ((r -= p) < 0) return m; return t[0][0]; };
   /* stock: 최대 몇 명이 가질 수 있는지 (비우거나 0이면 무제한) · sold: 지금 가진 사람 수 */
@@ -552,6 +544,18 @@
     },
     async shopLog() { const cut = new Date(Date.now() - LOG_DAYS * 864e5).toISOString(); return LS.get('t:shoplog', []).filter(l => l.created_at >= cut).reverse(); },
     async adminWallets() { const ws = LS.get('t:wallets', {}), out = {}; for (const k in ws) out[k] = Object.assign(emptyWallet(), ws[k]); return out; },
+    // 데모: 게시 + 심사 대기(스탯 적은 제출본) · 계산은 demo-combat.js (데모 전용 파일)
+    async statBoard() {
+      if (!window.demoCombat) await new Promise(r => { const s = document.createElement('script'); s.src = 'assets/js/demo-combat.js'; s.onload = s.onerror = r; document.head.appendChild(s); });
+      const calc = window.demoCombat || (() => ({ power: 0, note: '', x: [] }));
+      const chars = LS.get('t:characters', []), ws = LS.get('t:wallets', {});
+      const pub = chars.map(c => c.published_at ? c : (c.status === 'submitted' && c.draft && STATS.some(st => statBase(c.draft, st)) ? Object.assign({}, c, { data: c.draft, pending: true }) : null))
+        .filter(c => c && c.data && c.data.name);
+      const val = (c, st) => statBase(c.data, st) + ((((ws[c.owner_id] || {}).boosts || {})[c.id] || {})[st] || 0);
+      const avg = {}; STATS.forEach(st => avg[st] = pub.length ? pub.reduce((a, c) => a + val(c, st), 0) / pub.length : 0);
+      return { avg, xcols: window.demoCombatCols || [], rows: pub.map(c => { const v = Object.fromEntries(STATS.map(st => [st, val(c, st)]));
+        return { id: c.id, name: c.data.name, color: c.data.color || '', pending: !!c.pending, v, combat: calc(v) }; }).sort((a, b) => b.combat.power - a.combat.power) };
+    },
     async giveCoins(me, nick, to, amount, note) {
       const n = parseInt(amount, 10); if (!n) throw new Error('지급할 영전을 적어 주세요.');
       const users = LS.get('users', []), tu = users.find(u => u.id === to); if (!tu) throw new Error('회원을 찾을 수 없어요.');
@@ -994,6 +998,7 @@
         return ok(await sb.from('shop_log').select('*').gte('created_at', cut).order('created_at', { ascending: false }));
       },
       async adminWallets() { const rows = ok(await sb.from('wallets').select('*')), out = {}; rows.forEach(r => out[r.user_id] = Object.assign(emptyWallet(), r)); return out; },
+      async statBoard() { return ok(await sb.rpc('admin_stat_board')) || { avg: {}, rows: [] }; },
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
@@ -1181,18 +1186,8 @@
     async shopLog() { await this.requireAdmin(); return B.shopLog(); },
     /* 관리자: 모든 회원 지갑 { user_id: wallet } · 영전 지급(음수면 회수) */
     async adminWallets() { await this.requireStaff(); return B.adminWallets(); },
-    async statBoard() {
-      await this.requireAdmin();
-      const [chars, ws] = await Promise.all([B.list('characters'), B.adminWallets()]);
-      // 게시된 캐릭터 + 아직 게시 전이지만 제출된(심사 대기) 캐릭터는 제출한 작성본 스탯으로 같이 계산
-      // (스탯을 아직 안 적은 제출본은 0 으로 평균을 끌어내리니 빼요)
-      const pub = chars.map(c => c.published_at ? c : (c.status === 'submitted' && c.draft && STATS.some(st => statBase(c.draft, st)) ? Object.assign({}, c, { data: c.draft, pending: true }) : null))
-        .filter(c => c && c.data && c.data.name);
-      const val = (c, st) => statBase(c.data, st) + ((((ws[c.owner_id] || {}).boosts || {})[c.id] || {})[st] || 0);
-      const avg = {}; STATS.forEach(st => avg[st] = pub.length ? pub.reduce((a, c) => a + val(c, st), 0) / pub.length : 0);
-      return { stats: STATS, avg, tierOf, rows: pub.map(c => { const v = Object.fromEntries(STATS.map(st => [st, val(c, st)]));
-        return { id: c.id, name: c.data.name, color: c.data.color || '', pending: !!c.pending, v, combat: combatOf(v) }; }).sort((a, b) => b.combat.power - a.combat.power) };
-    },
+    // 전투력 · 스탯 평균표: 계산은 서버(관리자만)에서 해서 결과만 받아요
+    async statBoard() { await this.requireAdmin(); const b = await B.statBoard(); return { stats: STATS, avg: b.avg || {}, tierOf, rows: b.rows || [], xcols: b.xcols || [] }; },
     async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); cachedBadges = null; return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */
     statBonus(badge, items, charId) {

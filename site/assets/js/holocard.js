@@ -104,6 +104,7 @@ void main(){
   // 미리 받아 두기: 랭킹 1 · 2 · 3 두상을 처음에 한 번에 받아 두면, 넘길 때 바로 나와요
   const cache = new Map();
   const getData = url => {
+    if (/^data:/i.test(url)) return Promise.resolve(null);   // 그림 없는 캐릭터의 빈 그림(data:)은 받을 게 없어요
     if (!cache.has(url)) cache.set(url, fetch(url, { mode: 'cors' }).then(async res => {
       if (!res.ok) return null;
       const type = (res.headers.get('content-type') || '').split(';')[0] || (/\.gif(\?|$)/i.test(url) ? 'image/gif' : '');
@@ -111,7 +112,30 @@ void main(){
     }).catch(() => null));
     return cache.get(url);
   };
-  const preload = urls => urls.filter(Boolean).forEach(u => { if (window.ImageDecoder) getData(u); else { const i = new Image(); i.crossOrigin = 'anonymous'; i.src = u; } });
+  // imgur GIF 두상은 GIF 통째(수십 MB) 대신 같은 움직임의 MP4(수백 KB~수 MB)만 미리 받아요
+  const mp4Of = u => window.headMp4 ? window.headMp4(u) : null;
+  const preload = urls => urls.filter(u => u && !/^data:/i.test(u)).forEach(u => { const v = mp4Of(u); if (v) { fetch(v.mp4, { mode: 'cors' }).catch(() => {}); return; }
+    if (window.ImageDecoder) getData(u); else { const i = new Image(); i.crossOrigin = 'anonymous'; i.src = u; } });
+  // 두상 영상: 숨겨 둔 <video> 를 틀어 놓고 장면을 베껴 그려요 (첫 장면 그림을 먼저) · 안 되면 false → 원래 GIF 방식
+  function loadVideo(url, my, el) {
+    const v = mp4Of(url); if (!v) return Promise.resolve(false);
+    return new Promise(res => {
+      const vid = document.createElement('video'); vid.className = 'hc-live'; vid.crossOrigin = 'anonymous';
+      Object.assign(vid, { muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto' }); vid.setAttribute('muted', ''); vid.setAttribute('playsinline', '');
+      const poster = new Image(); poster.crossOrigin = 'anonymous';
+      poster.onload = () => { if (my === token && !liveImg) { try { drawSub(poster, poster.naturalWidth, poster.naturalHeight); el.classList.add('gl'); } catch (e) {} } };
+      poster.src = v.poster;
+      const fail = () => { vid.remove(); if (liveImg === vid) liveImg = null; res(false); };
+      vid.addEventListener('error', fail, { once: true });
+      vid.addEventListener('loadeddata', () => {
+        if (my !== token) { vid.remove(); return res(true); }
+        try { drawSub(vid, vid.videoWidth, vid.videoHeight); } catch (e) { return fail(); }
+        el.classList.add('gl'); el.append(vid); liveImg = vid;
+        const p = vid.play(); if (p) p.then(() => res(true), err => { if (err && err.name === 'NotAllowedError') fail(); else res(true); }); else res(true);
+      }, { once: true });
+      vid.src = v.mp4;
+    });
+  }
   async function loadAnimated(url, my, el) {
     if (!window.ImageDecoder) return false;
     const got = await getData(url); if (!got) return false;
@@ -140,7 +164,7 @@ void main(){
     card.style.setProperty('--rx', (rx * 57.3).toFixed(2) + 'deg'); card.style.setProperty('--ry', (ry * 57.3).toFixed(2) + 'deg');
     const vx = Math.sin(ry), vy = Math.sin(rx), vz = Math.cos(rx) * Math.cos(ry);
     gl.uniform3f(U.uView, vx, vy, vz); gl.uniform1f(U.uTime, REDUCED && !hover ? 0 : elapsed);
-    if (liveImg && liveImg.isConnected && now - liveAt > 66) { liveAt = now; try { drawSub(liveImg, liveImg.naturalWidth, liveImg.naturalHeight); } catch (e) { liveImg = null; } }
+    if (liveImg && liveImg.isConnected && now - liveAt > 66) { liveAt = now; try { drawSub(liveImg, liveImg.naturalWidth || liveImg.videoWidth, liveImg.naturalHeight || liveImg.videoHeight); } catch (e) { liveImg = null; } }
     gl.viewport(0, 0, canvas.width, canvas.height); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     raf = requestAnimationFrame(frame);
   }
@@ -167,7 +191,8 @@ void main(){
       img.onerror = () => { canvas.remove(); el.classList.remove('gl'); };
       img.src = o.img;
     };
-    loadAnimated(o.img, my, el).then(ok => { if (!ok && my === token) still(); }).catch(() => { if (my === token) still(); });
+    const gifWay = () => loadAnimated(o.img, my, el).then(ok => { if (!ok && my === token) still(); }).catch(() => { if (my === token) still(); });
+    loadVideo(o.img, my, el).then(ok => { if (!ok && my === token) gifWay(); });
     // 처음 한 번만 빈 주체층 (넘길 땐 새 그림이 올 때까지 앞 그림을 잠깐 둬요 — 뒤집히는 동안이라 안 보여요)
     if (!texReady) { upload(texSub, 0, (() => { const c = document.createElement('canvas'); c.width = c.height = 2; return c; })()); texReady = true; }
     el.addEventListener('pointermove', e => {

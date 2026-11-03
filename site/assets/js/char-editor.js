@@ -64,7 +64,8 @@ window.normChar = (d = {}) => {
     name: d.name || '', name_en: d.name_en || '', subtitle: FIXED.subtitle, org: d.org || d.affiliation || '',
     classline: FIXED.classline, team: HOUSES.includes(d.team) ? d.team : '', codename: FIXED.codename, quote: d.quote || '',
     rank: RANKS.includes(d.rank) ? d.rank : (d.rank || ''), color: /^#[0-9a-f]{6}$/i.test(d.color) ? d.color : '#c8161d',
-    element: '', images, song,  
+    element: '', images, song,   // 오행 속성은 쓰지 않아요
+    // 능력 설명 서식 (예전에 정렬만 따로 저장한 것도 이어받아요)
     ability: (a => Object.assign(a, { style: normPStyle(Object.assign({ align: a.align }, a.style), ASTYLE_DEF) }))(Object.assign({ name: '', sub: '', desc: '' }, d.ability)),
     skills: d.skills || [], danger: d.danger === '' || d.danger == null ? '' : Math.max(0, Math.min(100, +d.danger || 0)),
     persona: d.persona || '', persona_style: normPStyle(d.persona_style), persona_tags: d.persona_tags || [], profile: d.profile || '', stats: d.stats || '',
@@ -217,7 +218,7 @@ window.CharEditor = {
         </div>
 
         <div class="epane" data-p="img">
-          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) 500×500 (1:1) · GIF 가능 · 2MB 이하 추천</small></span>
+          <div class="field head-field"><span>두상 · 움짤 <small>멤버란 카드에만 보여요 · 권장 500×800 (5:8) · GIF 가능 · 2MB 이하 추천</small></span>
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>

@@ -9,6 +9,20 @@
   window.$$ = (s, r) => [...(r || document).querySelectorAll(s)];
   window.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* ---------- 두상 움짤 가볍게 ----------
+     imgur GIF 는 같은 주소의 .mp4 영상이 자동으로 있어요 (보통 10배 이상 가벼움) → 영상으로 틀고, 첫 장면 그림(약 30KB)을 먼저 깔아 둬요.
+     영상이 없거나 · 아이폰 저전력 모드처럼 자동 재생이 막히면 원래 GIF 로 돌아가요. 투명 배경 GIF 는 영상에서 배경이 채워질 수 있어요. */
+  const IMGUR_GIF = /^https:\/\/i\.imgur\.com\/([A-Za-z0-9]+)\.gif(?:[?#].*)?$/i;
+  window.headMp4 = url => { const m = IMGUR_GIF.exec(String(url || '').trim()); return m ? { mp4: `https://i.imgur.com/${m[1]}.mp4`, poster: `https://i.imgur.com/${m[1]}l.jpg` } : null; };
+  window.headHTML = (url, cls = '') => { const v = headMp4(url);
+    return v ? `<video class="${cls}" src="${esc(v.mp4)}" poster="${esc(v.poster)}" data-gif="${esc(url)}" autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>`
+      : `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`; };
+  const toGif = v => { if (!v.dataset.gif || !v.isConnected) return; const i = document.createElement('img');
+    i.className = v.className; i.alt = ''; i.decoding = 'async'; i.referrerPolicy = 'no-referrer'; i.src = v.dataset.gif; v.replaceWith(i); };
+  document.addEventListener('error', e => { const v = e.target; if (v && v.matches && v.matches('video[data-gif]')) toGif(v); }, true);
+  document.addEventListener('loadeddata', e => { const v = e.target; if (!(v && v.matches && v.matches('video[data-gif]')) || !v.paused) return;
+    const p = v.play(); if (p) p.catch(err => { if (err && err.name === 'NotAllowedError') toGif(v); }); }, true);
+
   /* ---------- 글 서식 태그 ----------
      <태그>글자</태그> 로 쓰면 캐릭터 색으로 꾸며져요. 칸마다 쓸 수 있는 태그가 달라요 (목록에 없는 태그는 쓴 글 그대로 보여요).
      흰색~회색 계열 캐릭터 색은 pale: 빛은 굵은 흰 글씨, 메일은 회색 화면
