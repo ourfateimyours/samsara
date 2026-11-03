@@ -1,10 +1,4 @@
-/* ================================================================
-   Store — 로그인/데이터 저장 계층
-   · Supabase 설정이 있으면 Supabase 사용 (진짜 회원가입, 모두가 같은 데이터)
-   · 없으면 데모 모드 (localStorage, 이 브라우저에서만 보임)
-   테이블: profiles, characters, notes, links, telepathy,
-           site_settings(사이트 설정), edit_grants(예외 허용)
-   ================================================================ */
+
 (function () {
   const cfg = window.SITE_CONFIG || {};
   const remoteOn = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
@@ -93,10 +87,7 @@
     : (r.score >= 6000 ? 0 : r.score >= 3600 ? 1 : r.score >= 1200 ? 2 : 3);   // 미술: 대박 2 + 무난 1 이면 甲
   const HOUSE_OF = d => JSON.stringify(d || {}).includes('염업') ? '염업' : ({ '瑞門': '본가', '誓門': '경파', '染': '염가' }[(d || {}).team] || '본가');
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  /* 재력 · 행운 특전 · 수업 스탯 보정 · 복주머니 (⚠ supabase-schema.sql 의 perk_* · shop_special 과 같아야 해요)
-     특전 단계: 내 캐릭터 중 그 스탯이 가장 높은 캐릭터 − 게시된 캐릭터 평균 → +1~9 = 1단계 · +10~19 = 2단계 · +20 이상 = 3단계 */
   const PERK = { money: [0, .05, .10, .15], catCoin: [10, 30], luckCat: .01, statPer: .005, statCap: .15 };
-  // 외모 특전으로 틀린 답을 봐줄 때 상대가 하는 말 (⚠ lesson-schema.sql lesson_answer_x 와 같게)
   const SPARE = {
     soc: ['너는 얼굴 하나는 타고났구나… 이번만 넘어가마.', '그 얼굴을 보니 누가 생각나서 뭐라 못 하겠구나.', '에휴, 예쁘게 생겨서 혼을 낼 수가 없구나.'],
     mor: ['…예쁘게 생겨서 못 때리겠네.', '그 얼굴로 그러면 거절을 못 하잖아.', '네 얼굴을 보면 누가 생각나서… 이번만이야.']
@@ -736,7 +727,6 @@
       const others = chars.filter(c => c.owner_id !== me), face = c => ({ name: c.data.name, color: c.data.color || '', head: c.data.head || '' });
       let qs = [], love = false;
       if (subj === 'kor') {
-        // 문제 종류: 두상 · 전신(조각 벗기기) · 소지품 사진 · 성격 글 · 테마곡 · 한마디 · 능력/스킬 — 그 인물 프로필에 있는 것 중에서 골라요
         const kinds = d => {
           const it = (d.items || []).filter(x => x && x.img), img = ((d.images || [])[0] || {}).url, yt = ((d.song || {}).url || '').match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/|live\/)([\w-]{11})/);
           const mask = s => String(s || '').split(d.name).join('○○');
@@ -779,7 +769,6 @@
           return { ok: -1, res: rx.map(x => x[2]), dm: rx.map(x => x[3]), pub: { who: Object.assign(c ? face(c) : { name: st.char, color: '', head: '' }, { handle: st.handle || '' }), img: st.img, sticker: st.sticker || '', ago: st.ago || '', opts: rx.map(x => [x[0], x[1]]) } }; });
       }
       const r = { id: newId(), user_id: me, char_id: charId, subj, day: today, msg: String(msg || '').trim().slice(0, 40), qs, i: 0, score: 0, right: 0, total: qs.length, combo: 0, combo_max: 0, lives: L.lives || 0, love, shown: now(), at: now(), done: false };
-      // 행운 특전: 1단계 힌트 1번 · 2단계 이상 다시 하기 1번도
       const lt = this.perkTier(me, '행운', charId); const pf = this.perkFree(me); Object.assign(r, { hint: pf && lt.tier >= 1 ? 1 : 0, retry: pf && lt.tier >= 2 ? 1 : 0, lname: mine.data.name, lhead: mine.data.head || '' });
       rows.push(r); LS.set('t:lessons', rows.filter(x => x.day >= kstDay(Date.now() - 864e5) || !x.done));
       return { q: this.lessonPub(r), hint: r.hint, retry: r.retry, lives: r.lives, love, hearts: subj === 'mor' ? (LS.get('t:lesson_love', {})[me + ':' + qs[0].target] || 0) : 0 };
@@ -789,9 +778,7 @@
       if (!r || !r.qs[r.i] || r.answered === r.i) throw new Error('진행 중인 수업이 없어요.');
       const L = LESSONS[r.subj], q = r.qs[r.i], ms = Math.max(Date.now() - Date.parse(r.shown), 250), late = choice < 0 || ms > L.secs * 1000 + 1500;
       const right = !late && choice === q.ok, left = Math.max(0, L.secs * 1000 - ms), out = { right, ok: q.ok };
-      // 행운 특전 2단계: 틀린 답(미술은 망함)이면 한 번 다시 풀어요 · 점수 · 목숨 그대로 · 시간은 새로
       const wrong = choice >= 0 && !late && (r.subj === 'art' ? q.res[choice] === '망함' : !right);
-      // 외모 특전 (사회 · 도덕심): 외모가 평균보다 높으면 틀린 답을 한 번 봐줘요 · 점수 · 콤보 그대로
       if (wrong && (r.subj === 'soc' || r.subj === 'mor') && !r.spared && this.perkFree(me) && this.perkTier(me, '외모', r.char_id).tier >= 1) {
         this.perkUse(me); r.spared = true; r.answered = r.i; r.at = now();
         const line = shuffle(SPARE[r.subj])[0];
@@ -828,7 +815,6 @@
       else LS.set('t:lessons', rows);
       return out;
     },
-    // 행운 특전 1단계: 힌트 — 지금 문제의 오답 보기 하나를 알려 줘요 (미술은 '망함' 반응 하나)
     async lessonHint(me) {
       const rows = LS.get('t:lessons', []), r = rows.find(x => x.user_id === me && !x.done && x.qs);
       if (!r || !r.qs[r.i] || r.answered === r.i) throw new Error('진행 중인 수업이 없어요.');
@@ -1002,23 +988,18 @@
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
-      // 호감도 · 선물 영전은 서버에서만 계산해요 (사이트 코드를 고쳐도 하루 +5 · 선물 한 번씩을 못 넘어요)
       async catPet(me, up) { const r = ok(await sb.rpc('cat_pet_x', { p_up: !!up })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },      // 미니 게임: 배수 뽑기 · 정산 · 하루 한 판은 전부 서버에서
       async pangStatus() { return ok(await sb.rpc('pang_status')); },
       async pangStart(me, bet, level) { return ok(await sb.rpc('pang_start', { p_bet: parseInt(bet, 10) || 0, p_level: level })); },
-      // 점수는 서버 함수가 직접 계산해요 (움직인 기록만 보내요)
       async pangFinish(me, moves) { const { data, error } = await sb.functions.invoke('pang-finish', { body: { moves } }); if (error) { let m = error.message; try { m = (await error.context.json()).error || m; } catch (e) {} throw new Error(koError(m)); } if (data && data.error) throw new Error(data.error); return data; },
-      // 후계자 수업: 문제 · 시간 · 점수 · 스탯은 전부 서버 함수에서
       async lessonStatus() { return ok(await sb.rpc('lesson_status')); },
-      // 관리자 '수업 문제' (관리자만 · 서버에서 한 번 더 확인해요)
       async lessonItems(subj) { return ok(await sb.rpc('lesson_items', { p_subj: subj })) || []; },
       async lessonItemSave(subj, it) { return ok(await sb.rpc('lesson_item_save', { p_subj: subj, p_item: it })); },
       async lessonItemDel(subj, id) { return ok(await sb.rpc('lesson_item_del', { p_subj: subj, p_id: id })); },
-      async lessonStart(me, subj, charId, msg) { return ok(await sb.rpc('lesson_start_x', { p_subj: subj, p_char: charId, p_msg: msg || '', p_art: null })); },   // 미술 스토리는 서버가 관리자 '미술 스토리' 표에서 꺼내요
+      async lessonStart(me, subj, charId, msg) { return ok(await sb.rpc('lesson_start_x', { p_subj: subj, p_char: charId, p_msg: msg || '', p_art: null })); },   
       async lessonAnswer(me, choice) { return ok(await sb.rpc('lesson_answer_x', { p_choice: choice })); },
       async lessonNext() { return ok(await sb.rpc('lesson_next')); },
       async lessonHint() { return ok(await sb.rpc('lesson_hint')); },
-      // 대국: 실제 사이트용 서버 함수는 아직 (데모 확인 뒤 만들어요)
       async matchStatus() { return { canPlay: false, soon: true }; }, async matchRooms() { return []; },
       async matchOpen() { throw new Error('대국은 곧 열려요.'); }, async matchCancel() {}, async matchJoin() { throw new Error('대국은 곧 열려요.'); }, async matchSettle() { throw new Error('대국은 곧 열려요.'); },
       async cheersToday() { return ok(await sb.rpc('cheers_today')) || []; },
@@ -1111,12 +1092,6 @@
     },
     windowState,
 
-    /* 권한
-       save   : 작성본 저장 — 본인 것은 언제나 · 새 캐릭터 만들기는 등록 기간(또는 예외 허용)에만 · 관리자는 전부
-       submit : 제출 — 본인 것만, 등록 기간(첫 등록) / 수정 기간(게시된 캐릭터) 안에만
-       publish: 게시·반려 — 관리자만
-       delete : 삭제 — 관리자만
-       create/edit : 기간 계산 (submit 이 내부적으로 사용) */
     async can(kind, row) {
       const u = await this.user();
       if (!u) return { ok: false, reason: '로그인이 필요해요.' };
@@ -1234,10 +1209,6 @@
     async matchSettle(id, result) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.matchSettle(u.id, id, result); },
     async lessonRank(subj) { const u = await this.user(); return B.lessonRank(u && u.id, subj); },
 
-    /* ---------- 캐릭터: 작성본 → 제출 → 게시 ----------
-       data  = 게시본 (모두에게 보임)      draft = 작성본 (본인·관리자만)
-       status: draft(작성 중) / submitted(심사 대기) / returned(반려) / published(게시됨)
-       published_at 이 있으면 공개된 캐릭터예요. */
     isPublic: r => !!(r && r.published_at),
     /* 공개 목록: 게시된 캐릭터만 (게시본 기준) */
     async list(t) {
