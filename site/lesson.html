@@ -240,7 +240,7 @@ App.ready.then(async user => {
     main.innerHTML = `<div class="gl ls-play">${hud(st, lives)}
       <div class="wanted"><div class="poster">${art}<span class="cap">WANTED · No.${String(q.no).padStart(2, '0')}</span></div>
         <div class="clue"><small>WANTED ${String(q.no).padStart(2, '0')} / ${String(q.total).padStart(2, '0')} · ${kd[1]}</small><p>${esc(q.ask)}</p>
-          ${q.text ? `<blockquote class="ls-quote">${esc(q.text)}</blockquote>` : ''}${q.kind === 'song' ? '<div class="ls-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' : ''}
+          ${q.text ? `<blockquote class="ls-quote">${esc(stripFmt(q.text))}</blockquote>` : ''}${q.kind === 'song' ? '<div class="ls-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' : ''}
           <div class="hint">${q.hints.map(h => `<span>${esc(h)}</span>`).join('')}</div>
           <div class="ls-ops">${q.opts.map((o, i) => `<button type="button" class="ls-op" data-i="${i}"><span class="k">${ABC[i]}</span>${esc(o)}</button>`).join('')}</div>
           <div class="ls-pts" id="pts"></div></div></div></div>`;
