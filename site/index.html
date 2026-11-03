@@ -286,9 +286,7 @@ App.ready.then(async user => {
   const pool = CAT_LINES.length > 1 ? CAT_LINES.filter(l => l !== lastLine) : CAT_LINES;
   const todayLine = pool[Math.floor(Math.random() * pool.length)];
   try { localStorage.setItem(LINE_KEY, todayLine); } catch (e) {}
-  setTimeout(() => speak(todayLine), 900);   // 들어오면 오늘의 한마디
-  // 누르면: 고양이가 통 튀고, 투명한 알림이 위로 떠올라 사라져요
-  // 가끔(약 12%) 호감도가 떨어지면 → "실망했다냥....." 하고 고양이가 화면에서 사라져요 (30초 뒤 슬그머니 돌아와요)
+  setTimeout(() => speak(todayLine), 900);   
   const likeToast = (html, cls) => {
     const n = document.createElement('div'); n.className = 'cat-like' + (cls ? ' ' + cls : ''); n.innerHTML = html;
     const r = fig.getBoundingClientRect(); n.style.left = (r.left + r.width / 2) + 'px'; n.style.top = (r.top + r.height * .28) + 'px';
@@ -301,7 +299,6 @@ App.ready.then(async user => {
   affShow();
   if (myChar) { const mc = normChar(myChar.data || myChar.draft).color; $('#aff-bar').style.setProperty('--ac', mc); say.style.setProperty('--mc', mc); }   // 막대 · 주인님 글자는 내 캐릭터 색
   let catGone = false, petBusy = false;
-  /* 호감도 단계 선물 (쓰다듬기 · 츄르 공통): 호감도 순서대로 하나씩 (앞 대사가 다 나온 뒤에) */
   const catEvents = (r, at) => {
     const ev = (r.rewards || []).concat(r.unlocked ? [{ th: Store.CAT.full, kind: 'butler' }] : []).sort((a, b) => a.th - b.th);
     ev.forEach(x => {
@@ -324,7 +321,7 @@ App.ready.then(async user => {
       likeToast(r && r.changed < 0 ? `<b>💔</b> 호감도가 떨어졌습니다 ${r.changed}` : '<b>💔</b> 삐졌습니다', 'down');
       fig.classList.add('sulk'); speak('실망했다냥.....');
       setTimeout(() => fig.classList.add('gone'), 1600);   // 삐진 채로 사라져요
-      setTimeout(() => { fig.classList.remove('sulk', 'gone'); fig.classList.add('back'); catGone = false; speak('...흥. 다시 와 줬다냥'); setTimeout(() => fig.classList.remove('back'), 1200); }, 30000);
+      setTimeout(() => { fig.classList.remove('sulk', 'gone'); fig.classList.add('back'); catGone = false; speak('...... 흥. 다시 와 줬다냥'); setTimeout(() => fig.classList.remove('back'), 1200); }, 30000);
       return;
     }
     fig.classList.remove('boing'); void fig.offsetWidth; fig.classList.add('boing');
@@ -399,7 +396,7 @@ Store.matchStatus().then(s => {
     if (pick === 3) { speak('진짜?'); await pause(700); if (await ask(['ㅇㅇ', '아니 제발 저요']) === 1) pick = 2; }
     try {
       const r = await Store.openGift(g.id, pick);
-      if (r.refused) speak('...알겠다냥 그럼 이건 내가 갖겠다냥');
+      if (r.refused) speak('...... 알겠다냥 그럼 이건 내가 갖겠다냥');
       else {
         speak(pick === 1 ? `급하다냥! ${r.name}에게 ${r.stat} +${r.amount}이다냥` : `예의 바른 집사다냥 ${r.name}에게 ${r.stat} +${r.amount}이다냥`);
         likeToast(`<b>✦</b> 관리자의 선물 · ${esc(r.name)} ${esc(r.stat)} +${r.amount}`, 'gift');
@@ -411,7 +408,7 @@ Store.matchStatus().then(s => {
     try {   // 츄르: 하루 한 번 · 호감도는 서버가 정해요
       const r = await Store.useSnack(); wal = r.wallet; churu(); affShow(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]);
       if (r.changed > 0) likeToast(`<b>♥</b> 호감도가 올라갑니다 +${r.changed}`, r.changed >= 10 ? 'gift' : '');
-      else { likeToast('<b>♡</b> 냠냠… 호감도는 그대로', 'flat'); setTimeout(() => speak(['맛만 봤다냐앙 다음엔 더 줘라냥', '배가 덜 고팠다냐앙', '음… 오늘은 그냥 그렇다냐앙'][Math.floor(Math.random() * 3)]), 1800); }
+      else { likeToast('<b>♡</b> 냠냠...... 먹튀 했다냥 ㅋ', 'flat'); setTimeout(() => speak(['맛만 봤다냐앙 다음엔 더 줘라냥', '배가 덜 고팠다냐앙', '음...... 오늘은 그냥 그렇다냐앙'][Math.floor(Math.random() * 3)]), 1800); }
       catEvents(r, 2400);
     }
     catch (e) { toast(e.message); }
@@ -427,25 +424,22 @@ Store.matchStatus().then(s => {
   $('#n-roster').textContent = pub.length ? pad2(pub.length) : '';
   if (unread) $('#db-tele').classList.add('new');
 
-  /* 영전 순위 홀로그램 카드 (왼쪽 아래): 보유 영전이 많은 멤버 3명 · 그 멤버가 가장 최근에 게시한 캐릭터의 두상
-     카드는 층을 겹쳐 만들어요 — 배경(뒤로) · 두상(앞으로) · 무지개 박(기울기에 따라 결이 흘러요) · 별빛 · 글자(표면)
-     기울이면 층마다 다르게 움직여서 입체처럼 보여요 */
   (async () => {
     const badges = await Store.badges().catch(() => ({}));
-    // 그 멤버의 대표 캐릭터: 두상이 있는 캐릭터가 먼저, 그중 가장 먼저 등록한 캐릭터
+
     const latest = uid => pub.filter(c => c.owner_id === uid).sort((a, b) => (!!normChar(b.data || {}).head - !!normChar(a.data || {}).head)
       || String(a.created_at).localeCompare(String(b.created_at)))[0];
     const top = Object.entries(badges).map(([uid, b]) => ({ b, coins: +b.coins || 0, ch: latest(uid) }))
       .filter(r => r.ch && r.coins > 0).sort((a, b) => b.coins - a.coins);
     if (!top.length) return;
-    // 1 · 2 · 3등 안에 같은 영전을 가진 사람이 3명 이상이면 순위를 매길 수 없으니 카드를 띄우지 않아요 (금액이 달라지면 다시 나와요)
+
     const same = {}; top.forEach(r => { same[r.coins] = (same[r.coins] || 0) + 1; });
     if (top.slice(0, 3).some(r => same[r.coins] >= 3)) return;
     top.splice(3);
     $('#holo').hidden = false;
-    // 1 · 2 · 3 등 두상을 미리 받아 둬요 (넘길 때 로딩 없이)
+
     if (window.HoloCard && HoloCard.preload) HoloCard.preload(top.map(r => { const d = normChar(r.ch.data || {}); return d.head || charImage(r.ch.data || {}, r.ch.id); }));
-    // 카드 문장: 별 + 초승달 + 연꽃잎 (왼쪽 반을 그리고 오른쪽은 뒤집어 붙여요)
+
     const half = `<path d="M34 30 C25 40 25 53 36 61 C31 51 31 40 34 30Z"/><path d="M27 41 C19 45 15 51 13 57 C20 53 24 48 27 41Z"/>
       <path d="M48 71 C38 61 22 58 9 61 C23 62 37 66 48 73Z"/><path d="M46 75 C36 75 26 78 19 83 C29 80 37 78 46 77Z"/><path d="M39 53 C36 58 36 63 40 67 C39 62 39 58 39 53Z"/>`;
     const LOGO = `<svg class="hc-logo" viewBox="0 0 100 106" aria-hidden="true" fill="currentColor">
@@ -481,7 +475,7 @@ Store.matchStatus().then(s => {
       const st = $('#hl-stage'); st.classList.add('out');
       setTimeout(() => { put(); st.classList.remove('out'); st.classList.add('in'); setTimeout(() => { st.classList.remove('in'); busy = false; }, 380); }, 260);
     };
-    // 마우스를 따라 기울고(--px · --py: -1 ~ 1), 층마다 깊이가 달라요
+
     const bindTilt = c => {
       if (!c) return;
       c.addEventListener('pointermove', e => {
@@ -494,7 +488,7 @@ Store.matchStatus().then(s => {
     if (top.length < 2) $('#hl-pages').hidden = true;
     show(0);
   })();
-  /* 배너 1: 등록 · 수정 기간 */
+
   const cw = Store.windowState(s, 'create'), ew = Store.windowState(s, 'edit');
   const until = iso => { const ms = Date.parse(iso) - Date.now(); return isNaN(ms) ? '' : `D-${Math.max(0, Math.ceil(ms / 864e5))}`; };
   const md = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getMonth() + 1}.${pad2(d.getDate())}까지`; };
