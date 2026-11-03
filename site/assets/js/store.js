@@ -1183,12 +1183,15 @@
     async adminWallets() { await this.requireStaff(); return B.adminWallets(); },
     async statBoard() {
       await this.requireAdmin();
-      const [chars, ws] = await Promise.all([this.list('characters'), B.adminWallets()]);
-      const pub = chars.filter(c => c.published_at && c.data && c.data.name);
+      const [chars, ws] = await Promise.all([B.list('characters'), B.adminWallets()]);
+      // 게시된 캐릭터 + 아직 게시 전이지만 제출된(심사 대기) 캐릭터는 제출한 작성본 스탯으로 같이 계산
+      // (스탯을 아직 안 적은 제출본은 0 으로 평균을 끌어내리니 빼요)
+      const pub = chars.map(c => c.published_at ? c : (c.status === 'submitted' && c.draft && STATS.some(st => statBase(c.draft, st)) ? Object.assign({}, c, { data: c.draft, pending: true }) : null))
+        .filter(c => c && c.data && c.data.name);
       const val = (c, st) => statBase(c.data, st) + ((((ws[c.owner_id] || {}).boosts || {})[c.id] || {})[st] || 0);
       const avg = {}; STATS.forEach(st => avg[st] = pub.length ? pub.reduce((a, c) => a + val(c, st), 0) / pub.length : 0);
       return { stats: STATS, avg, tierOf, rows: pub.map(c => { const v = Object.fromEntries(STATS.map(st => [st, val(c, st)]));
-        return { id: c.id, name: c.data.name, color: c.data.color || '', v, combat: combatOf(v) }; }).sort((a, b) => b.combat.power - a.combat.power) };
+        return { id: c.id, name: c.data.name, color: c.data.color || '', pending: !!c.pending, v, combat: combatOf(v) }; }).sort((a, b) => b.combat.power - a.combat.power) };
     },
     async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); cachedBadges = null; return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */

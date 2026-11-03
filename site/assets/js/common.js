@@ -9,6 +9,129 @@
   window.$$ = (s, r) => [...(r || document).querySelectorAll(s)];
   window.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* ---------- 글 서식 태그 ----------
+     <태그>글자</태그> 로 쓰면 캐릭터 색으로 꾸며져요. 칸마다 쓸 수 있는 태그가 달라요 (목록에 없는 태그는 쓴 글 그대로 보여요).
+     흰색~회색 계열 캐릭터 색은 pale: 빛은 굵은 흰 글씨, 메일은 회색 화면
+     서식 안에 다른 서식은 안 먹혀요 (겹쳐 쓰면 안쪽은 글자 그대로) · 성격은 서식 종류 3개까지 */
+  const FMT_LINE = ['c', '강조', '밑줄', '점', '빛글', '검열', '흐림', '메모', '떨림', '지움', '타자', '반짝', '네온', '도장'];
+  window.FMT = { persona: [...FMT_LINE, '무물', '무물단색'], skill: ['c', '강조', '밑줄', '점'], item: ['문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티'] };
+  window.FMT_MAX = { persona: 3 };   // 칸마다 쓸 수 있는 서식 종류 수 (먼저 쓴 순서대로 · 넘치는 종류는 글자 그대로)
+  const FMT_BLOCK = ['무물', '무물단색', '문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티'];
+  const FMT_CLS = { c: 'tf-c', 강조: 'tf-hl', 밑줄: 'tf-u', 점: 'tf-dot', 빛글: 'tf-gr', 검열: 'tf-red', 흐림: 'tf-blur', 메모: 'tf-pen', 떨림: 'tf-shake', 지움: 'tf-del', 반짝: 'tf-shine', 네온: 'tf-neon', 도장: 'tf-seal' };
+  const fmtTone = color => {
+    const c = /^#[0-9a-f]{6}$/i.test(color) ? color : '#c8161d', n = parseInt(c.slice(1), 16);
+    const ch = [n >> 16, n >> 8 & 255, n & 255], mx = Math.max(...ch), mn = Math.min(...ch);
+    // 흰색 · 회색만 pale (빨강 · 초록 · 파랑 차이가 거의 없는 색) · #ffe4ec 같은 아주 옅은 색도 색이 보이면 캐릭터 색 그대로
+    return { c, pale: mx - mn < 10 && (mx + mn) / 2 > 100, ink: (ch[0] * .299 + ch[1] * .587 + ch[2] * .114) > 150 ? '#111' : '#fff' };
+  };
+  const unent = s => s.replace(/&(lt|gt|amp|quot|#39);/g, m => ({ '&lt;': '<', '&gt;': '>', '&amp;': '&', '&quot;': '"', '&#39;': "'" })[m]);
+  const parts = t => t.split('|').map(x => x.trim());
+  const ML_IC = {
+    sig: '<svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor"><rect y="10" width="3" height="4"/><rect x="4" y="7" width="3" height="7"/><rect x="8" y="4" width="3" height="10"/><rect x="12" width="3" height="14"/></svg>',
+    bat: '<svg width="22" height="14" viewBox="0 0 22 14" fill="currentColor"><rect x="1" y="1" width="18" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="19" y="4" width="3" height="6"/><rect x="4" y="4" width="3" height="6"/><rect x="8" y="4" width="3" height="6"/><rect x="12" y="4" width="3" height="6"/></svg>',
+    clk: '<svg width="13" height="13" viewBox="0 0 13 13"><circle cx="6.5" cy="6.5" r="5.5" fill="#fff"/><path d="M6.5 3v4h3" stroke="var(--mb)" stroke-width="1.6" fill="none"/></svg>',
+    memo: '<svg width="12" height="13" viewBox="0 0 12 13"><rect x="1" y="1" width="10" height="11" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M3 4h6M3 6.5h6M3 9h6" stroke="#fff" stroke-width="1.2"/></svg>'
+  };
+  const STAR = 'M50 8 L61.17 32.63 L88.04 35.64 L68.07 53.87 L73.51 80.36 L50 67 L26.49 80.36 L31.93 53.87 L11.96 35.64 L38.83 32.63 Z';
+  let fmtSeq = 0;
+  const FMT_BUILD = {
+    무물단색: (t, o) => FMT_BUILD.무물(t, o, true),   // 머리 띠에 검은 그라데이션 없이 캐릭터 색 한 가지로
+    무물: (t, o, flat) => { const [q, ...a] = parts(t), ans = a.join(' | ');
+      return `<div class="tf-qa${flat ? ' flat' : ''}"><div class="qh"><small>무엇이든 물어보세요</small>${esc(o.name || '')}에게 질문하기</div><div class="qb"><b>Q.</b>${q}</div>${ans ? `<div class="qa">${ans}</div>` : ''}</div>`; },
+    문자: t => {
+      const rows = t.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^([^:：]{1,20})[:：]\s*([\s\S]*)$/); return m ? [m[1].trim(), m[2]] : ['', l]; });
+      let out = '', prev = null;
+      rows.forEach(([who, say], i) => {
+        if (who === '시간') { out += `<div class="ts">${say}</div>`; prev = null; return; }
+        if (who === '읽음') { out += `<div class="rd"><b>읽음</b> ${say}</div>`; prev = null; return; }
+        const me = who === '나', nx = rows[i + 1], last = !nx || nx[0] !== who;
+        if (!me && who && who !== prev) out += `<div class="tnm">${who}</div>`;
+        out += `<div class="b ${me ? 'm' : 'o'}${last ? ' t' : ''}">${say}</div>`; prev = who;
+      });
+      return `<div class="tf-im">${out}</div>`; },
+    메일: (t, o, inbox) => { const [when = '', who = '', sub = '', ...b] = parts(t), body = b.join(' | ');
+      const no = String(++o.mail).padStart(3, '0'), hm = (unent(when).match(/\d{1,2}:\d{2}/) || ['--:--'])[0];
+      return `<div class="tf-ml${inbox ? ' in' : ''}"><div class="bar">${ML_IC.sig}${ML_IC.bat}<span class="tm">${hm}</span></div>`
+        + `<div class="tt">${inbox ? '받은' : '보낸'} 메일${no}<span class="nv"><span>이전</span><span>다음</span></span></div>`
+        + `<div class="hd"><div class="ic"><i>${ML_IC.clk}</i><i>${inbox ? 'Fr' : 'To'}</i><i>${ML_IC.memo}</i></div><div class="inf"><div>${when}</div><div>${who}</div><div>${sub}</div></div></div>`
+        + `<div class="bd">${body}${inbox ? '' : '<span class="cur"></span>'}</div></div>`; },
+    받은메일: (t, o) => FMT_BUILD.메일(t, o, true),
+    후원: t => { const [nick = '', cnt = '', ...m] = parts(t), msg = m.join(' | '), n = parseInt(unent(cnt).replace(/[^\d]/g, ''), 10);
+      const num = isNaN(n) ? cnt : n.toLocaleString('ko-KR'), id = 'tfst' + (++fmtSeq);
+      return `<div class="tf-dn"><span class="sp"></span><span class="sp"></span><span class="sp"></span>`
+        + `<svg class="bl" viewBox="0 0 100 124" aria-hidden="true"><defs><radialGradient id="${id}" cx=".38" cy=".3" r=".75"><stop offset="0" style="stop-color:color-mix(in srgb, var(--g) 30%, #fff)"/><stop offset=".5" style="stop-color:var(--g)"/><stop offset="1" style="stop-color:color-mix(in srgb, var(--g) 60%, #000)"/></radialGradient></defs>`
+        + `<path d="M50 76 Q44 92 52 104 Q58 113 50 122" stroke="rgba(255,255,255,.55)" stroke-width="1.4" fill="none"/><path d="M46 72 h8 l-2 6 h-4 z" style="fill:color-mix(in srgb, var(--g) 60%, #000)"/>`
+        + `<path d="${STAR}" fill="url(#${id})" stroke="url(#${id})" stroke-width="13" stroke-linejoin="round"/>`
+        + `<path d="${STAR}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2" stroke-linejoin="round" transform="translate(50 46) scale(.62) translate(-50 -46)"/>`
+        + `<ellipse cx="38" cy="30" rx="7" ry="3.6" transform="rotate(-35 38 30)" fill="#fff" opacity=".8"/><circle cx="31" cy="38" r="1.8" fill="#fff" opacity=".7"/></svg>`
+        + `<div class="l1"><span class="nk">${nick}</span>님 별풍선 <span class="ct" data-n="${esc(num)}"><i>${num}</i></span>개</div><div class="l2">감사합니다!</div>${msg ? `<div class="ms">${msg}</div>` : ''}</div>`; },
+    별점: (t, o, _, raw) => { const [ti = '', sc = '', ...r] = parts(t), cm = r.join(' | ').trim();
+      if (!ti || !cm) return raw;   // 제목 · 코멘트가 없으면 서식이 안 걸리고 쓴 글 그대로
+      const n = Math.round(Math.max(0, Math.min(5, parseFloat(unent(sc)) || 0)) * 2) / 2, head = safeUrl(o.head);
+      return `<div class="tf-rt"><div class="twho">${head ? `<img src="${esc(head)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<i>${esc((o.name || '?').slice(0, 1))}</i>`}${esc(o.name || '')}<span class="sc"><b>★</b>${n.toFixed(1)}</span></div>`
+        + `<div class="ti">${ti}</div><span class="st">★★★★★<span style="width:${n / 5 * 100}%">★★★★★</span></span><div class="cm">${cm}</div></div>`; },
+    // 음악 재생 위젯: 제목 | 가수 | 길이(3:24) | 표지 이미지 링크(선택) · ▶ 누르면 실제로 시간이 흘러가요
+    // 표지를 안 적으면 내 캐릭터 두상 (다른 캐릭터 정보는 안 불러와요)
+    음악: (t, o) => { const [ti = '', ar = '', len = '', cov = ''] = parts(t), m = unent(len).match(/(\d{1,2}):(\d{2})/), dur = m ? +m[1] * 60 + +m[2] : 200, img = safeUrl(unent(cov)) || safeUrl(o.head);
+      const I = (d, w = 16) => `<svg width="${w}" height="${w}" viewBox="0 0 16 16" fill="currentColor">${d}</svg>`;
+      return `<div class="tf-sp" data-dur="${dur}" data-t="0"><div class="sp-top"><div class="sp-cov"${img ? ` style="background-image:url('${esc(img)}')"` : ''}>${img ? '' : '♪'}</div>`
+        + `<div class="sp-tx"><b>${ti}</b><span>${ar}</span></div><span class="sp-hrt">${I('<path d="M8 14s-5.5-3.4-5.5-7.3A3.1 3.1 0 0 1 8 4.6a3.1 3.1 0 0 1 5.5 2.1C13.5 10.6 8 14 8 14z"/>')}</span></div>`
+        + `<div class="sp-bar"><i></i></div><div class="sp-tm"><span class="sp-a">0:00</span><span>${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}</span></div>`
+        + `<div class="sp-ctl"><span>${I('<path d="M11 2h3v3l-1-1-3 3-1-1 3-3zM2 4h3l7 8h-1l1-1v3h-3l1-1-6.5-8H2zM2 12h3l1.5-1.8.8.9L5.5 13H2z"/>', 15)}</span>`
+        + `<span>${I('<path d="M3 3h2v10H3zM13 3v10L6 8z"/>')}</span><button type="button" class="sp-pl" aria-label="재생">${I('<path class="pl" d="M5 3l9 5-9 5z"/><path class="pa" d="M4 3h3v10H4zM9 3h3v10H9z"/>', 18)}</button>`
+        + `<span>${I('<path d="M11 3h2v10h-2zM3 3v10l7-5z"/>')}</span><span>${I('<path d="M3 6a3 3 0 0 1 3-3h6V1l3 3-3 3V5H6a1 1 0 0 0-1 1v2H3zM13 10a3 3 0 0 1-3 3H4v2l-3-3 3-3v2h6a1 1 0 0 0 1-1V8h2z"/>', 15)}</span></div></div>`; },
+    // 트윗 (내 캐릭터가 쓴 글): @아이디 | 내용 | 시간(선택)
+    트윗: (t, o) => { const [id = '', ...r] = parts(t), last = r.length > 1 ? r[r.length - 1] : '', body = (r.length > 1 ? r.slice(0, -1) : r).join(' | ');
+      return fmtTweet({ name: esc(o.name || ''), id, body, time: last, head: safeUrl(o.head), initial: esc((o.name || '?').slice(0, 1)) }); },
+    // 알티 (내 캐릭터가 남의 글을 재게시): 이름 | @아이디 | 내용 | 시간(선택)
+    알티: (t, o) => { const [nm = '', id = '', ...r] = parts(t), last = r.length > 1 ? r[r.length - 1] : '', body = (r.length > 1 ? r.slice(0, -1) : r).join(' | ');
+      const hd = o.headOf ? safeUrl(o.headOf(unent(nm))) : '';   // 멤버란에 같은 이름이 있으면 그 캐릭터 두상
+      return fmtTweet({ name: nm, id, body, time: last, head: hd, initial: (unent(nm) || '?').slice(0, 1), rtBy: esc(o.name || '') }); }
+  };
+  const TW_IC = {
+    rp: '<path d="M2 7.5A5 5 0 0 1 7 2.5h2a5 5 0 0 1 0 10H8l-3 2.5v-3A5 5 0 0 1 2 7.5z" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    rt: '<path d="M4 2L1 5h2v6a2 2 0 0 0 2 2h5v-1.6H5.2a.6.6 0 0 1-.6-.6V5h2zM12 14l3-3h-2V5a2 2 0 0 0-2-2H6v1.6h4.8c.3 0 .6.3.6.6V11h-2z"/>',
+    lk: '<path d="M8 14s-5.5-3.4-5.5-7.3A3.1 3.1 0 0 1 8 4.6a3.1 3.1 0 0 1 5.5 2.1C13.5 10.6 8 14 8 14z" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    sh: '<path d="M8 1.5l3.5 3.5-1 1L8.7 4.2V10H7.3V4.2L5.5 6l-1-1zM2.5 9h1.4v4h8.2V9h1.4v5.4H2.5z"/>'
+  };
+  const twI = d => `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">${d}</svg>`;
+  function fmtTweet(w) {
+    const id = w.id ? (w.id.startsWith('@') ? w.id : '@' + w.id) : '';
+    return `<div class="tf-tw${w.rtBy ? ' rt' : ''}">${w.rtBy ? `<div class="tw-rt">${twI(TW_IC.rt)}<span>${w.rtBy} 님이 재게시했습니다</span></div>` : ''}`
+      + `<div class="tw-row"><div class="tw-av">${w.head ? `<img src="${esc(w.head)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<i>${w.initial}</i>`}</div>`
+      + `<div class="tw-b"><div class="tw-h"><b>${w.name}</b><span>${id}${w.time ? ` · ${w.time}` : ''}</span></div><div class="tw-t">${w.body}</div>`
+      + `<div class="tw-a"><span>${twI(TW_IC.rp)}</span><span class="${w.rtBy ? 'on' : ''}">${twI(TW_IC.rt)}</span><span>${twI(TW_IC.lk)}</span><span>${twI(TW_IC.sh)}</span></div></div></div></div>`;
+  }
+  // 음악 위젯: ▶ / ❚❚ · 1초마다 진행 막대가 흘러가요 (끝나면 처음으로)
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.tf-sp .sp-pl'); if (b) b.closest('.tf-sp').classList.toggle('on'); });
+  setInterval(() => document.querySelectorAll('.tf-sp.on').forEach(p => {
+    const dur = +p.dataset.dur || 200; let t = (+p.dataset.t || 0) + 1; if (t > dur) { t = 0; p.classList.remove('on'); }
+    p.dataset.t = t; p.querySelector('.sp-a').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); p.style.setProperty('--p', (t / dur * 100) + '%');
+  }), 1000);
+  // s: 쓴 글 · ch: { color, name, head } · allow: FMT.persona 같은 허용 목록 · max: 서식 종류 수 제한
+  // 한 번에 훑어서 바꿔요 → 서식 안의 서식은 그대로 글자 (무물 박스 안에 빛 X)
+  window.fmtText = (s, ch, allow, max) => {
+    const tone = fmtTone(ch && ch.color), o = { name: ch && ch.name, head: ch && ch.head, headOf: ch && ch.headOf, mail: 0 };
+    const attr = (cls, more = '') => `class="${cls}${tone.pale ? ' pale' : ''}" style="--g:${tone.c};--gi:${tone.ink}${more}"`;
+    let h = esc(s);
+    if (!allow || !allow.length) return h;
+    const re = () => new RegExp(`&lt;(${allow.join('|')})&gt;(\\n?)([\\s\\S]*?)(\\n?)&lt;\\/\\1&gt;(\\n?)`, 'gi');
+    let keep = null;
+    if (max) { keep = new Set(); for (const m of h.matchAll(re())) { const t = m[1].toLowerCase(); if (keep.size < max) keep.add(t); } }
+    return h.replace(re(), (raw, tg, n1, t, n2, n3) => {
+      const tag = tg.toLowerCase();
+      if (keep && !keep.has(tag)) return raw;
+      if (FMT_BLOCK.includes(tag)) { const out = FMT_BUILD[tag](t, o, false, raw); return out === raw ? raw : out.replace(/^<div class="([^"]+)"/, (_, c) => `<div ${attr(c)}`); }
+      const body = n1 + t + n2;
+      const span = tag === '타자' ? `<span ${attr('tf-type', `;--n:${Math.min(40, unent(t).length)}`)}>${body}</span>`
+        : tag === '검열' || tag === '흐림' ? `<span ${attr(FMT_CLS[tag])} tabindex="0">${body}</span>` : `<span ${attr(FMT_CLS[tag])}>${body}</span>`;
+      return span + n3;
+    });
+  };
+  // 서식 태그를 떼고 글만 (작은 미리보기 · 문제 글)
+  window.stripFmt = s => String(s || '').replace(/<\/?(c|강조|밑줄|점|빛글|검열|흐림|메모|떨림|지움|타자|반짝|네온|도장|무물단색|무물|문자|메일|받은메일|후원|별점|음악|트윗|알티)>/gi, ' ').replace(/\s*\|\s*/g, ' · ').replace(/[ \t]{2,}/g, ' ').trim();
+  // 검열 · 흐림: 폰에서는 눌러서 보기
+  document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('.tf-red, .tf-blur'); if (t) t.classList.toggle('on'); });
   window.safeUrl = u => {
     u = String(u || '').trim();
     return /^(https?:\/\/|data:image\/(png|jpe?g|webp|gif);)/i.test(u) ? u : '';

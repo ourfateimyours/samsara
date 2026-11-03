@@ -245,14 +245,15 @@ window.CharEditor = {
             <label class="field"><span>위험도 % <small>0~100</small></span><input name="danger" type="number" min="0" max="100" value="${esc(d.danger)}"></label>
           </div>
           ${pstyleBar('as_', d.ability.style, '능력 · 스킬 글 서식')}
-          <label class="field"><span>능력 설명 <small>위 서식 그대로 프로필에 나와요 · 스킬 설명도 같은 서식이에요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
-          <div class="field"><span>스킬</span><div id="e-skill"></div></div>
+          <label class="field"><span>능력 설명 <small>위 서식 그대로 프로필에 나와요 · 스킬 설명도 같은 서식이에요 · 능력 설명엔 글 서식 태그를 쓸 수 없어요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
+          <div class="field"><span>스킬</span><div class="fmt-guide" data-fg="skill"></div><div id="e-skill"></div></div>
 
         </div>
 
         <div class="epane" data-p="persona">
           ${pstyleBar('ps_', d.persona_style, '성격 글 서식')}
           <label class="field"><span>성격 · 성향 <small>쓴 그대로(줄바꿈 · 띄어쓰기 · 서식) 프로필에 나와요</small></span><textarea name="persona" rows="10" class="ps-text" style="${personaCSS(d.persona_style)}">${esc(d.persona)}</textarea></label>
+          <div class="fmt-guide" data-fg="persona"></div>
 
           <div class="row3">${BODY_KEYS.map(([k, n, ph]) => `<label class="field"><span>${k} <small>프로필 이름 아래에 보여요</small></span><input name="${n}" maxlength="20" value="${esc(bodyOf(d)[k] || '')}" placeholder="${ph}"></label>`).join('')}</div>
         </div>
@@ -261,7 +262,7 @@ window.CharEditor = {
           <p class="hint-text">숫자로 적어 주세요. ${statLocked ? '<b style="color:#ffcf6b">🔒 스탯은 처음 등록한 뒤로는 관리자만 고칠 수 있어요.</b>' : '처음 등록한 뒤로는 <b>관리자만</b> 고칠 수 있으니 신중하게 적어 주세요.'}</p>
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
-        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div id="e-items"></div></div>
+        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
         <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
@@ -340,6 +341,51 @@ window.CharEditor = {
     // 능력 설명 + 스킬 설명 칸 모두 같은 서식 (스킬을 새로 추가해도 맞춰져요)
     const asApply = bindStyle('as_', () => [f.a_desc, ...$$('#e-skill textarea', m)], asNow, ASTYLE_DEF);
     asApply(); new MutationObserver(asApply).observe($('#e-skill', m), { childList: true, subtree: true });
+    // 글 서식 미리보기: 칸마다 쓸 수 있는 서식만 · 내 테마 컬러로 · 누르면 마지막으로 쓰던 글 칸에 넣어져요
+    const FMT_EX = {
+      c: ['빛', '<c>붉은 실</c>'], 강조: ['형광펜', '<강조>빚은 절대 잊지 않는다</강조>'], 밑줄: ['빛 밑줄', '<밑줄>사당 근처에는 가지 않는다</밑줄>'], 점: ['방점', '<점>반드시</점>'],
+      빛글: ['그라데이션', '<빛글>인연을 묶는 실</빛글>'], 검열: ['검열 · 누르면 보임', '<검열>숨긴 본명</검열>'], 흐림: ['흐림 · 누르면 보임', '<흐림>돌아오지 마</흐림>'],
+      메모: ['손글씨 메모', '<메모>← 사실 싫어함</메모>'], 떨림: ['떨림', '<떨림>내 이름을 불렀다</떨림>'], 지움: ['지운 줄', '<지움>사람 구경</지움>'], 타자: ['타자 효과', '<타자>아직 살아 있음</타자>'],
+      반짝: ['반짝', '<반짝>홍련의 계승자</반짝>'], 네온: ['네온', '<네온>OPEN</네온>'], 도장: ['도장', '<도장>誓門</도장>'],
+      무물: ['무물 박스 · 그라데이션 · 질문 | 답변', '<무물>무엇이 제일 무서워요? | 비밀.</무물>'],
+      무물단색: ['무물 박스 · 단색 · 질문 | 답변', '<무물단색>무엇이 제일 무서워요? | 비밀.</무물단색>'],
+      문자: ['아이메시지 · 한 줄에 한 마디', '<문자>\n시간: 오늘 오전 2:47\n상대: 어디야\n나: 집이에요\n읽음: 오전 2:48\n</문자>'],
+      메일: ['폴더폰 보낸 메일 · 날짜 | 받는 사람 | 제목 | 내용', '<메일>11/03(월) 02:47 | 받는 사람 | 제목 | 내용</메일>'],
+      받은메일: ['폴더폰 받은 메일 · 날짜 | 보낸 사람 | 제목 | 내용', '<받은메일>11/03(월) 02:51 | 보낸 사람 | 제목 | 내용</받은메일>'],
+      후원: ['방송 후원 알림 · 닉네임 | 개수 | 메시지', '<후원>{이름} | 1004 | 메시지</후원>'],
+      별점: ['별점 코멘트 · 제목 | 점수 | 코멘트 (코멘트 꼭!)', '<별점>영화 제목 | 4.5 | 코멘트</별점>'],
+      음악: ['음악 재생 · 제목 | 가수 | 길이 | 표지 링크(선택)', '<음악>노래 제목 | 가수 | 3:24</음악>'],
+      트윗: ['트윗 · @아이디 | 내용 | 시간(선택)', '<트윗>@아이디 | 오늘도 무사히. | 오전 2:47</트윗>'],
+      알티: ['알티 · 이름 | @아이디 | 내용 | 시간(선택)', '<알티>원래 쓴 사람 | @아이디 | 퍼 갈 만한 글 | 11월 3일</알티>']
+    };
+    const fgLast = {};   // 칸마다 마지막으로 쓰던 글 칸
+    const fgTarget = { persona: () => f.persona, skill: () => fgLast.skill || $('#e-skill textarea', m), item: () => fgLast.item || $('#e-items textarea', m) };
+    $('#e-skill', m).addEventListener('focusin', e => { if (e.target.matches('textarea')) fgLast.skill = e.target; });
+    $('#e-items', m).addEventListener('focusin', e => { if (e.target.matches('textarea')) fgLast.item = e.target; });
+    const fgEx = tag => FMT_EX[tag][1].split('{이름}').join(f.name.value.trim() || '이름');   // 예시 속 이름은 지금 적은 캐릭터 이름으로
+    const fgDraw = box => {
+      const where = box.dataset.fg, me = { color: f.color.value, name: f.name.value.trim() || '이름', head: safeUrl(f.head.value.trim()),
+        headOf: nm => { const k = nm.replace(/\s+/g, ''), c = others.find(x => x.published_at && x.data && String(x.data.name || '').replace(/\s+/g, '') === k); return c ? c.data.head || '' : ''; } };
+      $('.fg-list', box).innerHTML = FMT[where].map(tag => { const lb = FMT_EX[tag][0], ex = fgEx(tag);
+        return `<div class="fg-card" data-tag="${esc(tag)}"><div class="fg-hd"><b>${esc(lb)}</b><button type="button" class="fg-add">＋ 넣기</button></div><div class="fg-ex">${fmtText(ex, me, FMT[where])}</div><code>${esc(ex)}</code></div>`; }).join('');
+    };
+    $$('.fmt-guide', m).forEach(box => {
+      const lim = FMT_MAX[box.dataset.fg];
+      box.innerHTML = `<button type="button" class="fg-tog">✦ 쓸 수 있는 글 서식 보기 <small>${FMT[box.dataset.fg].length}개</small></button>`
+        + `<p class="fg-note">서식 안에 다른 서식은 안 먹혀요 (겹쳐 쓰면 안쪽은 글자 그대로 보여요)${lim ? ` · 이 칸은 서식 <b>${lim}종류까지</b>만 · 그 뒤로 쓴 종류는 글자 그대로` : ''}</p><div class="fg-list" hidden></div>`;
+      $('.fg-tog', box).onclick = () => { const l = $('.fg-list', box); l.hidden = !l.hidden; box.classList.toggle('open', !l.hidden); if (!l.hidden) fgDraw(box); };
+      $('.fg-list', box).addEventListener('click', e => {
+        const c = e.target.closest('.fg-add'); if (!c) return;
+        const tag = c.closest('.fg-card').dataset.tag, ta = fgTarget[box.dataset.fg]();
+        if (!ta) return toast('먼저 글 칸을 하나 추가해 주세요.', 'err');
+        const ex = fgEx(tag), s = ta.selectionStart || 0, e2 = ta.selectionEnd || 0, sel = ta.value.slice(s, e2);
+        const ins = sel && !/^(무물|무물단색|문자|메일|받은메일|후원|별점|음악|트윗|알티)$/.test(tag) ? `<${tag}>${sel}</${tag}>` : ex;
+        ta.focus(); ta.setRangeText(ins, s, e2, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true }));
+        toast(`${FMT_EX[tag][0].split(' · ')[0]} 서식을 넣었어요.`);
+      });
+    });
+    f.color.addEventListener('input', () => $$('.fmt-guide.open', m).forEach(fgDraw));
+    f.name.addEventListener('change', () => $$('.fmt-guide.open', m).forEach(fgDraw));
     f.head.oninput = () => { $('#hd-th', m).style.backgroundImage = cssUrl(safeUrl(f.head.value.trim())); };
     f.fx_url.oninput = () => { $('#fx-th', m).style.backgroundImage = cssUrl(safeUrl(f.fx_url.value.trim())); };
     f.fx_op.oninput = () => { $('[data-fxv]', m).textContent = Math.round(f.fx_op.value * 100) + '%'; };

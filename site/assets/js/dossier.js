@@ -30,6 +30,9 @@ App.ready.then(async user => {
 
   /* ---------- 데이터 ---------- */
   const d = normChar(row.data);
+  // 알티 원작자 이름이 멤버란 캐릭터 이름(성까지)과 같으면 그 캐릭터 두상 · 이미 불러온 목록에서 찾아요 (서버 요청 없음)
+  const headOf = nm => { const k = String(nm || '').replace(/\s+/g, ''); if (!k) return ''; const c = all.find(x => x.published_at && x.data && String(x.data.name || '').replace(/\s+/g, '') === k); return c ? c.data.head || '' : ''; };
+  const rt = (s, where) => fmtText(s, { color: d.color, name: d.name, head: d.head, headOf }, FMT[where], FMT_MAX[where]);   // 글 서식 태그 (성격 · 스킬 · 소지품만)
   const own = !!(user && user.id === row.owner_id);
   // 작성본 수정은 본인(언제나)·관리자만, 삭제는 관리자만
   const editPerm = await Store.can('save', orig), delPerm = await Store.can('delete');
@@ -150,7 +153,7 @@ App.ready.then(async user => {
       <div class="g-img ${it.img ? '' : 'empty'}">${it.img ? `<img src="${esc(safeUrl(it.img))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span>物</span>'}</div>
       <span class="g-no">${pad2(i + 1)}</span>
       <div class="g-body"><b>${esc(it.name || '이름 없는 소지품')}</b>
-        <p>${esc(it.desc || '아직 기록된 이야기가 없어요.')}</p>
+        ${new RegExp(`<(${FMT.item.join('|')})>`).test(it.desc || '') ? '' : `<p>${esc(it.desc || '아직 기록된 이야기가 없어요.')}</p>`}
         ${g ? `<small class="g-gift" style="--gc:${g.color}">♥ ${esc(g.name)}의 선물</small>` : ''}</div></article>`;
   };
 
@@ -433,7 +436,7 @@ App.ready.then(async user => {
   /* ---------- 아카이브 파일 ---------- */
   const empty = '';   // 비어 있는 칸은 아무것도 안 보여요
   const SEC = [
-    { t: '성격', en: 'PERSONA', r: () => d.persona ? `<div class="text ps-out" style="${personaCSS(d.persona_style)}">${esc(d.persona)}</div>` : empty },
+    { t: '성격', en: 'PERSONA', r: () => d.persona ? `<div class="text ps-out" style="${personaCSS(d.persona_style)}">${rt(d.persona, 'persona')}</div>` : empty },
     { t: '스킬', en: 'SKILL', r: () => `
       ${d.ability.name ? `<div class="skh"><div class="skh-t"><small class="skh-k">ABILITY</small><b>${esc(d.ability.name)}</b><span class="skh-line" aria-hidden="true"><i></i></span></div>
         </div>` : ''}
@@ -441,7 +444,7 @@ App.ready.then(async user => {
       ${d.skills.map((s, i) => `<div class="skr" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>
-        <div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(s.desc || '설명이 없어요.')}</div></div>`).join('')}
+        <div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${rt(s.desc || '설명이 없어요.', 'skill')}</div></div>`).join('')}
       ${!d.ability.name && !d.skills.length ? empty : ''}` },
 
     { t: '소지품', en: 'BELONGINGS', r: () => d.items.length ? `<div class="items-grid">${d.items.map(itemCard).join('')}</div>` : empty }
@@ -512,7 +515,7 @@ App.ready.then(async user => {
         <div class="wpn-bar"><i></i></div>
         <dl class="wpn-stats"><div><dt>OWNER</dt><dd>${esc(d.name)}</dd></div>
           ${g ? `<div class="gift" style="--gc:${g.color}"><dt>GIFT FROM</dt><dd><a href="character.html?id=${encodeURIComponent(g.rc.id)}">♥ ${esc(g.name)}</a></dd></div>` : ''}</dl>
-        <div class="wpn-lore"><small>DESCRIPTION</small><p>${esc(it.desc || '아직 기록된 이야기가 없어요.')}</p></div>
+        <div class="wpn-lore"><small>DESCRIPTION</small><div class="p">${rt(it.desc || '아직 기록된 이야기가 없어요.', 'item')}</div></div>
         ${n > 1 ? `<div class="wpn-nav"><button type="button" data-wi="${(i - 1 + n) % n}">‹ 이전</button><button type="button" data-wi="${(i + 1) % n}">다음 ›</button></div>` : ''}
       </div></div>`, 'item-modal');
     m.style.setProperty('--c', d.color);   // 창 바탕의 은은한 빛도 이 캐릭터 색으로 (기본 빨강 대신)
