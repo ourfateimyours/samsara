@@ -495,7 +495,7 @@ App.ready.then(async user => {
       $('#sb').innerHTML = rows.length ? `<table class="adm-table sb-table"><thead><tr><th>순위</th><th>캐릭터</th><th>⚔ 전투력</th>${b.stats.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody>
         <tr class="avg"><td></td><td>평균 (${rows.length}명)</td><td>${Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length).toLocaleString()}</td>${b.stats.map(s => `<td>${f(b.avg[s])}</td>`).join('')}</tr>
         ${rows.map((r, i) => `<tr class="${i ? '' : 'sb-top'}"><td class="sb-rk">${i ? i + 1 : '👑 1'}</td><td><b>${esc(r.name)}</b>${r.pending ? ' <small class="sb-pend">심사 대기</small>' : ''}</td>${pw(r)}${b.stats.map(s => {
-          const d = r.v[s] - b.avg[s], t = b.tierOf(d);
+          const d = r.v[s] - b.avg[s], t = (r.tiers || {})[s] || 0;
           return `<td class="sb-c t${t}"><b>${f(r.v[s])}</b><small>${d >= 0 ? '+' : ''}${f(d)}${t ? ` · ${t}단계` : ''}</small></td>`;
         }).join('')}</tr>`).join('')}</tbody></table>` : '<p class="dim">게시된 캐릭터가 없어요.</p>';
       // 엑셀 · 구글 시트에서 바로 열리는 CSV (맨 앞 BOM 은 한글이 깨지지 않게)
@@ -505,7 +505,7 @@ App.ready.then(async user => {
         const head = ['순위', '캐릭터', '전투력'].concat(b.xcols, b.stats, b.stats.map(s => s + ' 평균 대비'), b.stats.map(s => s + ' 특전 단계'));
         const avgRow = ['', '평균', Math.round(rows.reduce((a, r) => a + r.combat.power, 0) / rows.length)].concat(b.xcols.map(() => ''), b.stats.map(s => f(b.avg[s])), b.stats.map(() => ''), b.stats.map(() => ''));
         const body = rows.map((r, i) => [i + 1, r.name, r.combat.power].concat(r.combat.x || [])
-          .concat(b.stats.map(s => f(r.v[s])), b.stats.map(s => f(r.v[s] - b.avg[s])), b.stats.map(s => b.tierOf(r.v[s] - b.avg[s]))));
+          .concat(b.stats.map(s => f(r.v[s])), b.stats.map(s => f(r.v[s] - b.avg[s])), b.stats.map(s => (r.tiers || {})[s] || 0)));
         const csv = String.fromCharCode(0xFEFF) + [head, avgRow].concat(body).map(row => row.map(q).join(',')).join('\r\n');
         const d = new Date(), name = `전투력-스탯-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.csv`;
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name;
