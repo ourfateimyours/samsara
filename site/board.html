@@ -48,7 +48,7 @@ App.ready.then(async user => {
 
   async function load() {
     try {
-      [notes, links, chars] = await Promise.all([Store.list('notes'), Store.list('links'), Store.list('characters')]);
+      [notes, links, chars] = await Promise.all([Store.list('notes'), Store.list('links'), Store.charCards()]);
     } catch (e) { toast(e.message, 'err'); }
     render();
   }

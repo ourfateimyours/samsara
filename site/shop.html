@@ -106,7 +106,7 @@ App.ready.then(async user => {
   const renderAll = () => { renderWallet(); renderGoods(); };
 
   try {
-    [wal, items, members, mine, allChars] = await Promise.all([Store.wallet(), Store.shopItems(), Store.profiles(), Store.myCharacters(), Store.list('characters')]);
+    [wal, items, members, mine, allChars] = await Promise.all([Store.wallet(), Store.shopItems(), Store.profiles(), Store.myCharacters(), Store.charNames()]);
   } catch (e) { toast(e.message, 'err'); wal = wal || { coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0 }; }
   renderAll();
 

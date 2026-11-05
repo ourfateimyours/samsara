@@ -274,7 +274,7 @@ App.ready.then(async user => {
   const P = Store.PANG, main = $('#main');
   
 
-  let [st, wal, chars] = await Promise.all([Store.pangStatus().catch(() => ({ played: false })), Store.wallet().catch(() => ({ coins: 0 })), Store.list('characters').catch(() => [])]);
+  let [st, wal, chars] = await Promise.all([Store.pangStatus().catch(() => ({ played: false })), Store.wallet().catch(() => ({ coins: 0 })), Store.charCards().catch(() => [])]);
 
   /* 오늘 이미 했으면 자물쇠 */
   const kno = 'No. ' + Store.kstDay().replace(/-/g, '').slice(2);   // 오늘 날짜 티켓 번호

@@ -59,7 +59,7 @@
 <script>
 App.ready.then(async user => {
   let all = [];
-  try { all = await Store.list('characters'); } catch (e) { toast(e.message, 'err'); }
+  try { all = await Store.charCards(); } catch (e) { toast(e.message, 'err'); }
   const rankOf = r => (r || '').replace(/[+-]$/, '');
   const rankSup = r => ((r || '').match(/[+-]$/) || [''])[0];
 

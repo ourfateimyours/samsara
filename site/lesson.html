@@ -44,7 +44,7 @@ App.ready.then(async user => {
   const shuffleArr = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const gwa = s => { const c = String(s).charCodeAt(String(s).length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 ? '과의' : '와의'; };
 
-  let [status, chars, badges, items] = await Promise.all([Store.lessonStatus().catch(() => ({ today: null })), Store.list('characters').catch(() => []),
+  let [status, chars, badges, items] = await Promise.all([Store.lessonStatus().catch(() => ({ today: null })), Store.charCards().catch(() => []),
     Store.badges().catch(() => ({})), Store.shopItems(true).catch(() => [])]);
   const mine = chars.filter(c => c.owner_id === user.id && c.published_at && c.data && c.data.name);
   let cur = (status.today && mine.find(c => c.id === status.today.char_id)) || mine[0];
