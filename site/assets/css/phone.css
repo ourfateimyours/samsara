@@ -80,7 +80,14 @@
 .ph-clock { font: 600 84px/1 var(--sans); letter-spacing: -.035em; margin-top: 2px; text-shadow: 0 2px 20px rgba(0, 0, 0, .25);
   background: linear-gradient(180deg, #fff 30%, rgba(255, 255, 255, .78)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ph-owner { margin-top: 6px; font: 500 11px var(--sans); letter-spacing: .06em; opacity: .7; }
-.ph-notis { width: 100%; margin-top: auto; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 370px; overflow-y: auto; scrollbar-width: none; padding: 6px 0 2px; }
+/* 시계·하단 버튼은 고정하고 알림 목록 안에서만 스크롤해요. */
+.ph-lock > * { flex-shrink: 0; }
+.ph-notis { width: 100%; flex: 0 1 370px; min-height: 0; margin-top: auto; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 370px; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; padding: 6px 0 2px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top, 0px), #000 calc(100% - var(--fade-bottom, 0px)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top, 0px), #000 calc(100% - var(--fade-bottom, 0px)), transparent); }
+.ph-notis > .noti { flex-shrink: 0; grid-template-columns: 38px minmax(0, 1fr); }
+.ph-notis .ttl { min-width: 0; grid-column: 2; grid-row: 1; }
+.ph-notis .msg { min-width: 0; grid-column: 2; grid-row: 2; }
 .ph-notis::-webkit-scrollbar { display: none; }
 .ph-none { text-align: center; font: 500 12px var(--sans); opacity: .55; margin: auto 0 20px; }
 .ph-bottom { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 34px; }
