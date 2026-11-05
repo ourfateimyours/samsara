@@ -79,7 +79,6 @@
         <form id="lf" novalidate>
           <label class="field"><span>아이디</span><input name="id" maxlength="8" placeholder="아이디" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
           <label class="field"><span>비밀번호</span><input name="pw" type="password" maxlength="8" placeholder="비밀번호" autocomplete="current-password"></label>
-          <label class="chk" style="margin:-4px 0 14px"><input type="checkbox" id="remember"> 아이디 저장</label>
           <p class="err-text" id="lerr" role="alert"></p>
           <button class="btn btn-block">입장 →</button>
         </form>
@@ -130,14 +129,14 @@ App.ready.then(async user => {
   if (Store.mode === 'demo') $('#mode-note').textContent = '지금은 데모 모드예요. 계정과 글이 이 브라우저에만 저장됩니다.';
 
   /* ---------- 입장 ---------- */
-  const lf = $('#lf'), KEY = 'naru:remember-id';
-  try { const saved = localStorage.getItem(KEY); if (saved) { lf.id.value = saved; $('#remember').checked = true; lf.pw.focus(); } else lf.id.focus(); } catch (e) {}
+  const lf = $('#lf');
+  lf.id.focus();
+  if (qs('expired') === '1') $('#lerr').textContent = '5분 동안 활동이 없어 로그아웃됐어요. 다시 입장해 주세요.';
   lf.onsubmit = async e => {
     e.preventDefault(); $('#lerr').textContent = '';
     const btn = lf.querySelector('button'); btn.disabled = true;
     try {
       await Store.signIn(lf.id.value, lf.pw.value);
-      try { $('#remember').checked ? localStorage.setItem(KEY, lf.id.value.trim().toLowerCase()) : localStorage.removeItem(KEY); } catch (e) {}
       location.replace(next);
     } catch (ex) { $('#lerr').textContent = ex.message; btn.disabled = false; }
   };
