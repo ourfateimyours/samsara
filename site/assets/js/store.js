@@ -224,6 +224,25 @@
       async list(t) { return ok(await sb.from(t === 'characters' ? 'characters_view' : t).select('*').order('created_at', { ascending: true })); },
       // 이름 · 색만 (심박 창처럼 캐릭터 전체 내용이 필요 없는 곳 · 훨씬 가벼워요)
       async charNames() { return ok(await sb.from('characters_view').select('id,owner_id,author,published_at,name:data->>name,color:data->>color').order('created_at', { ascending: true })).map(c => ({ id: c.id, owner_id: c.owner_id, author: c.author, published_at: c.published_at, data: { name: c.name || '', color: c.color || '' } })); },
+      // 목록 화면은 긴 본문·스킬·작성본 대신 카드에 쓰는 JSON 필드만 받아요.
+      async charCards() {
+        const fields = ['name', 'name_en', 'team', 'org', 'affiliation', 'rank', 'danger', 'element', 'color', 'head', 'images', 'image', 'silhouette', 'stats'];
+        const columns = ['id', 'owner_id', 'author', 'created_at', 'published_at'].concat(fields.map(k => `${k}:data->${k}`)).join(',');
+        const rows = ok(await sb.from('characters_view').select(columns).not('published_at', 'is', null).order('created_at', { ascending: true }));
+        return rows.map(row => {
+          const data = {};
+          fields.forEach(k => {
+            if (row[k] != null) data[k] = row[k];
+            delete row[k];
+          });
+          return Object.assign(row, { data });
+        });
+      },
+      async myCharacters(id) { return ok(await sb.from('characters_view').select('*').eq('owner_id', id).order('created_at', { ascending: true })); },
+      async myCharacterNews(id) {
+        const rows = ok(await sb.from('characters_view').select('id,status,published_at,review_note,name:data->>name,draft_name:draft->>name').eq('owner_id', id));
+        return rows.map(row => Object.assign(row, { data: { name: row.name }, draft: row.draft_name == null ? null : { name: row.draft_name } }));
+      },
       async get(t, id) { return ok(await sb.from(t === 'characters' ? 'characters_view' : t).select('*').eq('id', id).maybeSingle()); },
       async insert(t, row) { return ok(await sb.from(t).insert(row).select().single()); },
       async update(t, id, patch) { return ok(await sb.from(t).update(patch).eq('id', id).select().single()); },
@@ -431,7 +450,15 @@
     /* 이름 · 색만 담은 가벼운 목록 (게시된 캐릭터만) */
     async charNames() { return (await B.charNames()).filter(r => r.published_at); },
     get: (t, id) => B.get(t, id),
-    async myCharacters() { const u = await this.user(); if (!u) return []; return (await B.list('characters')).filter(r => r.owner_id === u.id); },
+    async charCards() { return remote ? B.charCards() : this.list('characters'); },
+    async myCharacters() {
+      const u = await this.user(); if (!u) return [];
+      return remote ? B.myCharacters(u.id) : (await B.list('characters')).filter(r => r.owner_id === u.id);
+    },
+    async myCharacterNews() {
+      const u = await this.user(); if (!u) return [];
+      return remote ? B.myCharacterNews(u.id) : this.myCharacters();
+    },
     async adminCharacters() {
       await this.requireStaff(); const rows = await B.list('characters');
       return (await this.isAdmin()) ? rows : rows.filter(c => c.published_at || c.status === 'submitted');   // 부관리자: 게시된 것 + 심사 대기만

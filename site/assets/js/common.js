@@ -475,7 +475,7 @@
   /* 내 캐릭터가 게시·반려되면 알림 (마지막으로 본 상태와 비교) */
   async function checkNews(user) {
     let mine = [];
-    try { mine = await Store.myCharacters(); } catch (e) { return; }
+    try { mine = await Store.myCharacterNews(); } catch (e) { return; }
     const KEY = 'naru:seen:' + user.id, NEWS = 'naru:news:' + user.id;
     let seen = null, news = [];
     try { seen = JSON.parse(localStorage.getItem(KEY)); news = JSON.parse(localStorage.getItem(NEWS) || '[]'); } catch (e) {}
