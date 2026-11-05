@@ -2,6 +2,10 @@
 (function () {
   const cfg = window.SITE_CONFIG || {};
   const remoteOn = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
+  const SESSION_IDLE_MS = 5 * 60 * 1000;
+  const ACTIVITY_KEY = 'naru:last-activity';
+  let lastActivity = 0;
+  try { localStorage.removeItem('naru:remember-id'); } catch (e) {}
   const newId = () => (crypto.randomUUID ? crypto.randomUUID()
     : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const now = () => new Date().toISOString();
@@ -127,7 +131,7 @@
         }
         return { user: u };
       },
-      async signOut() { await sb.auth.signOut(); },
+      async signOut() { const { error } = await sb.auth.signOut({ scope: 'local' }); if (error) throw error; },
       async profiles() {
         const rows = ok(await sb.from('profiles').select('*').order('created_at', { ascending: true }));
         // 관리자에게만 읽히는 아이디·이메일 붙이기
@@ -277,7 +281,18 @@
 
   window.Store = {
     mode: remote ? 'supabase' : 'demo',
-    DAILY, dayStart, DEFAULT_SETTINGS,
+    DAILY, dayStart, DEFAULT_SETTINGS, SESSION_IDLE_MS, ACTIVITY_KEY,
+    sessionActivity() {
+      try { return Number(localStorage.getItem(ACTIVITY_KEY)) || 0; } catch (e) { return lastActivity; }
+    },
+    sessionExpired() {
+      const activity = this.sessionActivity();
+      return !Number.isFinite(activity) || activity <= 0 || activity > Date.now() || Date.now() - activity >= SESSION_IDLE_MS;
+    },
+    recordActivity() {
+      lastActivity = Date.now();
+      try { localStorage.setItem(ACTIVITY_KEY, String(lastActivity)); } catch (e) {}
+    },
     async user() {
       if (cachedUser === undefined) {
         cachedUser = await B.user();
@@ -300,9 +315,15 @@
     async signIn(id, pw) {
       id = String(id || '').trim().toLowerCase();
       if (!id || !pw) throw new Error('아이디와 비밀번호를 입력해 주세요.');
-      const r = await B.signIn(id, pw); cachedUser = r.user; return r;
+      const r = await B.signIn(id, pw); cachedUser = r.user; this.recordActivity(); return r;
     },
-    async signOut() { await B.signOut(); cachedUser = null; },
+    async signOut() {
+      try { await B.signOut(); }
+      finally {
+        cachedUser = null; lastActivity = 0;
+        try { localStorage.removeItem(ACTIVITY_KEY); } catch (e) {}
+      }
+    },
     /* 명부: 승인된 회원만 (관리자 페이지는 allProfiles) */
     async profiles() { return (await B.profiles()).filter(p => (p.approval || 'approved') === 'approved'); },
     async allProfiles() { await this.requireStaff(); return B.profiles(); },

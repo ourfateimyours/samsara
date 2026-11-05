@@ -543,6 +543,35 @@
     size(); addEventListener('resize', size); requestAnimationFrame(draw);
   }
 
+  // 페이지를 옮겨도 마지막 활동 시각을 이어받고, 다른 탭의 로그아웃도 반영해요.
+  function watchSession() {
+    let timer, ending = false;
+    const check = () => {
+      clearTimeout(timer);
+      if (ending) return;
+      if (Store.sessionExpired()) {
+        ending = true;
+        document.documentElement.classList.add('gate');
+        Store.signOut().catch(console.error).finally(() => location.replace('login.html?expired=1'));
+        return;
+      }
+      timer = setTimeout(check, Store.SESSION_IDLE_MS - (Date.now() - Store.sessionActivity()));
+    };
+    const activity = () => {
+      if (ending || document.hidden) return;
+      if (!Store.sessionExpired()) Store.recordActivity();
+      check();
+    };
+    ['pointerdown', 'keydown'].forEach(type => addEventListener(type, activity, { passive: true }));
+    addEventListener('scroll', activity, { passive: true, capture: true });
+    document.addEventListener('visibilitychange', check);
+    addEventListener('focus', check);
+    addEventListener('pageshow', check);
+    addEventListener('pagehide', () => clearTimeout(timer));
+    addEventListener('storage', e => { if (e.key === Store.ACTIVITY_KEY || e.key === null) check(); });
+    check();
+  }
+
   window.App = {
     ready: (async () => {
       if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
@@ -556,7 +585,13 @@
         }
       }
       let user = null;
-      try { user = await Store.user(); } catch (e) { console.error(e); }
+      try {
+        user = await Store.user();
+        if (user && Store.sessionExpired()) {
+          await Store.signOut(); user = null;
+        }
+      } catch (e) { console.error(e); user = null; }
+      if (user) watchSession();
       // 입장 문: 로그인(승인된 회원)하지 않으면 입장 화면으로 (관리자가 "비회원 둘러보기"를 켜면 예외)
       if (!user && document.body.dataset.page !== 'login') {
         let open = false; try { open = (await Store.settings()).public_view; } catch (e) {}

@@ -46,7 +46,8 @@ App.ready.then(async user => {
   const classFirst = (d.classline.split('·')[0] || '').trim();
   const fileNo = String(row.id).replace(/[^0-9a-f]/gi, '').slice(0, 6).toUpperCase();
   const others = new Map(all.map(c => [c.id, c]));
-  const related = d.related.filter(r => others.has(r.id));
+  const receivedFrom = all.filter(c => c.id !== row.id &&
+    ((c.data && c.data.related) || []).some(r => r.id === row.id && r.msgType));
   const firstImg = charImage(row.data, row.id);
   const isDummy = !d.images.length;
   document.title = `${d.name} — ${SITE_CONFIG.siteName}`;
@@ -185,7 +186,7 @@ App.ready.then(async user => {
       ${d.quote ? `<p class="desc">${esc(d.quote)}</p>` : '<div></div>'}
       <div class="ap"><div class="hd"><b>PROFILE</b><span>${esc(d.codename || 'No. ' + fileNo)}</span></div>
         <div class="bd"><button data-open="0"><span>PERSONA</span><b>성격 · 성향 보기</b><i>›</i></button>
-        <button class="rlv" data-phone title="관계 휴대폰 열기"><span>RELATED</span><b>📱 ${pad2(related.length)}</b></button></div></div>
+        <button class="rlv" data-phone title="나에게 메시지를 남긴 인물 · 관계 휴대폰 열기"><span>RELATED</span><b>📱 ${pad2(receivedFrom.length)}</b></button></div></div>
     </section>
 
     ${d.rank || el ? `<div class="dg">

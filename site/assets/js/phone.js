@@ -105,11 +105,21 @@ window.Phone = (function () {
     document.body.classList.add('no-scroll');
     if (d.phoneBg !== 'moon') liveEarth($('.ph-earth img', ov));
 
+    // 화면 밖에 남은 알림이 있는 쪽만 부드럽게 사라지도록 해요.
+    const notifications = $('.ph-notis', ov);
+    const updateFade = () => {
+      const remaining = notifications.scrollHeight - notifications.clientHeight - notifications.scrollTop;
+      notifications.style.setProperty('--fade-top', notifications.scrollTop > 1 ? '18px' : '0px');
+      notifications.style.setProperty('--fade-bottom', remaining > 1 ? '24px' : '0px');
+    };
+    notifications.addEventListener('scroll', updateFade, { passive: true });
+
     // 키링은 폰 오른쪽 위 고리에 걸려 옆으로 늘어지니, 가로 자리를 조금 더 잡아요
     const hang = 0, sideW = krOut ? 380 + 130 : 380;
     const fit = () => {
       const s = Math.min(1, (innerHeight - 70) / (700 + hang), (innerWidth - 30) / sideW), st = $('.ph-stage', ov);
       st.style.setProperty('--s', s.toFixed(3)); st.style.marginTop = (-hang * s) + 'px';
+      updateFade();
     };
     fit(); addEventListener('resize', fit);
     // 화면이 켜지는 연출
@@ -121,7 +131,7 @@ window.Phone = (function () {
       const n = e.target.closest('.noti');
       if (n) {
         if (e.target.closest('.go')) return; // 링크는 그대로 이동
-        n.classList.toggle('open'); return;
+        n.classList.toggle('open'); updateFade(); return;
       }
       const k = e.target.closest('.kr');
       if (k) { k.classList.remove('again'); void k.offsetWidth; k.classList.add('again'); }
