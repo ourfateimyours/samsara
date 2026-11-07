@@ -23,10 +23,10 @@
   <!-- 배경: assets/img/lobby-bg.webp 를 바꾸면 배경 그림이 바뀌어요 -->
   <div class="lb-bg" aria-hidden="true"><i class="photo"></i><i class="shade"></i><i class="grid"></i><i class="scan"></i><div class="lb-meteors" id="meteors"></div><div class="lb-dayfx" id="dayfx"></div></div>
   <div class="lb-glints" id="glints" aria-hidden="true"></div>
-  <button class="lb-fig lb-cat" id="fig" type="button" aria-label="고양이에게 말 걸기"><img id="fig-img" alt="" draggable="false"></button>
+  <button class="lb-fig lb-cat" id="fig" type="button" aria-label="사리에게 말 걸기"><img id="fig-img" alt="" draggable="false"></button>
   <!-- 고양이 대사: 게임 나레이션처럼 그림 아래에 -->
   <div class="lb-narr" id="narr">
-    <div class="nr-line"><i></i><span class="nr-name">天師監 · 고양이</span><i></i></div>
+    <div class="nr-line"><i></i><span class="nr-name">天師監 · 사리</span><i></i></div>
     <p class="nr-text" id="say" aria-live="polite"></p>
     <button type="button" class="lb-churu" id="churu" hidden>츄르 주기 <b id="churu-n">0</b></button>
   </div>
@@ -36,7 +36,7 @@
   <section class="lb-card">
     <small class="eb">RECORDER · 記錄者</small>
     <div class="row"><b class="nm" id="nick">—</b><span class="ttl" id="ttl" hidden></span></div>
-    <div class="bar" id="aff-bar" title="고양이 호감도"><i id="bar"></i></div>
+    <div class="bar" id="aff-bar" title="사리 호감도"><i id="bar"></i></div>
     <div class="date" id="today"></div>
   </section>
 
@@ -89,9 +89,9 @@
     </div>
     <!-- 그 아래: 미니 게임 전광판 (하루 한 판 · 하고 나면 자물쇠) -->
     <!-- 미니 게임: 유리 배너 배경에 도트 그라데이션 + 반짝이 / 그 안에 어두운 전광판 (네온 글자가 흘러요) -->
-    <a class="pg-board" id="pang" href="pang.html" aria-label="미니 게임 · 영전을 걸고 하루 한 판">
+    <a class="pg-board" id="pang" href="pang.html" aria-label="미니 게임 · 영전을 걸고 이틀에 한 판">
       <div class="pg-sign" aria-hidden="true"><div class="pg-run"><span>★ 오늘의 미니 게임 ★ 같은 캐릭터 셋을 맞춰 터뜨려요 ★ 50 ~ 1000 영전 ★ 최대 ×10 </span><span>★ 오늘의 미니 게임 ★ 같은 캐릭터 셋을 맞춰 터뜨려요 ★ 50 ~ 1000 영전 ★ 최대 ×10 </span></div></div>
-      <div class="pg-row"><b class="pt-ttl">미니 게임</b><em class="pt-chip">하루 한 번</em><span class="pg-go" id="pang-go">PLAY ▸</span></div>
+      <div class="pg-row"><b class="pt-ttl">미니 게임</b><em class="pt-chip">이틀에 한 번</em><span class="pg-go" id="pang-go">PLAY ▸</span></div>
     </a>
   </aside>
 
@@ -111,7 +111,7 @@
 
   <!-- 오른쪽 아래: 메뉴 -->
   <nav class="lb-dock" aria-label="메뉴">
-    <a class="rb big" href="characters.html"><span class="ci" data-emb="roster"></span><b>멤버란<small>ROSTER</small></b><em class="cnt" id="n-roster"></em></a>
+    <a class="rb big" href="characters.html" onclick="try{sessionStorage.setItem('naru:roster-intro','1')}catch(e){}"><span class="ci" data-emb="roster"></span><b>멤버란<small>ROSTER</small></b><em class="cnt" id="n-roster"></em></a>
     <a class="rb big" href="board.html"><span class="ci" data-emb="board"></span><b>사건 보드<small>BOARD</small></b></a>
     <a class="rb big" href="https://samsaraworld.vercel.app/world.html" target="_blank" rel="noopener"><span class="ci" data-emb="world"></span><b>세계관<small>WORLD</small></b></a>
     <button type="button" class="rb big" data-tele id="db-tele"><span class="ci" data-emb="heart"></span><b>심박<small>HEARTBEAT</small></b></button>
@@ -249,7 +249,7 @@ App.ready.then(async user => {
   const ttl = wal.equip.title && item(wal.equip.title), tag = wal.equip.tag && item(wal.equip.tag);
   // 칭호는 내 캐릭터 색으로 (가장 최근에 게시된 캐릭터)
   const myChar = mine.filter(c => c.published_at).sort((a, b) => String(b.published_at).localeCompare(String(a.published_at)))[0] || mine[0];
-  if (ttl) { $('#ttl').hidden = false; $('#ttl').textContent = Store.titleText(ttl, wal.equip); if (myChar) $('#ttl').style.setProperty('--tc', normChar(myChar.data || myChar.draft).color); }
+  if (ttl) { $('#ttl').hidden = false; $('#ttl').textContent = Store.titleText(ttl, wal.equip); if (ttl.font === 'chosun') $('#ttl').style.fontFamily = "'ChosunNm',serif"; if (myChar) $('#ttl').style.setProperty('--tc', normChar(myChar.data || myChar.draft).color); }
   if (tag) $('#nick').style.color = tag.value;
   const checked = att.some(r => r.user_id === user.id && r.day === today);
   if (!checked) $('#sb-att').classList.add('new');
@@ -308,7 +308,7 @@ App.ready.then(async user => {
     ev.forEach(x => {
       setTimeout(() => {
         if (x.kind === 'lore') speak(x.text);
-        else if (x.kind === 'stat') likeToast('<b>✦</b> 고양이의 선물 · 내 캐릭터 이성 +1', 'gift');
+        else if (x.kind === 'stat') likeToast('<b>✦</b> 사리의 선물 · 내 캐릭터 이성 +1', 'gift');
         else if (x.kind === 'butler') { speak('이제부터 너는 나의 집사다냥! 상점에 가 봐라냥'); toast('상점에 「집사」 칭호가 공개됐어요'); }
         else if (x.kind === 'title') { likeToast('<b>✦</b> 칭호 「^. .^₎⟆ ˙⋆✮」를 받았어요', 'gift'); toast('상점에서 「^. .^₎⟆ ˙⋆✮」 칭호를 달 수 있어요'); }
         else if (x.kind === 'master') { speak('주인님', 'master'); toast('상점에서 「주인님」 칭호를 달 수 있어요'); }
@@ -364,8 +364,8 @@ Store.matchStatus().then(s => {
 }).catch(() => {});Store.pangStatus().then(p => {
     if (!p || !p.played) return;
     const b = $('#pang'); b.classList.add('locked'); b.removeAttribute('href'); b.setAttribute('aria-disabled', 'true');
-    $('#pang-go').textContent = '🔒 내일 다시';
-    b.title = p.done ? (p.win ? `오늘의 한 판: 승리 · +${p.delta} 영전` : `오늘의 한 판: 패배 · ${p.delta} 영전`) : '오늘의 한 판은 이미 시작했어요 (도중에 나가면 패배로 정산돼요)';
+    $('#pang-go').textContent = p.next ? `🔒 ${+p.next.slice(5, 7)}/${+p.next.slice(8, 10)}부터` : '🔒 잠김';
+    b.title = p.done ? (p.win ? `지난 한 판: 승리 · +${p.delta} 영전` : `지난 한 판: 패배 · ${p.delta} 영전`) : '이미 시작한 판이 있어요 (도중에 나가면 패배로 정산돼요)';
   }).catch(() => {});
   /* 츄르: 상점에서 산 만큼 줄 수 있어요 */
   const churu = () => { $('#churu').hidden = wal.snacks < 1; $('#churu-n').textContent = wal.snacks; };
@@ -462,7 +462,7 @@ Store.matchStatus().then(s => {
         <span class="hc-bg"></span><span class="hc-sub" style="background-image:${cssUrl((headMp4(img) || {}).poster || img)}"></span>
         <span class="hc-laser"></span><span class="hc-star"></span><span class="hc-star b"></span><span class="hc-glare"></span>
         <span class="hc-txt"><span class="hc-rk">No.<b>${i + 1}</b></span><span class="hc-emb">${LOGO}</span>
-          <span class="hc-bt">${t ? `<small>${esc(Store.titleText(t, b.equip))}</small>` : ''}<b>${esc(d.name || '?')}</b>
+          <span class="hc-bt">${t ? `<small style="${Store.titleFont(t)}">${esc(Store.titleText(t, b.equip))}</small>` : ''}<b>${esc(d.name || '?')}</b>
             <em><i></i>${coins.toLocaleString()}<span>靈錢</span></em></span></span></a>`;
     };
     let cur = 0, busy = false;

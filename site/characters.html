@@ -8,7 +8,7 @@
 <title>캐릭터 — 三娑罗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Encode+Sans+Compressed:wght@500;600;700&family=Playfair+Display:ital,wght@1,400;1,700&family=Nanum+Pen+Script&family=Zhi+Mang+Xing&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Encode+Sans+Compressed:wght@500;600;700&family=Playfair+Display:ital,wght@1,400;1,700&family=Nanum+Pen+Script&family=Zhi+Mang+Xing&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/roster.css">
@@ -133,8 +133,9 @@ App.ready.then(async user => {
     renderStage(dir);
   }
   renderTabs(); renderStage();
-  // 멤버란을 열 때마다 접속 화면 (NPC 한 명이 무작위로 나와요)
-  if (window.LoginSeq && !REDUCED) LoginSeq.play({ count: all.length });
+  // 접속 화면은 메인의 멤버란 버튼을 눌렀을 때만 (뒤로 가기 · 프로필에서 돌아올 때는 안 나와요)
+  let fromMain = false; try { fromMain = sessionStorage.getItem('naru:roster-intro') === '1'; sessionStorage.removeItem('naru:roster-intro'); } catch (e) {}
+  if (fromMain && window.LoginSeq && !REDUCED) LoginSeq.play({ count: all.length });
   // 휴대폰·트랙패드: 옆으로 쓸어서 다음 열로
   (function swipe() {
     let x0 = null, y0 = 0;

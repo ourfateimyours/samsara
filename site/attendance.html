@@ -8,7 +8,7 @@
 <title>출석 — 三娑罗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/market.css">
@@ -76,7 +76,7 @@ App.ready.then(async user => {
   function renderWallet() {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
-      <div class="w-i">칭호 <b>${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div><div class="w-i">츄르 <b>${wal.snacks}</b>개</div>
+      <div class="w-i">칭호 <b style="${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div><div class="w-i">츄르 <b>${wal.snacks}</b>개</div>
       <a class="btn ghost sm w-go" href="shop.html">상점 가기 →</a>`;
   }
 
@@ -125,7 +125,7 @@ App.ready.then(async user => {
     const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
     $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
       <span class="who" style="${r.tag ? `color:${esc(r.tag)}` : ''}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
-      <span class="cm">${esc(r.comment || '')}</span></li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
+      ${r.comment ? `<span class="cm">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
   }
 
   const renderAll = () => { renderWallet(); renderStamp(); renderTrack(); renderCal(); renderRoll(); };

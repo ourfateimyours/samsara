@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/banner.css">
@@ -267,12 +267,13 @@ App.ready.then(async user => {
     const KN = { title: '칭호', tag: '이름표', snack: '간식', ticket: '지정권', boost: '스탯 증가권' };
     const statTxt = it => Object.entries(it.stats || {}).filter(([, v]) => parseFloat(v)).map(([k, v]) => `${k} +${v}`).join(' · ');
     pane.innerHTML = `<section class="adm-card"><header><b>🏮 상점 물건</b><span class="label">가격·판매는 바꾸면 바로 저장돼요 · 칭호는 스탯 보너스를 걸 수 있어요</span></header>
-      <table class="adm-table"><thead><tr><th>물건</th><th>종류</th><th>가격</th><th>수량 <small class="dim">0 = 무제한</small></th><th>판매</th><th>스탯 보너스</th></tr></thead>
+      <table class="adm-table"><thead><tr><th>물건</th><th>종류</th><th>가격</th><th>수량 <small class="dim">0 = 무제한</small></th><th>판매</th><th>스탯 보너스</th><th>칭호 글씨체</th></tr></thead>
       <tbody>${items.map(it => `<tr data-id="${esc(it.id)}"><td>${esc(it.name)}</td><td>${KN[it.kind] || esc(it.kind)}</td>
         <td><input class="input" type="number" min="0" data-price value="${it.price}" style="width:90px"></td>
         <td>${it.kind === 'title' || it.kind === 'tag' ? `<input class="input" type="number" min="0" data-stock value="${it.stock || 0}" style="width:70px"> <span class="dim">${it.sold || 0}명 가짐${Store.soldOut(it) ? ' · 품절' : ''}</span>` : '<span class="dim">—</span>'}</td>
         <td>${sw('act-' + it.id, it.active !== false).replace('<input', '<input data-act')}</td>
-        <td>${it.kind === 'title' ? `<span class="dim" data-st-txt>${esc(statTxt(it) || '없음')}</span> <button class="btn ghost sm" data-stat>정하기</button>` : it.kind === 'boost' ? `<span class="dim">무작위 +5 · 한 사람당 ${it.max_per || '∞'}번</span>` : '<span class="dim">—</span>'}</td></tr>`).join('')}</tbody></table></section>
+        <td>${it.kind === 'title' ? `<span class="dim" data-st-txt>${esc(statTxt(it) || '없음')}</span> <button class="btn ghost sm" data-stat>정하기</button>` : it.kind === 'boost' ? `<span class="dim">무작위 +5 · 한 사람당 ${it.max_per || '∞'}번</span>` : '<span class="dim">—</span>'}</td>
+        <td>${it.kind === 'title' ? `<select class="input" data-tfont><option value="">현재 글꼴</option><option value="chosun" ${it.font === 'chosun' ? 'selected' : ''}>조선일보체</option></select>` : '<span class="dim">—</span>'}</td></tr>`).join('')}</tbody></table></section>
       <section class="adm-card"><header><b>🎁 구매 · 선물 기록</b><span class="label">최근 ${Store.LOG_DAYS}일 · ${logs.length}건 (지난 기록은 저절로 지워져요)</span></header>
       <table class="adm-table"><thead><tr><th>시각</th><th>종류</th><th>산 사람</th><th>받은 사람</th><th>물건</th><th>영전</th><th>내용</th></tr></thead>
       <tbody>${logs.length ? logs.map(l => `<tr><td>${when(l.created_at)}</td><td><span class="act ${l.kind === 'buy' ? 'del' : ''}">${{ gift: '선물', buy: '구매', admin: '관리자 지급' }[l.kind] || esc(l.kind)}</span></td>
@@ -283,6 +284,7 @@ App.ready.then(async user => {
       const tr = e.target.closest('tr[data-id]'); if (!tr) return; const id = tr.dataset.id;
       if (e.target.matches('[data-price]')) save(id, { price: Math.max(0, parseInt(e.target.value, 10) || 0) }, '가격을 바꿨어요');
       if (e.target.matches('[data-stock]')) { const n = Math.max(0, parseInt(e.target.value, 10) || 0); save(id, { stock: n }, n ? `수량을 ${n}명으로 정했어요` : '수량 제한을 없앴어요'); }
+      if (e.target.matches('[data-tfont]')) save(id, { font: e.target.value }, '칭호 글씨체를 바꿨어요');
       if (e.target.matches('[data-act]')) save(id, { active: e.target.checked }, e.target.checked ? '다시 팔아요' : '판매를 멈췄어요');
     };
     pane.onclick = e => {
@@ -320,7 +322,8 @@ App.ready.then(async user => {
     const list = cs.filter(c => rvFilter === 'all' || st(c) === rvFilter)
       .sort((a, b) => String(b.submitted_at || b.updated_at || b.created_at).localeCompare(String(a.submitted_at || a.updated_at || a.created_at)));
     const ST = { draft: '✎ 작성 중', submitted: '⏳ 심사 대기', returned: '↩ 반려됨', published: '✦ 게시됨' };
-    pane.innerHTML = `<div class="review-tabs">${tabs.map(([k, l]) => `<button data-f="${k}" class="${k === rvFilter ? 'on' : ''}">${l}<b>${k === 'all' ? cs.length : cs.filter(c => st(c) === k).length}</b></button>`).join('')}</div>
+    const liveN = cs.filter(c => c.published_at).length;
+    pane.innerHTML = `${ADMIN ? `<section class="adm-card" style="margin-bottom:14px"><header><b>🌙 레스트</b><button class="btn sm ghost" id="rv-rest" ${liveN ? '' : 'disabled'}>레스트 (${liveN}명 내리기)</button></header><p class="hint-text">게시된 프로필 전체가 멤버란에서 내려가요. 내용은 그대로 남고, 회원이 고쳐서 수정 기간에 다시 제출하면 심사 대기로 와요. 스탯은 계속 잠겨 있어요.</p></section>` : ''}<div class="review-tabs">${tabs.map(([k, l]) => `<button data-f="${k}" class="${k === rvFilter ? 'on' : ''}">${l}<b>${k === 'all' ? cs.length : cs.filter(c => st(c) === k).length}</b></button>`).join('')}</div>
       <div class="rv-list">${list.length ? list.map(c => {
         const d = (c.draft || c.data) || {}, ch = changed(c), pend = !!c.draft;
         return `<div class="rv-row" data-id="${esc(c.id)}">
@@ -333,12 +336,11 @@ App.ready.then(async user => {
           <div class="acts">
             ${pend ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">보기</a>`}
             ${ADMIN ? '<button class="btn sm ghost" data-rv="edit">수정</button>' : ''}
-            ${st(c) === 'submitted' || c.published_at ? '<button class="btn sm ghost" data-rv="reject">반려</button>' : ''}
             ${pend ? '<button class="btn sm" data-rv="publish">게시 ›</button>' : ''}
           </div></div>`;
       }).join('') : `<div class="empty">${rvFilter === 'submitted' ? '심사를 기다리는 캐릭터가 없어요.' : '해당하는 캐릭터가 없어요.'}</div>`}</div>
       ${list.some(c => c.draft) ? `<div class="rv-bulk"><label class="chk"><input type="checkbox" id="rv-all"> 전체 선택</label><span class="label" id="rv-n">0명 선택</span>
-        <span style="display:flex;gap:8px"><button class="btn sm ghost" id="rv-reject">일괄 반려</button><button class="btn sm" id="rv-pub">일괄 게시 ›</button></span></div>` : ''}`;
+        <button class="btn sm" id="rv-pub">일괄 게시 ›</button></div>` : ''}`;
 
     const picks = () => $$('[data-pick]:checked').map(x => x.closest('.rv-row').dataset.id);
     const upd = () => { const n = $('#rv-n'); if (n) n.textContent = picks().length + '명 선택'; };
@@ -350,8 +352,11 @@ App.ready.then(async user => {
       if (!await askConfirm(label === '반려' ? `선택한 ${ids.length}명을 반려할까요? 작성 중으로 돌아가요.` : `선택한 ${ids.length}명을 게시할까요?`)) return;
       try { for (const id of ids) await fn(id); toast(`${ids.length}명 ${label}했어요`); review(); } catch (e) { toast(e.message, 'err'); }
     };
+    if ($('#rv-rest')) $('#rv-rest').onclick = async () => {
+      if (!await askConfirm(`게시된 ${liveN}명을 전부 멤버란에서 내릴까요?`)) return;
+      try { const n = await Store.restAll(); toast(`레스트: ${n}명을 내렸어요`); review(); } catch (e) { toast(e.message, 'err'); }
+    };
     if ($('#rv-pub')) $('#rv-pub').onclick = () => bulk(id => Store.publish(id), '게시');
-    if ($('#rv-reject')) $('#rv-reject').onclick = () => bulk(id => Store.reject(id), '반려');
     pane.querySelector('.rv-list').onclick = async e => {
       const b = e.target.closest('[data-rv]'); if (!b) return;
       const id = b.closest('.rv-row').dataset.id, c = cs.find(x => x.id === id);
@@ -460,12 +465,12 @@ App.ready.then(async user => {
   async function rptB() {
     const pane = curPane;
     const PG = { '': '메인', 'index.html': '메인', 'index-serious.html': '메인', 'shop.html': '상점', 'characters.html': '멤버란', 'character.html': '프로필', 'board.html': '사건 보드', 'attendance.html': '출석', 'mypage.html': '마이 페이지', 'pang.html': '모아팡', 'admin.html': '관리', 'login.html': '로그인', 'world.html': '세계관' };
-    let cs = []; try { cs = await Store.list('characters'); } catch (e) {}
+    let cs = []; try { cs = await Store.charNames(); } catch (e) {}
     const label = p => { const [f, q] = String(p || '').split('?'); const id = (q || '').match(/id=([^&]+)/); const c = id && cs.find(x => x.id === decodeURIComponent(id[1])); return c ? `<b style="color:${esc(c.data.color || 'inherit')}">${esc(c.data.name)}</b> 프로필` : esc(PG[f] || f || '메인'); };
     const ago = iso => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 6e4)); return m < 1 ? '방금' : m < 60 ? m + '분' : Math.round(m / 60) + '시간'; };
     const load = async () => {
       let rows = []; try { rows = await Store.rptB(); } catch (e) { pane.innerHTML = `<section class="adm-card"><p class="dim">불러오지 못했어요 · ${esc(e.message || e)}</p></section>`; return; }
-      const on = rows.filter(r => Date.now() - Date.parse(r.at) < 15e4);
+      const on = rows.filter(r => Date.now() - Date.parse(r.at) < 36e4);
       pane.innerHTML = `<section class="adm-card"><header><b>● 지금 ${on.length}</b><button class="btn sm ghost" id="rre">↻ 새로고침</button></header>
         <ul class="adm-list">${on.map(r => `<li><b>${esc(r.nickname || '?')}</b><span>@${esc(r.username || '')}</span><span>${label(r.page)}</span><span>${ago(r.since)}째</span></li>`).join('') || '<li class="dim">지금 접속한 사람이 없어요.</li>'}</ul></section>`;
       $('#rre', pane).onclick = load;
@@ -477,11 +482,11 @@ App.ready.then(async user => {
     const card = (k, title, desc) => `<section class="adm-card"><header><b>${title}</b>${sw(k + '-on', s[k + '_on'])}</header>
       <p class="hint-text">${desc}</p><div class="big-stat"><b id="${k}-state">${s[k + '_on'] ? '열림' : '닫힘'}</b></div></section>`;
     pane.innerHTML = `<div class="adm-grid">
-      ${card('lesson', '📚 후계자 수업', '켜면 회원이 메인의 \'후계자 수업\'에 들어갈 수 있어요. 끄면 메인에 창만 보이고, 누르면 고양이가 지금은 참여할 수 없다고 알려 줘요. 관리자는 꺼져 있어도 들어가서 미리 해 볼 수 있어요.')}
+      ${card('lesson', '📚 후계자 수업', '켜면 회원이 메인의 \'후계자 수업\'에 들어갈 수 있어요. 끄면 메인에 창만 보이고, 누르면 사리가 지금은 참여할 수 없다고 알려 줘요. 관리자는 꺼져 있어도 들어가서 미리 해 볼 수 있어요.')}
       ${card('match', '♟ 대국', '켜면 회원이 대국 방을 열고 들어갈 수 있어요. 끄면 메인에 창만 보이고 들어갈 수 없어요. 관리자는 꺼져 있어도 들어가요.')}
     </div>
     <section class="adm-card" style="margin-top:18px"><header><b>👁 회원 화면으로 보기</b>${sw('as-member', (() => { try { return localStorage.getItem('naru:asMember') === '1'; } catch (e) { return false; } })())}</header>
-      <p class="hint-text">켜면 관리자도 수업 · 대국이 닫혀 있을 때 일반 회원처럼 막혀요 (메인 창 '쉬는 중' · 고양이 안내). 이 브라우저에서만 바뀌고, 켜져 있는 동안 화면 아래에 '회원 화면으로 보는 중 · 끄기'가 떠요.</p></section>
+      <p class="hint-text">켜면 관리자도 수업 · 대국이 닫혀 있을 때 일반 회원처럼 막혀요 (메인 창 '쉬는 중' · 사리 안내). 이 브라우저에서만 바뀌고, 켜져 있는 동안 화면 아래에 '회원 화면으로 보는 중 · 끄기'가 떠요.</p></section>
     <section class="adm-card" style="margin-top:18px"><header><b>📊 전투력 · 스탯 평균 · 특전 단계</b><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="label">게시된 캐릭터 + 심사 대기(제출한 작성본) 기준 · 전투력 높은 순</span><button class="btn sm ghost" id="sb-csv" disabled>📥 스프레드시트로 내보내기</button></span></header>
       <div class="sb-wrap" id="sb"><p class="dim">불러오는 중…</p></div></section>`;
     $('#as-member').onchange = e => {
@@ -532,7 +537,7 @@ App.ready.then(async user => {
     const HELP = {
       soc: '가문 어른이 보내는 문자예요. 회원은 자기 캐릭터 가문의 문자만 받아요 · 수업 한 번에 5통이 섞여서 나와요 · 보기 셋은 화면에서 순서가 섞여요.',
       mor: '인물이 하는 부탁이에요. 공통으로 쓰면 어느 인물이 나와도 쓸 수 있어요 · 그 인물 전용 부탁이 먼저 나오고 모자라면 공통으로 채워요 · 한 번에 5개.',
-      art: '인스타 스토리예요. 셀피 이미지 주소를 넣고 반응을 2 ~ 8개 써요 · 한 번에 스토리 3개가 나와요 · 반응 순서는 매번 섞여요.'
+      art: '인스타 스토리예요. 셀피 이미지 주소를 넣고 반응을 2 ~ 8개 써요 · 반응마다 결과만 정하면 돼요 · 한 번에 스토리 3개가 나와요 · 반응 순서는 매번 섞여요.'
     };
     const form = it => {
       it = it || {};
@@ -554,18 +559,18 @@ App.ready.then(async user => {
         <div class="row3"><label class="field"><span>캐릭터 이름</span><input data-f="char" list="lq-names" value="${esc(it.char || '')}" placeholder="은설" maxlength="40"><datalist id="lq-names">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
           <label class="field"><span>인스타 아이디</span>${inp('handle', it.handle, 'eunseol_', 40)}</label><label class="field"><span>올린 지</span>${inp('ago', it.ago, '3시간', 20)}</label></div>
         <div class="row2"><label class="field"><span>셀피 이미지 주소</span>${inp('img', it.img, 'https://i.imgur.com/….jpg', 500)}</label><label class="field"><span>사진 위 스티커 · 비워도 돼요</span>${inp('sticker', it.sticker, '첫눈 ❄', 60)}</label></div>
-        <div class="lq-rx" id="lq-rx"><div class="lq-rh"><span>이모지</span><span>반응 문구</span><span>결과</span><span>DM 답장</span><span></span></div>
+        <div class="lq-rx" id="lq-rx"><div class="lq-rh"><span>이모지</span><span>반응 문구</span><span>결과</span><span></span></div>
           ${rx.map(x => rxRow(x)).join('')}</div>
         <button type="button" class="icon-btn" id="lq-addrx">+ 반응 하나 더</button>`;
     };
     const rxRow = x => `<div class="lq-rr"><input data-rx="0" value="${esc(x[0] || '')}" placeholder="😍" maxlength="8"><input data-rx="1" value="${esc(x[1] || '')}" placeholder="오 진짜 예쁘다 어디야?" maxlength="80">
-      <select data-rx="2">${['대박', '무난', '망함'].map(v => `<option ${x[2] === v ? 'selected' : ''}>${v}</option>`).join('')}</select><input data-rx="3" value="${esc(x[3] || '')}" placeholder="학교 뒷산. 같이 갈래?" maxlength="200"><button type="button" class="icon-btn danger" data-rxdel>✕</button></div>`;
+      <select data-rx="2">${['대박', '무난', '망함'].map(v => `<option ${x[2] === v ? 'selected' : ''}>${v}</option>`).join('')}</select><button type="button" class="icon-btn danger" data-rxdel>✕</button></div>`;
     const read = () => {
       const v = f => (($(`[data-f="${f}"]`, pane) || {}).value || '').trim(), it = { id: edit ? edit.id : undefined };
       if (subj === 'soc') Object.assign(it, { house: v('house'), from: v('from'), msg: v('msg'), opts: [v('o0'), v('o1'), v('o2')], scold: v('scold') });
       if (subj === 'mor') Object.assign(it, { char_id: v('char_id') || null, line: v('line'), opts: [v('o0'), v('o1'), v('o2')], react: [v('r0'), v('r1'), v('r2')] });
       if (subj === 'art') Object.assign(it, { char: v('char'), handle: v('handle'), ago: v('ago'), img: v('img'), sticker: v('sticker'),
-        reactions: $$('.lq-rr', pane).map(r => [0, 1, 2, 3].map(k => $(`[data-rx="${k}"]`, r).value.trim())).filter(x => x[1]) });
+        reactions: $$('.lq-rr', pane).map(r => [0, 1, 2].map(k => $(`[data-rx="${k}"]`, r).value.trim()).concat('')).filter(x => x[1]) });
       return it;
     };
     const check = it => {

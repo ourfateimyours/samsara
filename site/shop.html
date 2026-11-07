@@ -8,7 +8,7 @@
 <title>상점 — 三娑罗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Yuji+Boku&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/market.css">
@@ -19,7 +19,7 @@
   <div class="big-han">商店</div>
   <div class="eyebrow">Shop · 靈錢 商店</div>
   <h1>상점</h1>
-  <p>출석으로 모은 영전으로 칭호와 이름표, 로비 고양이의 간식을 살 수 있어요.</p>
+  <p>출석으로 모은 영전으로 칭호와 이름표, 사리의 간식을 살 수 있어요.</p>
 </header>
 
 <main class="wrap mk" id="shop">
@@ -67,13 +67,13 @@ App.ready.then(async user => {
   function renderWallet() {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
-      <div class="w-i">칭호 <b style="color:${t ? esc(myColor()) : 'inherit'}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div>
+      <div class="w-i">칭호 <b style="color:${t ? esc(myColor()) : 'inherit'};${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div>
       <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div><div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
       <a class="btn ghost sm w-go" href="attendance.html">출석하고 영전 받기 →</a>`;
   }
   /* 칭호 미리보기: 가진 칭호는 내 글자 그대로, 선물 전용 칭호는 "내가 선물하면" 들어갈 내 닉네임으로 */
   const ttlPv = it => Store.titleText(it, wal.items.includes(it.id) ? wal.equip : { from: { [it.id]: user.nickname } });
-  const preview = it => it.kind === 'title' ? `<span class="ttl-chip big" style="--tc:${esc(myColor())}">${esc(ttlPv(it))}</span>`
+  const preview = it => it.kind === 'title' ? `<span class="ttl-chip big" style="--tc:${esc(myColor())};${Store.titleFont(it)}">${esc(ttlPv(it))}</span>`
     : it.kind === 'tag' ? `<span class="tagpv" style="color:${esc(it.value)}">${esc(user.nickname)}</span><span class="sw" style="background:${esc(it.value)}"></span>`
     : it.kind === 'snack' ? CHURU : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
   function renderGoods() {
@@ -86,7 +86,7 @@ App.ready.then(async user => {
       // 고양이 호감도를 가득 채워야 공개되는 칭호 (집사) — 그 전엔 이름을 가린 잠긴 카드
       if (it.needs === 'cat_full' && !wal.cat_full && !owned) return `<article class="mk-panel good so locked">
         <div class="pv"><span class="gh">${k[2]}</span><span class="ttl-chip big" style="--tc:#8a8f9c">? ? ?</span></div>
-        <div class="kd">${k[1]} · ${k[0]}</div><h3>숨겨진 칭호</h3><p>로비 고양이와 더 친해지면 공개돼요. (호감도 ${Math.min(100, wal.aff || 0)} / 100)</p>
+        <div class="kd">${k[1]} · ${k[0]}</div><h3>숨겨진 칭호</h3><p>사리와 더 친해지면 공개돼요. (호감도 ${Math.min(100, wal.aff || 0)} / 100)</p>
         <div class="ft"><span class="pr"><span class="coin-s"></span>?</span><span class="bt"><span class="so-btn">LOCKED</span></span></div></article>`;
       const so = !owned && Store.soldOut(it);   // 품절: 가진 사람만 계속 달고 뺄 수 있어요
       const main = eq ? `<button class="btn ghost sm" data-off="${esc(it.kind)}">빼기</button>`
@@ -145,7 +145,7 @@ App.ready.then(async user => {
         const r = await Store.buy(it.id, { to, char: ch, msg, amount });
         if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); return pouchOpen(it, r.pouch); }
         wal = r.wallet; items = await Store.shopItems().catch(() => items); closeModal(); renderAll();   // 남은 수량 · 품절 다시 받아 오기
-        toast(it.kind === 'cheer' ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 로비 고양이에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
+        toast(it.kind === 'cheer' ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
       } catch (err) { toast(err.message, 'err'); if (/품절/.test(err.message)) { items = await Store.shopItems().catch(() => items); closeModal(); renderAll(); } }
     };
   }
