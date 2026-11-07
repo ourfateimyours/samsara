@@ -91,7 +91,7 @@
 .roll .who { font: 500 15px 'IBM Plex Sans KR', var(--sans); white-space: nowrap; max-width: none; overflow: visible; }
 @font-face { font-family: 'MabinogiClassic'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2207-01@1.0/MabinogiClassicR.woff2') format('woff2'); font-display: swap; }
 .roll .who .ttl-chip { margin-left: 6px; font-family: 'MabinogiClassic', var(--sans); font-weight: 400; font-size: 12px; }
-.roll .cm { justify-self: start; width: fit-content; max-width: 100%; padding: 7px 13px; border-radius: 4px 14px 14px 14px; background: rgba(255, 255, 255, .09); color: var(--paper); font-size: 13.5px; font-family: 'IBM Plex Sans KR', var(--sans); line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
+.roll .cm { justify-self: start; width: fit-content; max-width: 100%; padding: 7px 13px; border-radius: 4px 14px 14px 14px; background: rgba(255, 255, 255, .09); color: #fff; font-size: 13.5px; font-family: 'IBM Plex Sans KR', var(--sans); line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
 .roll ul { margin: 0; padding: 0; }
 
 /* ---------- 상점 ---------- */
