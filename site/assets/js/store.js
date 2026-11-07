@@ -60,7 +60,7 @@
     while (set.has(d.toISOString().slice(0, 10))) { n++; d.setUTCDate(d.getUTCDate() - 1); }
     return n;
   };
-  const emptyWallet = () => ({ coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null, snack_n: 0, churu_day: null });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
+  const emptyWallet = () => ({ coin_notes: [], coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null, snack_n: 0, churu_day: null });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
   const affToday = w => w.aff_day === kstDay() ? (w.aff_gain || 0) : 0;   // 오늘 올린 호감도
   const PROFILE_KEYS = ['nickname', 'title', 'bio', 'seal', 'role'];
 
@@ -220,6 +220,9 @@
       },
       async adminWallets() { const rows = ok(await sb.from('wallets').select('*')), out = {}; rows.forEach(r => out[r.user_id] = Object.assign(emptyWallet(), r)); return out; },
       async statBoard() { return ok(await sb.rpc('admin_stat_board')) || { avg: {}, rows: [] }; },
+      async giveBulk(ids, amount, note) { return ok(await sb.rpc('admin_give_bulk', { p_users: ids, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
+      async giftBulk(ids, note) { return ok(await sb.rpc('admin_gift_bulk', { p_chars: ids, p_note: String(note || '').slice(0, 60) })); },
+      async coinNotesSeen() { ok(await sb.rpc('coin_notes_seen')); },
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
@@ -447,6 +450,9 @@
     async adminWallets() { await this.requireStaff(); return B.adminWallets(); },
     // 전투력 · 스탯 평균표: 계산은 서버(관리자만)에서 해서 결과만 받아요
     async statBoard() { await this.requireAdmin(); const b = await B.statBoard(); return { stats: STATS, avg: b.avg || {}, rows: b.rows || [], xcols: b.xcols || [] }; },
+    async giveBulk(ids, amount, note) { await this.requireStaff(); dropBadges(); return B.giveBulk(ids, amount, note); },
+    async giftBulk(ids, note) { await this.requireAdmin(); return B.giftBulk(ids, note); },
+    async coinNotesSeen() { const u = await this.user(); if (u) return B.coinNotesSeen(u.id); },
     async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); dropBadges(); return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */
     statBonus(badge, items, charId) {
