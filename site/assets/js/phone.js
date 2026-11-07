@@ -41,15 +41,8 @@ window.Phone = (function () {
     });
   }
 
-  /* 오늘의 달: 나사 SVS 'Dial-A-Moon' 2026 사진 (한 시간마다 한 장 · 그 시각의 실제 달 모양)
-     2026년이 아니거나 못 불러오면 보름달 사진 */
-  const MOON_SET = 'https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005587/frames/730x730_1x1_30p/moon.';
-  const MOON_FULL = MOON_SET + '7157.jpg';
-  const moonUrl = () => {
-    const now = new Date(), start = Date.UTC(2026, 0, 1);
-    if (now.getUTCFullYear() !== 2026) return MOON_FULL;
-    return MOON_SET + String(Math.floor((now - start) / 36e5) + 1).padStart(4, '0') + '.jpg';
-  };
+  /* 달: 늘 표면이 잘 보이는 보름달 사진 (실제 달 모양을 따르면 초승달 · 그믐 때 거의 까맣게 나와요) */
+  const MOON_FULL = 'https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005587/frames/730x730_1x1_30p/moon.7157.jpg';
 
   let ov = null;
   function open(row, all, opt = {}) {
@@ -81,7 +74,7 @@ window.Phone = (function () {
         <div class="ph-case"><span class="ph-side a"></span><span class="ph-side b"></span><span class="ph-side c"></span><span class="ph-side d"></span><span class="ph-hole"></span>
           <div class="ph-screen off">
             ${d.phoneBg === 'moon'
-              ? `<div class="ph-wall space moon"><div class="ph-halo"></div><div class="ph-earth"><img src="${moonUrl()}" alt="" onerror="this.onerror=null;this.src='${MOON_FULL}'"></div></div>`
+              ? `<div class="ph-wall space moon"><div class="ph-halo"></div><div class="ph-earth"><img src="${MOON_FULL}" alt=""></div></div>`
               : '<div class="ph-wall space"><div class="ph-halo"></div><div class="ph-earth"><img src="assets/img/earth.jpg" alt=""></div></div>'}
             <div class="ph-island"></div>
             <div class="ph-status"><span>${clock}</span><span class="ph-icons"><span class="ph-sig"><i></i><i></i><i></i><i></i></span>${wifi}<span class="ph-bat"><i></i></span></span></div>
