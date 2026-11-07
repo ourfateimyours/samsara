@@ -119,12 +119,14 @@ App.ready.then(async user => {
     $('#next').disabled = y === ty && m === tm;
   }
 
-  // 말풍선 색: 그 사람의 첫 게시 캐릭터 색 (글자는 흰색이라 아주 밝은 색은 조금 어둡게)
+  // 말풍선 색: 그 사람의 첫 게시 캐릭터 색 (글자는 흰색 · 흰색 ~ 회색 캐릭터만 검은색 · 다른 밝은 색은 말풍선을 조금 어둡게)
   const bubbleOf = uid => {
     const c = cards.find(x => x.owner_id === uid), col = c && c.data && c.data.color;
     if (!/^#[0-9a-f]{6}$/i.test(col || '')) return '';
-    const n = parseInt(col.slice(1), 16), luma = (n >> 16) * .299 + (n >> 8 & 255) * .587 + (n & 255) * .114;
-    return `background:${luma > 165 ? `color-mix(in srgb, ${col} 62%, #000)` : col}`;
+    const n = parseInt(col.slice(1), 16), ch = [n >> 16, n >> 8 & 255, n & 255], mx = Math.max(...ch), mn = Math.min(...ch);
+    if (mx - mn < 10 && (mx + mn) / 2 > 100) return `background:${col};color:#000`;   // 흰색 ~ 회색 캐릭터: 그 색 그대로 + 검은 글자
+    const luma = ch[0] * .299 + ch[1] * .587 + ch[2] * .114;
+    return `background:${luma > 165 ? `color-mix(in srgb, ${col} 62%, #000)` : col};color:#fff`;
   };
 
   function renderRoll() {
@@ -132,7 +134,7 @@ App.ready.then(async user => {
     $('#roll-n').textContent = `${list.length}명`;
     const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
     $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
-      <span class="who" style="${r.tag ? `color:${esc(r.tag)}` : ''}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
+      <span class="who" style="color:${r.tag ? esc(r.tag) : '#fff'}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
       ${r.comment ? `<span class="cm" style="${bubbleOf(r.user_id)}">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
   }
 
