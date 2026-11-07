@@ -177,7 +177,7 @@ window.CharEditor = {
     // 작성본이 있으면 작성본을, 없으면 게시본을 불러와요
     const d = normChar(row && (row.draft || row.data));
     let others = [];
-    try { others = (await Store.list('characters')).filter(c => !row || c.id !== row.id); } catch (e) {}
+    try { others = (await Store.charCards()).filter(c => !row || c.id !== row.id); } catch (e) {}
     // 스탯은 처음 한 번 적고 나면 관리자만 고칠 수 있어요 (게시된 기록에 스탯이 있으면 잠김)
     const pub = row && row.data ? normChar(row.data) : null;
     // 한 번 게시된 적이 있으면 (작성 중으로 돌아가도) 회원 수정 창엔 스탯 탭이 아예 안 보여요 · 관리자만 고쳐요
@@ -263,10 +263,10 @@ window.CharEditor = {
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
         <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
-        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 아이메시지 · 문자는 메시지를, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
+        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
-        ${row && row.status === 'submitted' ? (isAdmin ? '<p class="hint-text" style="color:#ffcf6b">⏳ 심사 대기 중이에요. 관리자가 고쳐 저장해도 심사 대기 그대로예요 (반려는 반려 버튼으로).</p>' : '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>') : ''}
+        ${row && row.status === 'submitted' ? (isAdmin ? '<p class="hint-text" style="color:#ffcf6b">⏳ 심사 대기 중이에요. 관리자가 고쳐 저장해도 심사 대기 그대로예요.</p>' : '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>') : ''}
         ${row && row.status !== 'published' && row.review_note ? '<p class="hint-text" style="color:#ff8a80">↩ 반려됐어요 · 고쳐서 언제든 다시 제출할 수 있어요</p>' : ''}
         ${row && row.published_at ? '<p class="hint-text">고친 내용은 <b>작성본</b>으로 저장돼요. 게시되기 전까지 사이트에는 지금 게시된 모습이 그대로 보여요.</p>' : ''}
         <p class="err-text" id="cerr"></p>
@@ -297,10 +297,10 @@ window.CharEditor = {
       { k: 'desc', type: 'textarea', ph: '소개 / 이야기', rows: 4, full: true }], '소지품 추가', false, 6);
     // 관계란: 캐릭터 · 상대 휴대폰 알림 (아이메시지 · 문자 → 메시지 칸 / 부재중 전화 → 표시 시각 · 횟수 칸)
     const isMsg = v => v.msgType === 'imessage' || v.msgType === 'sms', isCall = v => v.msgType === 'missed';
-    const getRel = listEditor($('#e-rel', m), d.related, [
+    const getRel = listEditor($('#e-rel', m), d.related.map(r => r.msgType === 'sms' ? Object.assign({}, r, { msgType: 'imessage' }) : r), [   // 예전 '문자' 는 메시지로 합쳐요
       { k: 'id', type: 'select', options: () => [['', '— 캐릭터 선택 —']].concat(others.map(c => [c.id, `${(c.data && c.data.name) || '?'} (@${c.author})`])) },
 
-      { k: 'msgType', type: 'select', full: true, options: () => [['', '📱 상대 휴대폰에 보낼 알림 — 없음'], ['imessage', '💬 아이메시지'], ['sms', '✉️ 문자'], ['missed', '📞 부재중 전화']] },
+      { k: 'msgType', type: 'select', full: true, options: () => [['', '📱 상대 휴대폰에 보낼 알림 — 없음'], ['imessage', '💬 메시지'], ['missed', '📞 부재중 전화']] },
       { k: 'msg', type: 'textarea', ph: '상대 잠금 화면에 뜰 메시지', rows: 2, full: true, show: isMsg },
       { k: 'time', ph: '표시 시각 (예: 오전 2:14)', row: 'p', max: 12, show: isCall },
       { k: 'missed', ph: '부재중 횟수', row: 'p', max: 2, show: isCall },
@@ -356,7 +356,9 @@ window.CharEditor = {
       별점: ['별점 코멘트 · 제목 | 점수 | 코멘트 (코멘트 꼭!)', '<별점>영화 제목 | 4.5 | 코멘트</별점>'],
       음악: ['음악 재생 · 제목 | 가수 | 길이 | 표지 링크(선택)', '<음악>노래 제목 | 가수 | 3:24</음악>'],
       트윗: ['트윗 · @아이디 | 내용 | 시간(선택)', '<트윗>@아이디 | 오늘도 무사히. | 오전 2:47</트윗>'],
-      알티: ['알티 · 이름 | @아이디 | 내용 | 시간(선택)', '<알티>원래 쓴 사람 | @아이디 | 퍼 갈 만한 글 | 11월 3일</알티>']
+      알티: ['알티 · 이름 | @아이디 | 내용 | 시간(선택)', '<알티>원래 쓴 사람 | @아이디 | 퍼 갈 만한 글 | 11월 3일</알티>'],
+      네이버: ['네이버 검색창 · 검색 칸에 쓸 글 | 최근 검색어 | 최근 검색어 …', '<네이버>검색 칸에 쓸 글 | 최근 검색어 1 | 최근 검색어 2 | 최근 검색어 3</네이버>'],
+      송금: ['카카오 송금 · 금액 (쉼표는 저절로) · 아이메시지와 같은 칸에 쓰면 메시지가 카카오톡 색으로 바뀌어요', '<송금>50000</송금>']
     };
     const fgLast = {};   // 칸마다 마지막으로 쓰던 글 칸
     const fgTarget = { persona: () => f.persona, skill: () => fgLast.skill || $('#e-skill textarea', m), item: () => fgLast.item || $('#e-items textarea', m) };
@@ -379,7 +381,7 @@ window.CharEditor = {
         const tag = c.closest('.fg-card').dataset.tag, ta = fgTarget[box.dataset.fg]();
         if (!ta) return toast('먼저 글 칸을 하나 추가해 주세요.', 'err');
         const ex = fgEx(tag), s = ta.selectionStart || 0, e2 = ta.selectionEnd || 0, sel = ta.value.slice(s, e2);
-        const ins = sel && !/^(무물|무물단색|문자|메일|받은메일|후원|별점|음악|트윗|알티)$/.test(tag) ? `<${tag}>${sel}</${tag}>` : ex;
+        const ins = sel && !/^(무물|무물단색|문자|메일|받은메일|후원|별점|음악|트윗|알티|네이버|송금)$/.test(tag) ? `<${tag}>${sel}</${tag}>` : ex;
         ta.focus(); ta.setRangeText(ins, s, e2, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true }));
         toast(`${FMT_EX[tag][0].split(' · ')[0]} 서식을 넣었어요.`);
       });
@@ -430,7 +432,7 @@ window.CharEditor = {
         const saved = await Store.saveDraft(row && row.id, data);
         const go = u => { closeModal(); location.href = u; };
         if (act === 'preview') return go(`character.html?id=${encodeURIComponent(saved.id)}&preview=1`);
-        if (act === 'submit') { await Store.submit(saved.id); toast('제출했어요! 관리자가 확인한 뒤 게시돼요.'); return go('mypage.html#c-' + saved.id); }
+        if (act === 'submit') { const sr = await Store.submit(saved.id); toast(sr && sr.live ? '제출했어요! 멤버란에 바로 반영됐어요.' : '제출했어요! 관리자가 확인한 뒤 게시돼요.'); return go('mypage.html#c-' + saved.id); }
         if (act === 'publish') { await Store.publish(saved.id); toast('게시했어요'); return go('character.html?id=' + encodeURIComponent(saved.id)); }
         toast('작성본을 저장했어요'); go(isAdmin ? `character.html?id=${encodeURIComponent(saved.id)}&preview=1` : 'mypage.html#c-' + saved.id);
       } catch (ex) {

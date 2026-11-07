@@ -1,7 +1,7 @@
 /* ================================================================
    관계 휴대폰
    · 다른 캐릭터가 "나"를 연관 캐릭터로 등록하며 적은 메시지가
-     내 휴대폰 잠금 화면 알림으로 떠요 (아이메시지 / 문자 / 부재중 전화)
+     내 휴대폰 잠금 화면 알림으로 떠요 (메시지 / 부재중 전화)
    · 잠금 화면만 있어요 (연락처 화면은 없앴어요)
    ================================================================ */
 window.Phone = (function () {
@@ -62,7 +62,7 @@ window.Phone = (function () {
       if (c.id === row.id) return;
       ((c.data && c.data.related) || []).forEach(r => {
         if (r.id !== row.id || !r.msgType) return;
-        notis.push({ from: c, type: r.msgType, msg: r.msg || '', rel: r.rel || '',
+        notis.push({ from: c, type: r.msgType === 'sms' ? 'imessage' : r.msgType, msg: r.msg || '', rel: r.rel || '',
           time: r.time || '', missed: Math.max(1, parseInt(r.missed, 10) || 1) });
       });
     });

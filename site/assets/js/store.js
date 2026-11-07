@@ -6,6 +6,19 @@
   const ACTIVITY_KEY = 'naru:last-activity';
   let lastActivity = 0;
   try { localStorage.removeItem('naru:remember-id'); } catch (e) {}
+  /* 잠깐 기억해 두기: 페이지를 옮겨도 같은 정보를 서버에 다시 묻지 않아요 (이 탭에서만 · 로그아웃하면 비워요) */
+  const CACHE = 'naru:c:';
+  const hold = async (key, ms, load) => {
+    if (!remoteOn) return load();
+    try { const c = JSON.parse(sessionStorage.getItem(CACHE + key)); if (c && Date.now() - c.t < ms) return c.v; } catch (e) {}
+    const v = await load();
+    try { sessionStorage.setItem(CACHE + key, JSON.stringify({ t: Date.now(), v })); } catch (e) {}
+    return v;
+  };
+  const drop = (...keys) => { try {
+    if (keys.length) keys.forEach(k => sessionStorage.removeItem(CACHE + k));
+    else Object.keys(sessionStorage).filter(k => k.startsWith(CACHE)).forEach(k => sessionStorage.removeItem(k));
+  } catch (e) {} };
   const newId = () => (crypto.randomUUID ? crypto.randomUUID()
     : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const now = () => new Date().toISOString();
@@ -23,10 +36,10 @@
   const titleText = (it, equip) => it ? String(it.value || '').split(FROM).join(((equip && equip.from) || {})[it.id] || '누군가') : '';
   const CAT = { max: 200, full: 100, daily: 5 };   // 고양이 호감도: 화면에 보이는 값만
   const PANG_LEVELS = [
-    { id: 'normal',  name: '보통',        han: 'LV.1', target: 3700, secs: 60, glass: false },
-    { id: 'hard',    name: '매우 어려움', han: 'LV.2', target: 4000, secs: 45, glass: false },
-    { id: 'hell',    name: '지옥',        han: 'LV.3', target: 4000, secs: 30, glass: true },
-    { id: 'extreme', name: '극악',        han: 'LV.4', target: 4400, secs: 25, glass: true }
+    { id: 'normal',  name: '보통',        han: 'LV.1', target: 2800, secs: 60, glass: false, mx: '×1.5 ~ ×4' },
+    { id: 'hard',    name: '매우 어려움', han: 'LV.2', target: 3000, secs: 45, glass: false, mx: '×1.5 ~ ×6' },
+    { id: 'hell',    name: '지옥',        han: 'LV.3', target: 4000, secs: 30, glass: true, mx: '×6 ~ ×15' },
+    { id: 'extreme', name: '극악',        han: 'LV.4', target: 5000, secs: 25, glass: true, mx: '×6 ~ ×30' }
   ];
   const pangLevel = id => PANG_LEVELS.find(l => l.id === id) || PANG_LEVELS[0];
   const PANG = { min: 50, max: 1000, ext: 30, grace: 300 };   // ext: 모래시계로 늘릴 수 있는 최대 시간(초)
@@ -112,8 +125,10 @@
       client: sb,
       async user() {
         const { data } = await sb.auth.getSession();
-        const u = await toUser(data.session && data.session.user);
-        return u && u.approval === 'approved' ? u : null;
+        const su = data.session && data.session.user; if (!su) return null;
+        const u = await hold('me:' + su.id, 6e5, () => toUser(su));
+        if (!u || u.approval !== 'approved') { drop('me:' + su.id); return null; }
+        return u;
       },
       async usernameAvailable(id) { return ok(await sb.rpc('username_available', { p_username: id })); },
       async signUp(id, pw, nickname, contact) {
@@ -135,6 +150,7 @@
       async profiles() {
         const rows = ok(await sb.from('profiles').select('*').order('created_at', { ascending: true }));
         // 관리자에게만 읽히는 아이디·이메일 붙이기
+        const me = await remote.user(); if (!me || (me.grade !== 'admin' && me.grade !== 'staff')) return rows;
         const { data: acc } = await sb.from('accounts').select('id,username,contact');
         if (acc) rows.forEach(r => { const a = acc.find(x => x.id === r.id); if (a) { r.username = a.username; r.email = a.contact; } });
         return rows;
@@ -157,6 +173,8 @@
       async setPassword(id, pw) { return adminFn({ action: 'set_password', user_id: id, password: pw }); },
       async deleteUser(id) { return adminFn({ action: 'delete_user', user_id: id }); },
       async teles() { return ok(await sb.from('tele_box').select('*').order('created_at', { ascending: true })); },
+      // 안 읽은 맥박 수만 (내용은 받지 않아요)
+      async teleUnread(me) { const { count, error } = await sb.from('tele_box').select('id', { count: 'exact', head: true }).eq('to_user', me).eq('read', false); if (error) throw new Error(koError(error.message)); return count || 0; },
       async sendTele(me, nick, p) {
         return ok(await sb.rpc('send_tele', { p_from_char: p.from_char, p_to_char: p.to_char, p_body: p.body }));
       },
@@ -230,7 +248,7 @@
       async charNames() { return ok(await sb.from('characters_view').select('id,owner_id,author,published_at,name:data->>name,color:data->>color').order('created_at', { ascending: true })).map(c => ({ id: c.id, owner_id: c.owner_id, author: c.author, published_at: c.published_at, data: { name: c.name || '', color: c.color || '' } })); },
       // 목록 화면은 긴 본문·스킬·작성본 대신 카드에 쓰는 JSON 필드만 받아요.
       async charCards() {
-        const fields = ['name', 'name_en', 'team', 'org', 'affiliation', 'rank', 'danger', 'element', 'color', 'head', 'images', 'image', 'silhouette', 'stats'];
+        const fields = ['name', 'name_en', 'team', 'org', 'affiliation', 'rank', 'danger', 'element', 'color', 'head', 'images', 'image', 'silhouette', 'stats', 'phoneBg'];
         const columns = ['id', 'owner_id', 'author', 'created_at', 'published_at'].concat(fields.map(k => `${k}:data->${k}`)).join(',');
         const rows = ok(await sb.from('characters_view').select(columns).not('published_at', 'is', null).order('created_at', { ascending: true }));
         return rows.map(row => {
@@ -242,6 +260,10 @@
           return Object.assign(row, { data });
         });
       },
+      // 이 캐릭터를 관계란에 넣은 캐릭터의 관계란만 받아요 (프로필 화면 · 관계 휴대폰)
+      async charsRelatedTo(id) { return ok(await sb.from('characters_view').select('id,related:data->related').not('published_at', 'is', null).filter('data->related', 'cs', JSON.stringify([{ id }]))); },
+      async submitLive(id) { ok(await sb.rpc('submit_live', { p_id: id })); },
+      async restAll() { return ok(await sb.rpc('rest_all')); },
       async myCharacters(id) { return ok(await sb.from('characters_view').select('*').eq('owner_id', id).order('created_at', { ascending: true })); },
       async myCharacterNews(id) {
         const rows = ok(await sb.from('characters_view').select('id,status,published_at,review_note,name:data->>name,draft_name:draft->>name').eq('owner_id', id));
@@ -278,6 +300,8 @@
 
   const B = remote || new Proxy({}, { get: (_, k) => { const L = window.DemoBackend; if (!L) throw new Error('데모 저장소(demo-store.js)를 불러오지 못했어요.'); const v = L[k]; return typeof v === 'function' ? v.bind(L) : v; } });
   let cachedUser, cachedSettings, cachedGrants, cachedBadges;
+  const dropBadges = () => { cachedBadges = null; drop('badges'); };
+  const dropChars = () => drop('cards', 'names');
 
   window.Store = {
     mode: remote ? 'supabase' : 'demo',
@@ -315,33 +339,34 @@
     async signIn(id, pw) {
       id = String(id || '').trim().toLowerCase();
       if (!id || !pw) throw new Error('아이디와 비밀번호를 입력해 주세요.');
-      const r = await B.signIn(id, pw); cachedUser = r.user; this.recordActivity(); return r;
+      drop(); const r = await B.signIn(id, pw); cachedUser = r.user; this.recordActivity(); return r;
     },
     async signOut() {
       try { await B.signOut(); }
       finally {
-        cachedUser = null; lastActivity = 0;
+        cachedUser = null; lastActivity = 0; drop();
         try { localStorage.removeItem(ACTIVITY_KEY); } catch (e) {}
       }
     },
     /* 명부: 승인된 회원만 (관리자 페이지는 allProfiles) */
-    async profiles() { return (await B.profiles()).filter(p => (p.approval || 'approved') === 'approved'); },
+    async profiles() { return (await hold('profiles', 3e5, () => B.profiles())).filter(p => (p.approval || 'approved') === 'approved'); },
     async allProfiles() { await this.requireStaff(); return B.profiles(); },
     async setApproval(id, approval) { await this.requireAdmin(); return B.setApproval(id, approval); },
     async updateProfile(patch) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
       const clean = Object.assign({}, patch); delete clean.grade;
       const p = await B.updateProfile(u.id, clean);
+      drop('profiles', 'me:' + u.id);
       if (clean.nickname) u.nickname = clean.nickname;
       return p;
     },
 
     /* 사이트 설정 */
-    async settings(fresh) { if (fresh || !cachedSettings) cachedSettings = await B.settings(); return cachedSettings; },
+    async settings(fresh) { if (fresh) drop('settings'); if (fresh || !cachedSettings) cachedSettings = await hold('settings', 3e5, () => B.settings()); return cachedSettings; },
     async saveSettings(patch) {
       await this.requireStaff();
       if (!(await this.isAdmin()) && Object.keys(patch).some(k => !STAFF_SETTINGS.includes(k))) throw new Error('이 설정은 관리자만 바꿀 수 있어요.');
-      const s = await B.saveSettings(patch); cachedSettings = null; return s;
+      const s = await B.saveSettings(patch); cachedSettings = null; drop('settings'); return s;
     },
     windowState,
 
@@ -357,7 +382,7 @@
       if (kind === 'submit') {
         if (row && row.owner_id !== u.id && !isAdmin) return { ok: false, reason: '본인이 작성한 인물만 제출할 수 있어요.' };
         if (row && (row.status === 'returned' || row.review_note)) return { ok: true };   // 반려된 프로필(반려 메모가 있는 것)은 고쳐서 언제든 다시 제출
-        return this.can(row && row.published_at ? 'edit' : 'create', row);
+        return this.can(row && (row.published_at || (row.data && Object.keys(row.data).length)) ? 'edit' : 'create', row);   // 레스트로 내려간 프로필도 수정 기간에만
       }
       if (isAdmin) return { ok: true, admin: true };
       if (kind === 'edit' && row && row.owner_id !== u.id) return { ok: false, reason: '본인이 작성한 인물만 수정할 수 있어요.' };
@@ -378,7 +403,7 @@
     async addGrant(g) { await this.requireAdmin(); cachedGrants = null; return B.addGrant(g); },
     async removeGrant(id) { await this.requireAdmin(); cachedGrants = null; return B.removeGrant(id); },
     async setGrade(id, grade) { await this.requireAdmin(); return B.setGrade(id, grade); },
-    async adminUpdateProfile(id, patch) { await this.requireAdmin(); return B.updateProfile(id, patch); },
+    async adminUpdateProfile(id, patch) { await this.requireAdmin(); drop('profiles'); return B.updateProfile(id, patch); },
     async setPassword(id, pw) {
       await this.requireAdmin();
       if (String(pw).length < 6) throw new Error('비밀번호는 6자 이상이어야 해요.');
@@ -387,36 +412,42 @@
     async deleteUser(id) { await this.requireAdmin(); return B.deleteUser(id); },
 
     /* 텔레파시 */
-    async teles() { const u = await this.user(); return u ? B.teles(u.id) : []; },
+    async teles(fresh) { const u = await this.user(); if (!u) return []; if (fresh) drop('teles:' + u.id); return hold('teles:' + u.id, 12e4, () => B.teles(u.id)); },
+    async teleUnread() {
+      const u = await this.user(); if (!u) return 0;
+      return remote ? hold('unread:' + u.id, 24e4, () => B.teleUnread(u.id)) : (await B.teles(u.id)).filter(m => m.to_user === u.id && m.owner_id !== u.id && !m.read).length;
+    },
     async sendTele(p) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
-      return B.sendTele(u.id, u.nickname, p);
+      drop('teles:' + u.id); return B.sendTele(u.id, u.nickname, p);
     },
-    async markTeleRead(id) { const u = await this.user(); if (u) await B.markTeleRead(u.id, id); },
+    async markTeleRead(id) { const u = await this.user(); if (u) { drop('teles:' + u.id, 'unread:' + u.id); await B.markTeleRead(u.id, id); } },
     async touch(page) { const u = await this.user(); if (u) await B.touch(u.id, page).catch(() => {}); },
     async rptA() { await this.requireAdmin(); return B.rptA(); },
     async rptB() { await this.requireStaff(); return B.rptB(); },
     /* 출석 · 지갑 · 상점 (영전 지급과 구매는 서버 함수에서만) */
     kstDay, streakOf, ATTEND, attendReward,
     async wallet() { const u = await this.user(); return u ? B.wallet(u.id) : emptyWallet(); },
-    async attendance(from) { return (await this.user()) ? B.attendance(from) : []; },
+    async attendance(from) { return (await this.user()) ? hold('att:' + from, 12e4, () => B.attendance(from)) : []; },
     async myAttendance(from) { const u = await this.user(); return u ? B.attendance(from, u.id) : []; },
-    async checkIn(comment) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.checkIn(u.id, u.nickname, comment); },
+    async checkIn(comment) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('att:' + kstDay()); return B.checkIn(u.id, u.nickname, comment); },
     STATS, LOG_DAYS, isFromTitle, soldOut,
     /* 칭호 글자: {from} 자리에 선물한 사람 닉네임 → titleText(칭호 물건, 그 사람의 equip) */
     titleText,
-    async shopItems(all) { return B.shopItems(all); },
-    async saveShopItem(item) { await this.requireAdmin(); return B.saveShopItem(item); },
+    async shopItems(all) { return hold(all ? 'shop:all' : 'shop', 3e5, () => B.shopItems(all)); },
+    /* 칭호 글씨체: 관리자가 칭호마다 고른 대로 (chosun = 조선일보체 · 비어 있으면 원래 글꼴) */
+    titleFont: it => it && it.font === 'chosun' ? "font-family:'ChosunNm',serif;" : '',
+    async saveShopItem(item) { await this.requireAdmin(); drop('shop', 'shop:all'); return B.saveShopItem(item); },
     /* 사기 · 선물하기: opt = { to: 받는 사람 id (없으면 나), char: 스탯 증가권을 쓸 캐릭터 id } → { wallet, detail } */
-    async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.buy(u.id, u.nickname, id, opt || {}); },
+    async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
-    async badges() { if (!(await this.user())) return {}; if (!cachedBadges) cachedBadges = await B.badges().catch(() => ({})); return cachedBadges; },
+    async badges() { if (!(await this.user())) return {}; if (!cachedBadges) cachedBadges = await hold('badges', 18e4, () => B.badges()).catch(() => ({})); return cachedBadges; },
     async shopLog() { await this.requireAdmin(); return B.shopLog(); },
     /* 관리자: 모든 회원 지갑 { user_id: wallet } · 영전 지급(음수면 회수) */
     async adminWallets() { await this.requireStaff(); return B.adminWallets(); },
     // 전투력 · 스탯 평균표: 계산은 서버(관리자만)에서 해서 결과만 받아요
     async statBoard() { await this.requireAdmin(); const b = await B.statBoard(); return { stats: STATS, avg: b.avg || {}, rows: b.rows || [], xcols: b.xcols || [] }; },
-    async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); cachedBadges = null; return B.giveCoins(u.id, u.nickname, to, amount, note); },
+    async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); dropBadges(); return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */
     statBonus(badge, items, charId) {
       const out = {}; if (!badge) return out;
@@ -425,7 +456,7 @@
       if (t) add(t.stats); add((badge.boosts || {})[charId]);
       return out;
     },
-    async equip(kind, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.equip(u.id, kind, id); },
+    async equip(kind, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.equip(u.id, kind, id); },
     async useSnack() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.useSnack(u.id); },
     /* 고양이 쓰다듬기: up=true 면 +1 (하루 +5까지) · false 면 삐짐 -2 (하루 한 번) → { wallet, gift, unlocked, changed } */
     async catPet(up) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.catPet(u.id, up); },    CAT, affToday,
@@ -433,7 +464,7 @@
     PANG, PANG_LEVELS, pangLevel,
     async pangStatus() { const u = await this.user(); if (!u) return { played: false }; return B.pangStatus(u.id); },
     async pangStart(bet, level) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.pangStart(u.id, bet, level); },
-    async pangFinish(moves) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.pangFinish(u.id, moves); },
+    async pangFinish(moves) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.pangFinish(u.id, moves); },
     LESSONS, GRADES,
     async playOpen(kind) {
       const [s, u] = await Promise.all([this.settings(), this.user()]);
@@ -446,12 +477,12 @@
     async lessonItemDel(subj, id) { await this.requireAdmin(); return B.lessonItemDel(subj, id); },
     async lessonStatus() { const u = await this.user(); if (!u) return { today: null }; return B.lessonStatus(u.id); },
     async lessonStart(subj, charId, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonStart(u.id, subj, charId, msg); },   // msg: 1등이 되면 랭킹 전광판에 흐를 한마디 (40자)
-    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.lessonAnswer(u.id, choice); },
+    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.lessonAnswer(u.id, choice); },
     async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
     async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
     async cheersToday() { const u = await this.user(); if (!u) return []; return B.cheersToday(u.id); },
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
-    async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.openGift(u.id, id, pick); },
+    async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
     async adminGiftBox(charId) { await this.requireAdmin(); const u = await this.user(); return B.adminGiftBox(u.id, u.nickname, charId); },
     POUCH_DAY, MATCH,
     async matchStatus() { const u = await this.user(); if (!u) return { canPlay: false }; const p = await this.playOpen('match'); if (!p.open) return { canPlay: false, closed: true }; return B.matchStatus(u.id); },
@@ -459,7 +490,7 @@
     async matchOpen(game, bet, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchOpen(u.id, game, bet, msg); },
     async matchCancel(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchCancel(u.id, id); },
     async matchJoin(id, msg, bet) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchJoin(u.id, id, msg, bet); },
-    async matchSettle(id, result) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); cachedBadges = null; return B.matchSettle(u.id, id, result); },
+    async matchSettle(id, result) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.matchSettle(u.id, id, result); },
     async lessonRank(subj) { const u = await this.user(); return B.lessonRank(u && u.id, subj); },
 
     isPublic: r => !!(r && r.published_at),
@@ -469,16 +500,17 @@
       return t === 'characters' ? rows.filter(r => r.published_at) : rows;
     },
     /* 이름 · 색만 담은 가벼운 목록 (게시된 캐릭터만) */
-    async charNames() { return (await B.charNames()).filter(r => r.published_at); },
+    async charNames() { return hold('names', 3e5, async () => (await B.charNames()).filter(r => r.published_at)); },
     get: (t, id) => B.get(t, id),
-    async charCards() { return remote ? B.charCards() : this.list('characters'); },
+    async charCards() { return remote ? hold('cards', 3e5, () => B.charCards()) : this.list('characters'); },
+    async charsRelatedTo(id) { return remote ? hold('rel:' + id, 3e5, () => B.charsRelatedTo(id)) : []; },
     async myCharacters() {
       const u = await this.user(); if (!u) return [];
       return remote ? B.myCharacters(u.id) : (await B.list('characters')).filter(r => r.owner_id === u.id);
     },
     async myCharacterNews() {
       const u = await this.user(); if (!u) return [];
-      return remote ? B.myCharacterNews(u.id) : this.myCharacters();
+      return remote ? hold('news:' + u.id, 3e5, () => B.myCharacterNews(u.id)) : this.myCharacters();
     },
     async adminCharacters() {
       await this.requireStaff(); const rows = await B.list('characters');
@@ -505,7 +537,7 @@
       if (!admin) draft = keepAdminOnly(draft, row.draft || row.data);
       const patch = { draft, updated_at: now() };
       // 회원이 고치면 '작성 중'으로 · 관리자가 심사 대기 프로필을 고치면 심사 대기 그대로 (반려 버튼으로만 반려)
-      if (row.status !== 'draft' && !(admin && row.status === 'submitted')) patch.status = 'draft';
+      if (row.status !== 'draft' && !row.published_at && !(admin && row.status === 'submitted')) patch.status = 'draft';   // 게시된 프로필은 고쳐도 '작성 중'이 되지 않아요
       const r = await B.update('characters', id, patch);
       return r;
     },
@@ -513,6 +545,12 @@
       const u = await this.user(); const row = await B.get('characters', id);
       if (!row.draft) throw new Error('제출할 작성본이 없어요.');
       const c = await this.can('submit', row); if (!c.ok) throw new Error(c.reason);
+      // 게시된 프로필: 수정 기간에 제출하면 심사 없이 바로 게시본에 반영돼요 (서버에서 기간 · 잠긴 값을 다시 확인)
+      if (row.published_at && row.status !== 'submitted') {
+        if (remote) await B.submitLive(id);
+        else await B.update('characters', id, { data: Object.assign({}, row.draft, { stats: (row.data || {}).stats || '' }), draft: null, status: 'published', review_note: '', updated_at: now() });
+        dropChars(); return { live: true };
+      }
       const r = await B.update('characters', id, { status: 'submitted', submitted_at: now() });   // 반려 메모는 게시할 때 지워져요
       return r;
     },
@@ -527,9 +565,17 @@
       await this.requireStaff();
       if (!(await this.isAdmin())) return B.staffReview(id, 'publish');
       const u = await this.user(); const row = await B.get('characters', id);
-      const data = row.draft || row.data;
+      const data = row.draft || row.data; dropChars();
       const r = await B.update('characters', id, { data, draft: null, status: 'published', published_at: now(), review_note: '', updated_at: now() });
       return r;
+    },
+    /* 레스트: 게시된 프로필 전체를 멤버란에서 내려요 · 내용은 작성본으로 옮겨져요 · 스탯은 계속 잠겨 있어요 */
+    async restAll() {
+      await this.requireAdmin(); dropChars();
+      if (remote) return B.restAll();
+      const rows = (await B.list('characters')).filter(c => c.published_at);
+      for (const c of rows) await B.update('characters', c.id, { status: 'draft', draft: c.draft || c.data, published_at: null, submitted_at: null, review_note: '' });
+      return rows.length;
     },
     async reject(id, note) {
       await this.requireStaff();
@@ -537,7 +583,7 @@
       const u = await this.user(); const row = await B.get('characters', id);
       // 반려 = '작성 중'으로 돌려보내기 (본인 · 관리자만 보여요) · 게시 해제 + 게시본을 작성본으로 옮겨서 바로 고칠 수 있게
       // review_note 는 회원에게 보이지 않는 반려 표시 → 기간과 상관없이 다시 제출할 수 있어요 (게시하면 지워져요)
-      const memo = String(note || '').trim().slice(0, 300) || '반려';
+      const memo = String(note || '').trim().slice(0, 300) || '반려'; dropChars();
       const r = await B.update('characters', id, { status: 'draft', review_note: memo, published_at: null, draft: row.draft || row.data });
       return r;
     },
@@ -563,7 +609,7 @@
       if (t === 'npcs') { await this.requireOwner(t, id); return B.remove(t, id); }
       if (t === 'characters') {
         const c = await this.can('delete'); if (!c.ok) throw new Error(c.reason);
-        await B.remove(t, id);
+        await B.remove(t, id); dropChars();
         return;
       }
       return B.remove(t, id);

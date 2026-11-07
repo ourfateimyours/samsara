@@ -5,8 +5,11 @@ App.ready.then(async user => {
   const stage = $('#stage');
   const id = qs('id');
   let row = null, all = [];
-  try { [row, all] = await Promise.all([id ? Store.get('characters', id) : null, Store.list('characters')]); }
-  catch (e) { console.error(e); }
+  // 모든 캐릭터의 긴 본문 대신: 카드 정보 + 이 캐릭터를 관계란에 넣은 캐릭터의 관계란만 받아요
+  try {
+    let linked; [row, all, linked] = await Promise.all([id ? Store.get('characters', id) : null, Store.charCards(), id ? Store.charsRelatedTo(id) : []]);
+    all = all.map(c => { const l = linked.find(x => x.id === c.id); return l ? Object.assign({}, c, { data: Object.assign({}, c.data, { related: l.related }) }) : c; });
+  } catch (e) { console.error(e); }
 
   // 게시 전 캐릭터는 본인·관리자만 볼 수 있어요
   const isAdm = !!(user && user.grade === 'admin');
@@ -182,7 +185,7 @@ App.ready.then(async user => {
       <div class="sub">${esc(d.subtitle)}</div>
       ${ownerTitle ? '<div></div>' : d.classline ? `<div class="cls">[ ${esc(d.classline)} ]</div>` : '<div></div>'}
       <div class="nm-wrap"><h1 class="nm" id="nm" data-t="${esc(EN)}">${esc(chars.slice(0, cut).join(''))}<span class="o">${esc(chars.slice(cut).join(''))}</span></h1></div>
-      <div class="kn">${ownerTitle ? `<span class="ttl-on" style="--tc:${esc(d.color)}" title="칭호"><b>${esc(Store.titleText(ownerTitle, badge.equip))}</b><i class="tt-d"></i></span>` : ''}<b>${esc(d.name)}</b><small>${esc(d.name)}</small></div>      ${d.team ? `<div class="team"><span>家門</span><b>${esc(d.team)}</b></div>` : '<div style="height:14px"></div>'}
+      <div class="kn">${ownerTitle ? `<span class="ttl-on" style="--tc:${esc(d.color)};${Store.titleFont(ownerTitle)}" title="칭호"><b>${esc(Store.titleText(ownerTitle, badge.equip))}</b><i class="tt-d"></i></span>` : ''}<b>${esc(d.name)}</b><small>${esc(d.name)}</small></div>      ${d.team ? `<div class="team"><span>家門</span><b>${esc(d.team)}</b></div>` : '<div style="height:14px"></div>'}
       ${d.quote ? `<p class="desc">${esc(d.quote)}</p>` : '<div></div>'}
       <div class="ap"><div class="hd"><b>PROFILE</b><span>${esc(d.codename || 'No. ' + fileNo)}</span></div>
         <div class="bd"><button data-open="0"><span>PERSONA</span><b>성격 · 성향 보기</b><i>›</i></button>
@@ -254,7 +257,7 @@ App.ready.then(async user => {
 
   /* ---------- 미리보기 · 심사 바 ---------- */
   const ST = { draft: ['✎', '작성 중'], submitted: ['⏳', '심사 대기'], returned: ['↩', '반려됨'], published: ['✦', '게시됨'] };
-  const hasPending = canSeeDraft && orig.draft && orig.status !== 'published';
+  const hasPending = canSeeDraft && orig.draft;
   if (previewing || hasPending) {
     const st = ST[orig.status] || ST.draft;
     const kind = orig.published_at ? '수정본' : '첫 등록';
@@ -263,7 +266,7 @@ App.ready.then(async user => {
     const btn = (act, label, cls, dis) => `<button class="btn sm ${cls || 'ghost'}" data-pv="${act}" ${dis ? `disabled title="${esc(dis)}"` : ''}>${label}</button>`;
     let acts = '';
     if (!previewing) acts = `<a class="btn sm" href="character.html?id=${encodeURIComponent(orig.id)}&preview=1">👁 ${kind} 미리보기</a>`;
-    else if (isAdm) acts = btn('edit', '✎ 수정') + (orig.status === 'submitted' ? btn('reject', '↩ 반려') : '') + btn('publish', '게시 ›', ' ');
+    else if (isAdm) acts = btn('edit', '✎ 수정') + btn('publish', '게시 ›', ' ');
     else acts = btn('edit', '✎ 계속 수정') + (orig.status === 'submitted' ? btn('withdraw', '제출 취소')
       : btn('submit', '제출하기', ' ', subPerm.ok ? '' : subPerm.reason));
     if (previewing && orig.published_at) acts += `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(orig.id)}">게시본 보기</a>`;
@@ -276,7 +279,7 @@ App.ready.then(async user => {
       const b = e.target.closest('[data-pv]'); if (!b) return;
       try {
         if (b.dataset.pv === 'edit') return CharEditor.open(orig);
-        if (b.dataset.pv === 'submit') { await Store.submit(orig.id); toast('제출했어요! 관리자가 확인한 뒤 게시돼요.'); return setTimeout(() => location.reload(), 700); }
+        if (b.dataset.pv === 'submit') { const sr = await Store.submit(orig.id); toast(sr && sr.live ? '제출했어요! 멤버란에 바로 반영됐어요.' : '제출했어요! 관리자가 확인한 뒤 게시돼요.'); return setTimeout(() => location.reload(), 700); }
         if (b.dataset.pv === 'withdraw') { await Store.withdraw(orig.id); toast('제출을 취소했어요. 다시 고칠 수 있어요.'); return setTimeout(() => location.reload(), 700); }
         if (b.dataset.pv === 'publish') { await Store.publish(orig.id); toast('게시했어요 ✦'); return setTimeout(() => location.href = 'character.html?id=' + encodeURIComponent(orig.id), 700); }
         if (b.dataset.pv === 'reject') {

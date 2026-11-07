@@ -32,29 +32,36 @@
   let yt = null, ready = false, audio = null, playing = false;
   const ui = p => { playing = p; dock.classList.toggle('on', p); $('.bgm-ic', dock).textContent = p ? '❚❚' : '▶'; };
   const cur = () => yt && ready ? yt.getCurrentTime() : audio ? audio.currentTime : 0;
-  const play = () => { if (yt && ready) yt.playVideo(); else if (audio) audio.play().catch(() => {}); };
+  let wantPlay = false;
+  const play = () => { if (ytId && !yt) { wantPlay = true; boot(); } else if (yt && ready) yt.playVideo(); else if (audio) audio.play().catch(() => {}); };
   const pause = () => { if (yt && ready) yt.pauseVideo(); else if (audio) audio.pause(); };
 
-  if (ytId) {
+  // 유튜브 플레이어는 파일이 많아요: 페이지를 열 때 받지 않고, 처음 누를 때(또는 재생 버튼) 받아요
+  let booted = false;
+  function boot() {
+    if (booted) return; booted = true;
     const box = document.createElement('div'); box.id = 'bgm-yt';
     box.style.cssText = 'position:fixed;width:2px;height:2px;left:-20px;top:-20px;opacity:0;pointer-events:none';
     document.body.appendChild(box);
-    const boot = () => {
+    const make = () => {
       yt = new YT.Player('bgm-yt', {
         videoId: ytId, playerVars: { playsinline: 1, controls: 0, loop: 1, playlist: ytId, start: Math.floor(startAt) },
-        events: { onReady: () => { ready = true; if (!wantOff()) armAutoplay(); }, onStateChange: e => ui(e.data === 1) }
+        events: { onReady: () => { ready = true; if (wantPlay) { wantPlay = false; yt.playVideo(); } }, onStateChange: e => ui(e.data === 1) }
       });
     };
-    if (window.YT && window.YT.Player) boot();
+    if (window.YT && window.YT.Player) make();
     else {
       const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => { if (prev) prev(); boot(); };
+      window.onYouTubeIframeAPIReady = () => { if (prev) prev(); make(); };
       if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
         const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(sc);
       }
     }
+  }
+  if (ytId) {
+    if (!wantOff()) armAutoplay();
   } else {
-    audio = new Audio(url); audio.loop = true; audio.preload = 'auto'; audio.volume = .55;
+    audio = new Audio(url); audio.loop = true; audio.preload = 'none'; audio.volume = .55;
     audio.addEventListener('loadedmetadata', () => { if (startAt && startAt < audio.duration) audio.currentTime = startAt; }, { once: true });
     ['play', 'pause'].forEach(ev => audio.addEventListener(ev, () => ui(!audio.paused)));
     if (!wantOff()) armAutoplay();
@@ -62,7 +69,7 @@
 
   // 자동재생: 먼저 시도하고, 막히면 방문자의 첫 클릭 때 재생
   function armAutoplay() {
-    play();
+    if (audio) play();   // 유튜브는 자동 재생이 어차피 막혀서 첫 클릭까지 기다려요
     const once = e => { if (e.target.closest('.bgm-dock')) return; if (!playing && !wantOff()) play(); };
     addEventListener('pointerdown', once, { once: true, capture: true });
   }
@@ -70,7 +77,8 @@
     if (playing) { pause(); setPref('off'); } else { setPref('on'); play(); }
   };
   // 메인 영상 소리를 켜면 BGM 은 잠시 멈춤
-  addEventListener('naru:video-sound', e => { if (e.detail) pause(); });
+  let resume = false;
+  addEventListener('naru:video-sound', e => { if (e.detail) { if (playing) resume = true; pause(); } else if (resume) { resume = false; play(); } });
   const save = () => { try { sessionStorage.setItem(POS, String(cur())); } catch (e) {} };
   setInterval(save, 2000); addEventListener('pagehide', save);
 })();

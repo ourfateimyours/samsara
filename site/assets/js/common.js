@@ -28,9 +28,9 @@
      흰색~회색 계열 캐릭터 색은 pale: 빛은 굵은 흰 글씨, 메일은 회색 화면
      서식 안에 다른 서식은 안 먹혀요 (겹쳐 쓰면 안쪽은 글자 그대로) · 성격은 서식 종류 3개까지 */
   const FMT_LINE = ['c', '강조', '밑줄', '점', '빛글', '검열', '흐림', '메모', '떨림', '지움', '타자', '반짝', '네온', '도장'];
-  window.FMT = { persona: [...FMT_LINE, '무물', '무물단색'], skill: ['c', '강조', '밑줄', '점'], item: ['문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티'] };
+  window.FMT = { persona: [...FMT_LINE, '무물', '무물단색', '문자', '네이버', '송금'], skill: ['c', '강조', '밑줄', '점', '네이버'], item: ['문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티', '네이버', '송금'] };
   window.FMT_MAX = { persona: 3 };   // 칸마다 쓸 수 있는 서식 종류 수 (먼저 쓴 순서대로 · 넘치는 종류는 글자 그대로)
-  const FMT_BLOCK = ['무물', '무물단색', '문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티'];
+  const FMT_BLOCK = ['무물', '무물단색', '문자', '메일', '받은메일', '후원', '별점', '음악', '트윗', '알티', '네이버', '송금'];
   const FMT_CLS = { c: 'tf-c', 강조: 'tf-hl', 밑줄: 'tf-u', 점: 'tf-dot', 빛글: 'tf-gr', 검열: 'tf-red', 흐림: 'tf-blur', 메모: 'tf-pen', 떨림: 'tf-shake', 지움: 'tf-del', 반짝: 'tf-shine', 네온: 'tf-neon', 도장: 'tf-seal' };
   const fmtTone = color => {
     const c = /^#[0-9a-f]{6}$/i.test(color) ? color : '#c8161d', n = parseInt(c.slice(1), 16);
@@ -52,7 +52,7 @@
     무물단색: (t, o) => FMT_BUILD.무물(t, o, true),   // 머리 띠에 검은 그라데이션 없이 캐릭터 색 한 가지로
     무물: (t, o, flat) => { const [q, ...a] = parts(t), ans = a.join(' | ');
       return `<div class="tf-qa${flat ? ' flat' : ''}"><div class="qh"><small>무엇이든 물어보세요</small>${esc(o.name || '')}에게 질문하기</div><div class="qb"><b>Q.</b>${q}</div>${ans ? `<div class="qa">${ans}</div>` : ''}</div>`; },
-    문자: t => {
+    문자: (t, o) => {
       const rows = t.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^([^:：]{1,20})[:：]\s*([\s\S]*)$/); return m ? [m[1].trim(), m[2]] : ['', l]; });
       let out = '', prev = null;
       rows.forEach(([who, say], i) => {
@@ -62,7 +62,7 @@
         if (!me && who && who !== prev) out += `<div class="tnm">${who}</div>`;
         out += `<div class="b ${me ? 'm' : 'o'}${last ? ' t' : ''}">${say}</div>`; prev = who;
       });
-      return `<div class="tf-im">${out}</div>`; },
+      return `<div class="tf-im${o.ka ? ' ka' : ''}">${out}</div>`; },   // ka: 같은 칸에 송금이 있으면 카카오톡 색으로
     메일: (t, o, inbox) => { const [when = '', who = '', sub = '', ...b] = parts(t), body = b.join(' | ');
       const no = String(++o.mail).padStart(3, '0'), hm = (unent(when).match(/\d{1,2}:\d{2}/) || ['--:--'])[0];
       return `<div class="tf-ml${inbox ? ' in' : ''}"><div class="bar">${ML_IC.sig}${ML_IC.bat}<span class="tm">${hm}</span></div>`
@@ -100,7 +100,14 @@
     // 알티 (내 캐릭터가 남의 글을 재게시): 이름 | @아이디 | 내용 | 시간(선택)
     알티: (t, o) => { const [nm = '', id = '', ...r] = parts(t), last = r.length > 1 ? r[r.length - 1] : '', body = (r.length > 1 ? r.slice(0, -1) : r).join(' | ');
       const hd = o.headOf ? safeUrl(o.headOf(unent(nm))) : '';   // 멤버란에 같은 이름이 있으면 그 캐릭터 두상
-      return fmtTweet({ name: nm, id, body, time: last, head: hd, initial: (unent(nm) || '?').slice(0, 1), rtBy: esc(o.name || '') }); }
+      return fmtTweet({ name: nm, id, body, time: last, head: hd, initial: (unent(nm) || '?').slice(0, 1), rtBy: esc(o.name || '') }); },
+    // 검색창: 검색 칸에 쓸 글 | 최근 검색어 | 최근 검색어 … (최대 10개)
+    네이버: t => { const [q = '', ...r] = parts(t), list = r.filter(Boolean).slice(0, 10);
+      return `<div class="tf-nv"><div class="nv-box"><i>N</i><span class="nv-q">${q}</span><svg class="nv-s" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l5 5"/></svg></div>`
+        + (list.length ? `<div class="nv-h"><b>최근 검색어</b><span>전체삭제</span></div><ul>${list.map(x => `<li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5.6"/><path d="M7 3.8V7l2.2 1.4"/></svg><span>${x}</span><em>×</em></li>`).join('')}</ul>` : '') + `</div>`; },
+    // 송금 카드: 금액만 적으면 쉼표를 붙여요 · 숫자가 아니면 서식이 안 걸려요 · 그림은 이 서식을 쓴 화면에서만 받아요
+    송금: (t, o, _, raw) => { const n = parseInt(unent(t).replace(/[^\d]/g, ''), 10); if (isNaN(n)) return raw;
+      return `${o.ka ? '<div class="tf-kw">' : ''}<div class="tf-kp"><img src="assets/img/fmt/kakao-send.webp" alt="" width="360" height="239" loading="lazy" decoding="async"><div class="kp-b"><div class="kp-am"><b>${n.toLocaleString('ko-KR')}원</b>을 받으세요.</div><button type="button" class="kp-btn">받기</button></div><div class="kp-ft">카카오페이</div></div>${o.ka ? '</div>' : ''}`; }
   };
   const TW_IC = {
     rp: '<path d="M2 7.5A5 5 0 0 1 7 2.5h2a5 5 0 0 1 0 10H8l-3 2.5v-3A5 5 0 0 1 2 7.5z" fill="none" stroke="currentColor" stroke-width="1.4"/>',
@@ -116,6 +123,7 @@
       + `<div class="tw-b"><div class="tw-h"><b>${w.name}</b><span>${id}${w.time ? ` · ${w.time}` : ''}</span></div><div class="tw-t">${w.body}</div>`
       + `<div class="tw-a"><span>${twI(TW_IC.rp)}</span><span class="${w.rtBy ? 'on' : ''}">${twI(TW_IC.rt)}</span><span>${twI(TW_IC.lk)}</span><span>${twI(TW_IC.sh)}</span></div></div></div></div>`;
   }
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.tf-kp .kp-btn'); if (b) { b.textContent = '받기 완료'; b.disabled = true; } });
   // 음악 위젯: ▶ / ❚❚ · 1초마다 진행 막대가 흘러가요 (끝나면 처음으로)
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.tf-sp .sp-pl'); if (b) b.closest('.tf-sp').classList.toggle('on'); });
   setInterval(() => document.querySelectorAll('.tf-sp.on').forEach(p => {
@@ -129,6 +137,7 @@
     const attr = (cls, more = '') => `class="${cls}${tone.pale ? ' pale' : ''}" style="--g:${tone.c};--gi:${tone.ink}${more}"`;
     let h = esc(s);
     if (!allow || !allow.length) return h;
+    o.ka = allow.includes('문자') && allow.includes('송금') && h.includes('&lt;문자&gt;') && h.includes('&lt;송금&gt;');
     const re = () => new RegExp(`&lt;(${allow.join('|')})&gt;(\\n?)([\\s\\S]*?)(\\n?)&lt;\\/\\1&gt;(\\n?)`, 'gi');
     let keep = null;
     if (max) { keep = new Set(); for (const m of h.matchAll(re())) { const t = m[1].toLowerCase(); if (keep.size < max) keep.add(t); } }
@@ -143,7 +152,7 @@
     });
   };
   // 서식 태그를 떼고 글만 (작은 미리보기 · 문제 글)
-  window.stripFmt = s => String(s || '').replace(/<\/?(c|강조|밑줄|점|빛글|검열|흐림|메모|떨림|지움|타자|반짝|네온|도장|무물단색|무물|문자|메일|받은메일|후원|별점|음악|트윗|알티)>/gi, ' ').replace(/\s*\|\s*/g, ' · ').replace(/[ \t]{2,}/g, ' ').trim();
+  window.stripFmt = s => String(s || '').replace(/<\/?(c|강조|밑줄|점|빛글|검열|흐림|메모|떨림|지움|타자|반짝|네온|도장|무물단색|무물|문자|메일|받은메일|후원|별점|음악|트윗|알티|네이버|송금)>/gi, ' ').replace(/\s*\|\s*/g, ' · ').replace(/[ \t]{2,}/g, ' ').trim();
   // 검열 · 흐림: 폰에서는 눌러서 보기
   document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('.tf-red, .tf-blur'); if (t) t.classList.toggle('on'); });
   window.safeUrl = u => {
@@ -253,8 +262,17 @@
   /* 낮 · 밤: 06시~18시는 낮 (주소 끝에 ?day=1 이면 언제든 낮 · ?day=0 이면 언제든 밤 — 미리보기용) */
   window.isDayTime = () => { const q = (location.search.match(/[?&]day=([01])/) || [])[1]; if (q) return q === '1'; const h = new Date().getHours(); return h >= 6 && h < 18; };
   addEventListener('load', () => window.App && App.ready && App.ready.then(u => {
-    if (!u) return; const go = () => { if (!document.hidden) Store.touch(location.pathname.replace(/^\//, '') + location.search); };
-    go(); setInterval(go, 6e4); document.addEventListener('visibilitychange', go);
+    if (!u) return;
+    // 접속 신호: 페이지를 옮기면 한 번 · 같은 페이지면 5분에 한 번만 (다른 탭에 가 있으면 쉬어요)
+    const go = () => {
+      if (document.hidden) return;
+      const page = location.pathname.replace(/^\//, '') + location.search; let last = {};
+      try { last = JSON.parse(sessionStorage.getItem('naru:touch')) || {}; } catch (e) {}
+      if (last.p === page && Date.now() - last.t < 24e4) return;
+      try { sessionStorage.setItem('naru:touch', JSON.stringify({ p: page, t: Date.now() })); } catch (e) {}
+      Store.touch(page);
+    };
+    go(); setInterval(go, 3e5); document.addEventListener('visibilitychange', go);
   }));
   /* 별똥별: box 에 가끔 한두 개씩 (가끔 우르르) 떨어져요 · active() 가 false 면 (예: 낮) 쉬어요 · 움직임 줄이기 설정이면 안 띄워요 */
   window.meteors = (box, active = () => true) => {
@@ -486,6 +504,7 @@
       if (!seen || seen[c.id] === next[c.id]) return; // 처음 방문이면 기록만
       const name = ((c.draft || c.data) || {}).name || '?';
       if (c.status === 'published') news.unshift({ id: c.id, t: 'pub', text: `✦ "${name}" 이(가) 게시됐어요!`, at: c.published_at || new Date().toISOString() });
+      if (!c.published_at && String(seen[c.id] || '').split('|')[1]) news.unshift({ id: c.id, t: 'ret', text: `🌙 레스트로 "${name}" 이(가) 멤버란에서 내려갔어요 · 수정 기간에 다시 제출해 주세요`, at: new Date().toISOString() });
       // 반려 = 작성 중 + 반려 메모 (메모가 새로 생기거나 바뀌었을 때만 알려요)
       if (c.status !== 'published' && c.review_note && c.review_note !== String(seen[c.id] || '').split('|').slice(2).join('|')) news.unshift({ id: c.id, t: 'ret', text: `↩ "${name}" 이(가) 반려됐어요 · 작성 중으로 돌아갔어요`, at: new Date().toISOString() });
     });

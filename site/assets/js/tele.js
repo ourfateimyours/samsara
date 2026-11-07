@@ -39,11 +39,13 @@
 
   async function refresh(full) {
     me = await Store.user(); if (!me) return;
-    // 캐릭터 목록은 처음 한 번 (또는 창을 열 때)만, 1분마다는 맥박만 새로 받아요
-    try { [teles, chars] = await Promise.all([Store.teles(), chars.length && !full ? chars : Store.charNames()]); }
-    catch (e) { console.error(e); }
-    if (full) try { beats = ((await Store.wallet()).tickets || {}).k_beat || 0; } catch (e) {}   // 심박권 수 (창을 열 때 · 보낸 뒤)
-    const n = unread();
+    // 평소엔 안 읽은 수만 묻고, 맥박 내용 · 캐릭터 목록 · 심박권은 창을 열 때만 받아요
+    if (full) {
+      try { [teles, chars] = await Promise.all([Store.teles(true), Store.charNames()]); } catch (e) { console.error(e); }
+      try { beats = ((await Store.wallet()).tickets || {}).k_beat || 0; } catch (e) {}
+    }
+    let n = 0;
+    try { n = full ? unread() : await Store.teleUnread(); } catch (e) { console.error(e); }
     $$('.mail-badge').forEach(b => { b.textContent = n > 9 ? '9+' : n; b.hidden = !n; });
   }
 
@@ -140,7 +142,7 @@
     if (tl) {
       const m = teles.find(x => x.id === tl.dataset.tele);
       const wasNew = !m.read;
-      if (wasNew) { m.read = true; Store.markTeleRead(m.id).then(refresh); }
+      if (wasNew) { m.read = true; Store.markTeleRead(m.id).then(() => { const n = unread(); $$('.mail-badge').forEach(b => { b.textContent = n > 9 ? '9+' : n; b.hidden = !n; }); }); }
       tl.outerHTML = teleCard(m, true);
       const card = $(`[data-tele="${CSS.escape(m.id)}"]`);
       if (wasNew && card) { card.classList.add('awake'); typeText($('.tele-body', card), m.body, 40); }
@@ -151,5 +153,5 @@
 
   window.Telepathy = { open: t => refresh(true).then(() => open(t)), refresh };
   refresh();
-  setInterval(() => { if (!document.hidden) refresh(); }, 60000);   // 다른 탭에 가 있으면 쉬어요
+  setInterval(() => { if (!document.hidden) refresh(); }, 3e5);   // 5분마다 · 다른 탭에 가 있으면 쉬어요
 })();
