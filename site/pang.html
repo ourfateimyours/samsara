@@ -538,9 +538,17 @@ App.ready.then(async user => {
       <div class="tk-foot acts"><i></i><p>${r.win ? '축하해요! 이틀 뒤에 또 도전해 주세요.' : '오늘은 운이 없었어요. 이틀 뒤에 다시 도전해요.'}</p><a class="btn" href="index.html">로비로</a><a class="btn ghost" href="shop.html">상점</a></div></section>`;
     const reel = $('#reel'), b = reel.querySelector('b'), M = [1.5, 2, 4, 6, 10];
     for (let i = 0, d = 45; d < 300; i++, d *= 1.12) { b.textContent = '×' + M[i % M.length]; SND.beep(false); await new Promise(res => setTimeout(res, d)); }
-    b.textContent = '×' + r.mult; reel.classList.remove('spin'); r.win ? SND.win() : SND.lose();
-    $('#res-rest').innerHTML = `<div class="tk-tags"><span>${r.win ? '얻은 영전' : '잃은 영전'} <em>${r.win ? '+' : ''}${r.delta}</em></span><span>보유 영전 <em>${r.coins}</em></span></div>`;
+    const pity = r.pity && r.base_mult !== r.mult;   // 천장: 원래 배율이 먼저 나왔다가 사리가 올려 줘요
+    const d0 = pity ? r.base_delta : r.delta, c0 = pity ? r.coins - (r.delta - r.base_delta) : r.coins;
+    b.textContent = '×' + (pity ? r.base_mult : r.mult); reel.classList.remove('spin'); r.win ? SND.win() : SND.lose();
+    $('#res-rest').innerHTML = `<div class="tk-tags"><span>${r.win ? '얻은 영전' : '잃은 영전'} <em id="res-d">${r.win ? '+' : ''}${d0}</em></span><span>보유 영전 <em id="res-c">${c0}</em></span></div>`;
     $('#res-rest').style.opacity = 1;
+    if (pity) {
+      await new Promise(res => setTimeout(res, 1000));
+      const L = await luckLoad(); L.sari();
+      await new Promise(res => setTimeout(res, 3700));
+      await L.reel(reel, r.base_mult, r.mult, e => { $('#res-d').textContent = '+' + Math.round(d0 + (r.delta - d0) * e); $('#res-c').textContent = Math.round(c0 + (r.coins - c0) * e); });
+    } else if (r.luck) luckShow(r.luck);
     if (r.win) for (let i = 0; i < 36; i++) { const c = document.createElement('i'); c.className = 'coin-rain'; c.style.left = Math.random() * 100 + 'vw'; c.style.background = ['#b7a8ff', '#f3b6dc', '#a6dfe6', '#ffd56b', '#a3a6ff'][i % 5]; c.style.animationDuration = (1.4 + Math.random() * 1.6) + 's'; c.style.animationDelay = Math.random() * .8 + 's'; document.body.appendChild(c); setTimeout(() => c.remove(), 4000); }
     else $('#st').classList.add('glitch');
   }

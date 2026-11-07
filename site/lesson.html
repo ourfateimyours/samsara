@@ -228,7 +228,7 @@ App.ready.then(async user => {
   }
   async function next(st, r, delay) {
     await wait(delay);
-    if (r.result) { status.today = r.result; if (r.result.perk) setTimeout(() => pastMe(r.result.perk), 1400); return result(r.result, st); }   // 스탯 보정이 붙었으면 과거의 나에게서 문자
+    if (r.result) { status.today = r.result; if (r.result.perk) setTimeout(() => pastMe(r.result.perk), 1400); if (r.luck) setTimeout(() => luckShow(r.luck), 1600); return result(r.result, st); }   // 스탯 보정이 붙었으면 과거의 나에게서 문자
     let q; try { q = await Store.lessonNext(); } catch (e) { toast(e.message, 'err'); return; }
     play(st, q);
   }

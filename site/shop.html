@@ -143,7 +143,7 @@ App.ready.then(async user => {
         const amount = m.querySelector('#bx-amt') ? Math.floor(Number(m.querySelector('#bx-amt').value) || 0) : 0;
         if (it.kind === 'pouch' && amount < it.price) return toast(`복주머니는 ${it.price} 영전부터예요.`, 'err');
         const r = await Store.buy(it.id, { to, char: ch, msg, amount });
-        if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); return pouchOpen(it, r.pouch); }
+        if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); if (r.luck) setTimeout(() => luckShow(r.luck), 1500); return pouchOpen(it, r.pouch); }
         wal = r.wallet; items = await Store.shopItems().catch(() => items); closeModal(); renderAll();   // 남은 수량 · 품절 다시 받아 오기
         toast(it.kind === 'cheer' ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
       } catch (err) { toast(err.message, 'err'); if (/품절/.test(err.message)) { items = await Store.shopItems().catch(() => items); closeModal(); renderAll(); } }

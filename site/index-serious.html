@@ -415,7 +415,7 @@ Store.matchStatus().then(s => {
   };
   Store.myGifts().then(gs => { gifts = gs || []; if (gifts.length) setTimeout(giftTurn, 2600 + coinNotes.length * 3400); }).catch(() => {});  $('#churu').onclick = async () => {
     try {   // 츄르: 하루 한 번 · 호감도는 서버가 정해요
-      const r = await Store.useSnack(); wal = r.wallet; churu(); affShow(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]);
+      const r = await Store.useSnack(); wal = r.wallet; churu(); affShow(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]); luckShow(r.luck);
       if (r.changed > 0) likeToast(`<b>♥</b> 호감도가 올라갑니다 +${r.changed}`, r.changed >= 10 ? 'gift' : '');
       else { likeToast('<b>♡</b> 냠냠… 호감도는 그대로', 'flat'); setTimeout(() => speak(['맛만 봤다냐앙 다음엔 더 줘라냥', '배가 덜 고팠다냐앙', '음… 오늘은 그냥 그렇다냐앙'][Math.floor(Math.random() * 3)]), 1800); }
       catEvents(r, 2400);

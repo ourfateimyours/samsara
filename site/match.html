@@ -19,7 +19,7 @@
   <!-- 로비: 방 목록 · 방 열기 -->
   <section class="mt-view" id="v-lobby">
     <div class="mt-head"><div><h1>대국</h1></div><span class="mt-today" id="st"><span class="mt-orb"></span><b>불러오는 중…</b></span></div>
-    <p class="mt-demo-note" id="demo-note" hidden>데모: 내 방에 '연습 상대 부르기'를 누르거나 다른 방에 들어가면, 연습 상대(컴퓨터)와 둬요. 실제 사이트에선 진짜 회원끼리 둬요.</p>
+    <p class="mt-demo-note" id="demo-note" hidden>데모: 내 방에 '연습 상대 부르기'를 누르거나 다른 방에 들어가면 연습 상대가 아무 수나 둬요. 실제 사이트에는 연습 상대가 없고 회원끼리만 둬요.</p>
     <div class="lobby"><div class="rooms" id="rooms"></div>
       <aside class="gl open" id="open">
         <div class="tabhd"><span class="tab"><i></i>방 열기</span><span class="ln"><i></i><i></i><i></i></span></div>
@@ -34,6 +34,7 @@
 
   <!-- 대국판 -->
   <section class="mt-view" id="v-game" hidden>
+    <div class="rp-wrap" id="rps" hidden><div class="gl rp-box" id="rps-b"></div></div>
     <div class="mt"><div class="boardwrap"><div id="board"></div><div class="toast-fx" id="fx"></div></div>
       <aside class="side">
         <div class="gl pl" id="p-opp"><div class="tabhd"><span class="tab"><i></i>상대</span><span class="ln"></span></div><span class="av" id="opp-av"></span><div><b id="opp-nm"></b><small id="opp-side"></small></div><div class="clock"><small>남은 시간</small><b id="opp-clock">10:00</b></div></div>
@@ -43,7 +44,7 @@
           <button type="button" class="sk" id="sk2"><span class="ic" id="ic2"></span><span><b id="sk2-nm"></b><small id="sk2-ds"></small></span></button></div>
         <div class="gl pl" id="p-me"><div class="tabhd"><span class="tab"><i></i>나</span><span class="ln"></span></div><span class="av" id="me-av"></span><div><b id="me-nm"></b><small id="me-side"></small></div><div class="clock"><small>남은 시간</small><b id="me-clock">10:00</b></div></div>
         <div class="gl log" id="log"></div>
-        <div class="dev" id="dev" hidden><button type="button" id="ff">⏩ (데모) 9분 빨리 감기</button><button type="button" id="gg">🏳 (데모) 기권</button><button type="button" id="gw">🏆 (데모) 승리</button><button type="button" id="gd">🤝 (데모) 무승부</button></div>
+        <button type="button" class="mt-btn" id="resign">🏳 기권</button>
       </aside></div>
   </section>
 
@@ -53,6 +54,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.js"></script>
+<script src="assets/js/match-engine.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/store.js"></script>
 <script src="assets/js/common.js"></script>
@@ -73,7 +75,7 @@ App.ready.then(async user => {
   const show = id => ['v-lobby', 'v-game', 'v-res'].forEach(v => $('#' + v).hidden = v !== id);
   if (DEMO) $('#demo-note').hidden = false;
 
-  let status, game = 'gomoku', betKind = 'coin';
+  let status, game = 'gomoku', betKind = 'coin', waitSub = null;
   async function lobby() {
     show('v-lobby');
     status = await Store.matchStatus().catch(() => ({ canPlay: false }));
@@ -86,7 +88,12 @@ App.ready.then(async user => {
         try { localStorage.setItem('naru:t:matches', '[]'); } catch (e) {} toast('데모 대국 기록을 지웠어요. 다시 둘 수 있어요.'); lobby();
       };
     }
+    if (status.active) return enter(status.active);   // 진행 중인 대국이 있으면 바로 들어가요
     const rooms = ROOMS = await Store.matchRooms().catch(() => []);
+    // 내 방에 누가 들어오면 바로 시작해요 (방을 열어 둔 동안만 신호를 받아요)
+    if (waitSub) { waitSub.stop(); waitSub = null; }
+    const myRoom = rooms.find(r => r.mine);
+    if (myRoom) waitSub = Store.matchSub(myRoom.id, async () => { const s = await Store.matchStatus().catch(() => null); if (s && s.active && waitSub) { waitSub.stop(); waitSub = null; enter(s.active); } });
     $('#rooms').innerHTML = rooms.map(r => `<article class="gl room ${r.mine ? 'wait' : ''}"><div class="tabhd"><span class="tab"><i></i>${r.mine ? '내 방' : r.game === 'chess' ? '체스' : '오목'}</span><span class="ln"></span></div><span class="g ${r.game === 'chess' ? 'ch' : ''}">${r.game === 'chess' ? KN : GO}</span>
         <div><b>${r.mine ? `내 ${r.game === 'chess' ? '체스' : '오목'} 방 · 상대를 기다리는 중…` : `${esc(r.name)}의 ${r.game === 'chess' ? '체스' : '오목'} 방`}</b>
           <small class="rm-sub">${r.mine ? `${M.wait}분 뒤에 저절로 닫혀요 · ${ago(r.created_at)} 열림` : `${esc(r.name)}의 방 · ${ago(r.created_at)} 열림`}</small>
@@ -149,149 +156,178 @@ App.ready.then(async user => {
     const j = e.target.closest('[data-join]'); if (!j) return;
     let pick = { msg: '', bet: null };
     if (!j.dataset.mine) { const room = ROOMS.find(r => r.id === j.dataset.join); pick = await askBet(room, await Store.wallet().catch(() => null)); if (!pick) return; }
-    try { const g = await Store.matchJoin(j.dataset.join, pick.msg, pick.bet); start(g); } catch (err) { toast(err.message, 'err'); }
+    try { if (waitSub) { waitSub.stop(); waitSub = null; } const id = await Store.matchJoin(j.dataset.join, pick.msg, pick.bet || { kind: 'msg', amount: 0 }); enter(id); } catch (err) { toast(err.message, 'err'); }
   };
   const fx = text => { const e = $('#fx'); e.textContent = text; e.classList.remove('go'); void e.offsetWidth; e.classList.add('go'); };
-  const log = (html, cls) => { const l = $('#log'); l.insertAdjacentHTML('beforeend', `<p class="${cls || ''}">${html}</p>`); l.scrollTop = l.scrollHeight; };
-  function clockOf(el, card, onOut) {
-    let left = M.turn, t = null;
-    const draw = () => { el.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; card.classList.toggle('low', left <= 60); };
-    return { start() { this.stop(); left = M.turn; draw(); t = setInterval(() => { left--; draw(); if (left <= 0) { this.stop(); onOut(); } }, 1000); }, stop() { clearInterval(t); t = null; }, ff(s) { left = Math.max(1, left - s); draw(); } };
+  const avStyle = f => { const h = f && f.head ? ((window.headMp4 && headMp4(f.head) || {}).poster || f.head) : ''; return h ? `background-image:url('${esc(h)}');background-size:cover;background-position:center` : ''; };
+
+  /* ---------- 대국 진행: 화면은 서버가 준 판(view)을 그리기만 해요 ---------- */
+  let V = null, sub = null, busy = false, clockT = null, seenLog = 0, sel = null, aim = null, rpsShown = 0, rpsBusy = false, outSent = false, lastRound = 0;
+  const leave = () => { if (sub) sub.stop(); sub = null; clearInterval(clockT); clockT = null; V = null; $('#rps').hidden = true; };
+  async function enter(id) {
+    leave(); show('v-game'); $('#log').innerHTML = ''; seenLog = 0; sel = null; aim = null; rpsShown = 0; rpsBusy = false; outSent = false; lastRound = 0;
+    sub = Store.matchSub(id, () => pull(id));
+    await pull(id);
+    clockT = setInterval(tickClock, 1000);
   }
-  const avStyle = f => f.head ? `background-image:url('${esc(f.head)}');background-size:cover;background-position:center` : '';
-  let G = null;   // 지금 대국
-  function start(g) {
-    G = g; show('v-game'); $('#log').innerHTML = ''; $('#dev').hidden = !DEMO;
-    $('#me-nm').textContent = g.me.name; $('#opp-nm').textContent = g.opp.name; $('#me-av').style.cssText = avStyle(g.me); $('#opp-av').style.cssText = avStyle(g.opp);
-    $('#bet-me').textContent = chipOf(g.myBet); $('#bet-opp').textContent = chipOf(g.oppBet);
-    $('#sk1-nm').textContent = '「' + g.me.skills[0] + '」'; $('#sk2-nm').textContent = '「' + g.me.skills[1] + '」';
-    (g.game === 'chess' ? chess : gomoku)(g);
+  async function pull(id) {
+    if (busy) return;
+    let v; try { v = await Store.matchView(id); } catch (e) { toast(e.message, 'err'); return; }
+    if (!sub) return;   // 그사이 나갔어요
+    const first = !V; V = Object.assign(v, { skew: Date.parse(v.now) - Date.now() });
+    if (first) {
+      $('#me-nm').textContent = v.me.name; $('#opp-nm').textContent = v.opp.name; $('#me-av').style.cssText = avStyle(v.me); $('#opp-av').style.cssText = avStyle(v.opp);
+      $('#bet-me').textContent = chipOf(v.myBet); $('#bet-opp').textContent = chipOf(v.oppBet);
+      $('#sk1-nm').textContent = '「' + v.me.skills[0] + '」'; $('#sk2-nm').textContent = '「' + v.me.skills[1] + '」';
+      const go = v.game === 'gomoku';
+      $('#ic1').innerHTML = go ? IC.erase : IC.frost; $('#ic2').innerHTML = IC.again;
+      $('#sk1-ds').textContent = go ? '지우기 · 상대 돌 하나를 없애요' : '얼리기 · 상대 기물 하나를 한 차례 묶어요';
+      $('#sk2-ds').textContent = go ? '한 번 더 · 이번 차례에 두 번 둬요' : '한 번 더 · 이번 차례에 두 번 움직여요';
+    }
+    draw();
   }
-  async function finish(result, why) {
-    let r; try { r = await Store.matchSettle(G.id, result); } catch (e) { toast(e.message, 'err'); r = { detail: '' }; }
-    setTimeout(() => {
-      show('v-res'); const win = result === 'win', draw = result === 'draw';
-      const ico = draw ? '<path d="M5 9.5h14M5 14.5h14"/>' : win ? '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>' : '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" opacity=".35"/><path d="M4 20L20 4"/>';
-      $('#res').innerHTML = `<div class="gl rs ${draw ? 'draw' : win ? 'win' : 'lose'}"><div class="tabhd"><span class="tab"><i></i>대국 결과</span><span class="ln"><i></i><i></i><i></i></span><span class="code">${draw ? '무승부' : win ? '승리' : '패배'}</span></div>
-          <div class="rs-badge"><span class="rs-por" style="${avStyle(G.me)}"></span><svg class="rs-ic" viewBox="0 0 24 24">${ico}</svg></div>
-          <div class="rs-body"><h3>${esc(G.opp.name)}${draw ? '와(과) 무승부' : win ? '에게 승리했어요' : '에게 졌어요'}</h3>
-            <div class="sc">${G.game === 'chess' ? '체스' : '오목'} · ${esc(why)}</div><div class="gain"><span>베팅</span><b class="${/[0-9]/.test(r.detail || '') ? '' : 'txt'}">${esc(r.detail || '')}</b></div></div>
-          <div class="rs-ft"><span class="rs-uid">MATCH · ${esc(String(G.id || '').slice(-6).toUpperCase())}</span><button type="button" class="mt-btn w" id="back">대국 로비로</button></div></div>
-        ${r.loot != null ? `<div class="gl rs-loot"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(G.opp.name)}의 봉인된 메시지</small><p>${esc(r.loot)}</p><div class="from">― ${esc(G.opp.name)}</div></div></div>` : ''}`;
-      $('#back').onclick = lobby;
-    }, 1300);
+  async function act(action) {
+    if (busy || !V) return; busy = true; const id = V.id;
+    try { await Store.matchMove(id, action); if (sub) sub.ping(); }
+    catch (e) { if (!/다시 해 주세요/.test(e.message)) toast(e.message, 'err'); }
+    busy = false; await pull(id);
+  }
+  function draw() {
+    const v = V, s = v.state;
+    const reveal = s.phase === 'play' && rpsShown && s.rps && s.rps.prev && lastRound !== s.rps.prev.round + 'e';
+    if (s.phase === 'rps' || rpsBusy || reveal) return rpsDraw();
+    $('#rps').hidden = true;
+    if (v.done || s.phase === 'done') { render(); return finish(); }
+    render();
   }
 
-  function gomoku(g) {
-    const N = 15, el = $('#board'), meCard = $('#p-me'), oppCard = $('#p-opp');
-    const ME = g.first === 'me' ? 1 : 2, OP = 3 - ME;
+  /* ---------- 가위바위보: 3 · 2 · 1 → 고르기 → 3초 → 공개 → 이긴 사람이 선공 ---------- */
+  const HAND = { r: '✊', p: '✋', s: '✌️' }, HN = { r: '바위', p: '보', s: '가위' };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  async function rpsReveal(prev) {
+    rpsBusy = true; const box = $('#rps-b'), v = V, meP = prev[v.side], opP = prev[v.side === 'a' ? 'b' : 'a'];
+    box.innerHTML = `<p class="rp-t">상대도 냈어요…</p>`;
+    await wait(3000); if (!V) return;
+    box.innerHTML = `<p class="rp-big">가위 바위 보!</p>`;
+    await wait(900); if (!V) return;
+    const win = !prev.tie && V.state.first === v.side;
+    box.innerHTML = `<div class="rp-show"><div><span>${HAND[meP]}</span><small>나 · ${HN[meP]}</small></div><b>VS</b><div><span>${HAND[opP]}</span><small>${esc(v.opp.name)} · ${HN[opP]}</small></div></div>
+      <p class="rp-big">${prev.tie ? '비겼어요! 다시 한 번' : win ? '내가 선공!' : `${esc(v.opp.name)} 선공`}</p>`;
+    await wait(2000); rpsBusy = false; if (V) draw();
+  }
+  async function rpsDraw() {
+    const s = V.state, wrap = $('#rps'), box = $('#rps-b'); wrap.hidden = false;
+    if (rpsBusy) return;
+    // 처음 들어왔을 때 한 번만 카운트다운
+    if (!rpsShown) {
+      rpsShown = 1; rpsBusy = true;
+      for (const n of [3, 2, 1]) { box.innerHTML = `<p class="rp-count">${n}</p>`; await wait(1000); if (!V) return; }
+      rpsBusy = false; return draw();
+    }
+    const R = s.rps || {};
+    if (s.phase !== 'rps') { if (R.prev && lastRound !== R.prev.round + 'e') { lastRound = R.prev.round + 'e'; return rpsReveal(R.prev); } wrap.hidden = true; return render(); }
+    if (R.prev && R.prev.tie && lastRound !== R.prev.round) { lastRound = R.prev.round; return rpsReveal(R.prev); }
+    const mine = R[V.side];
+    box.innerHTML = mine ? `<p class="rp-t">나는 ${HAND[mine]} · 상대를 기다리는 중…</p><p class="rp-sub" id="rp-sec"></p>`
+      : `<p class="rp-t">가위바위보 중 낼 것을 정하세요</p><div class="rp-hands">${['s', 'r', 'p'].map(k => `<button type="button" data-h="${k}"><span>${HAND[k]}</span><small>${HN[k]}</small></button>`).join('')}</div><p class="rp-sub" id="rp-sec"></p>`;
+  }
+  $('#rps').onclick = e => { const b = e.target.closest('[data-h]'); if (!b || !V || V.state.rps[V.side]) return; V.state.rps[V.side] = b.dataset.h; rpsDraw(); act({ t: 'rps', pick: b.dataset.h }); };
+
+  /* ---------- 시계: 표시만 내 화면에서 · 시간 초과 판정은 서버가 해요 ---------- */
+  function tickClock() {
+    if (!V || V.done) return;
+    const s = V.state, nowS = Date.now() + (V.skew || 0);
+    if (s.phase === 'rps') {
+      const left = Math.max(0, Math.ceil((Date.parse(V.rps_at) - nowS) / 1000)), e = $('#rp-sec'); if (e) e.textContent = left + '초';
+      if (!left && !rpsBusy && !busy && !outSent) { outSent = true; act({ t: 'rpsTimeout' }).then(() => { outSent = false; }); }
+      return;
+    }
+    if (s.phase !== 'play') return;
+    const left = Math.max(0, 600 - Math.floor((nowS - Date.parse(V.turn_at)) / 1000)), fmt = n => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`, mine = s.turn === V.side;
+    $('#me-clock').textContent = mine ? fmt(left) : '10:00'; $('#opp-clock').textContent = mine ? '10:00' : fmt(left);
+    $('#p-me').classList.toggle('low', mine && left <= 60); $('#p-opp').classList.toggle('low', !mine && left <= 60);
+    if (!left && !busy && !outSent) { outSent = true; act({ t: 'clockOut' }); }
+  }
+
+  /* ---------- 판 그리기 ---------- */
+  function sharedUI() {
+    const s = V.state, mine = s.turn === V.side && s.phase === 'play';
+    $('#p-me').classList.toggle('turn', mine); $('#p-opp').classList.toggle('turn', !mine && s.phase === 'play');
+    $('#uses').textContent = '남은 횟수 ' + ((s.uses || {})[V.side] ?? 2);
+    ['sk1', 'sk2'].forEach((id, k) => { const b = $('#' + id); b.disabled = !mine || busy || ((s.uses || {})[V.side] || 0) < 1 || ((s.used || {})[V.side] || []).includes(k); b.classList.toggle('armed', (k === 0 && aim === 'sk') || (k === 1 && !!s.extra && mine)); });
+    const lg = s.log || [], skills = (by) => by === V.side ? V.me.skills : V.opp.skills, nm = by => by === V.side ? '나' : esc(V.opp.name);
+    for (; seenLog < lg.length; seenLog++) {
+      const l = lg[seenLog];
+      if (l.k === 'move') addLog(`${nm(l.by)} · ${esc(l.x)}`);
+      if (l.k === 'erase') { addLog(`<b>${nm(l.by)}</b> · 「${esc(skills(l.by)[0])}」으로 돌 하나를 지웠어요`, 'fx'); fx(`「${skills(l.by)[0]}」`); }
+      if (l.k === 'freeze') { addLog(`<b>${nm(l.by)}</b> · 「${esc(skills(l.by)[0])}」으로 ${esc(l.x)} 기물을 얼렸어요`, 'fx'); fx(`「${skills(l.by)[0]}」`); }
+      if (l.k === 'again') { addLog(`<b>${nm(l.by)}</b> · 「${esc(skills(l.by)[1])}」 한 번 더!`, 'fx'); fx(`「${skills(l.by)[1]}」`); }
+    }
+  }
+  const addLog = (html, cls) => { const l = $('#log'); l.insertAdjacentHTML('beforeend', `<p class="${cls || ''}">${html}</p>`); l.scrollTop = l.scrollHeight; };
+  function render() { const s = V.state; if (!s.board && !s.fen) return; (V.game === 'gomoku' ? renderGo : renderChess)(); sharedUI(); }
+  function renderGo() {
+    const s = V.state, N = MatchEngine.N, el = $('#board'), ME = MatchEngine.stoneOf(s, V.side), OP = 3 - ME;
+    el.className = 'go-board'; el.classList.toggle('erase', aim === 'sk');
     $('#me-side').innerHTML = `<span class="stone-ic ${ME === 1 ? 'b' : 'w'}"></span>${ME === 1 ? '흑 · 선수' : '백 · 후수'}`; $('#opp-side').innerHTML = `<span class="stone-ic ${OP === 1 ? 'b' : 'w'}"></span>${OP === 1 ? '흑 · 선수' : '백 · 후수'}`;
-    $('#ic1').innerHTML = IC.erase; $('#ic2').innerHTML = IC.again; $('#sk1-ds').textContent = '지우기 · 상대 돌 하나를 없애요'; $('#sk2-ds').textContent = '한 번 더 · 이번 차례에 두 번 둬요';
-    el.className = 'go-board';
-    let b = Array(N * N).fill(0), turn = 1, over = false, mode = null, extra = false, frost = new Set(), uses = 2, used = -1, last = -1, aiN = 0, aiUsed = false;
-    const clock = clockOf($('#me-clock'), meCard, () => end('lose', '10분 동안 두지 않아 자동 패배'));
-    const at = (x, y) => (x < 0 || y < 0 || x >= N || y >= N) ? -1 : b[y * N + x];
-    const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
-    const line = (i, p, dx, dy) => { const x = i % N, y = (i / N) | 0; let n = 1, open = 0, cells = [i]; for (const s of [1, -1]) { let k = 1; while (at(x + dx * k * s, y + dy * k * s) === p) { cells.push((y + dy * k * s) * N + x + dx * k * s); n++; k++; } if (at(x + dx * k * s, y + dy * k * s) === 0) open++; } return { n, open, cells }; };
-    const winAt = (i, p) => { for (const [dx, dy] of DIRS) { const l = line(i, p, dx, dy); if (l.n >= 5) return l.cells; } return null; };
-    const VAL = (n, o) => n >= 5 ? 1e6 : n === 4 ? (o === 2 ? 5e4 : o ? 4e3 : 0) : n === 3 ? (o === 2 ? 3e3 : o ? 150 : 0) : n === 2 ? (o === 2 ? 120 : o ? 15 : 0) : (o ? 2 : 0);
-    const score = (i, p) => { b[i] = p; let s = 0; for (const [dx, dy] of DIRS) { const l = line(i, p, dx, dy); s += VAL(l.n, l.open); } b[i] = 0; return s; };
-    const cands = () => { const out = []; for (let i = 0; i < N * N; i++) { if (b[i]) continue; const x = i % N, y = (i / N) | 0; let near = false; for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (at(x + dx, y + dy) > 0) { near = true; break; } if (near) out.push(i); } return out.length ? out : [7 * N + 7]; };
-    const best = p => { let bi = -1, bs = -1; for (const i of cands()) { if (frost.has(i) && p === ME) continue; const s = score(i, p) * 1.1 + score(i, 3 - p) + Math.random(); if (s > bs) { bs = s; bi = i; } } return bi; };
-    function render(win) {
-      el.classList.toggle('erase', mode === 'erase');
-      el.innerHTML = b.map((v, i) => { const x = i % N, y = (i / N) | 0, star = [3, 7, 11].includes(x) && [3, 7, 11].includes(y);
-        const cls = ['c', x === 0 && 'l', x === N - 1 && 'r', y === 0 && 't', y === N - 1 && 'bt', star && 'star', frost.has(i) && 'frost'].filter(Boolean).join(' ');
-        return `<button type="button" class="${cls}" data-i="${i}">${star ? '<i class="dot"></i>' : ''}${v ? `<span class="st ${v === 1 ? 'b' : 'w'}${i === last ? ' last' : ''}${win && win.includes(i) ? ' win' : ''}"></span>` : '<span class="ghost"></span>'}</button>`; }).join('');
-      meCard.classList.toggle('turn', turn === ME && !over); oppCard.classList.toggle('turn', turn === OP && !over);
-      $('#uses').textContent = '남은 횟수 ' + uses;
-      ['sk1', 'sk2'].forEach((id, k) => { const s = $('#' + id); s.disabled = over || turn !== ME || uses < 1 || used === k; s.classList.toggle('armed', (k === 0 && mode === 'erase') || (k === 1 && extra)); });
-    }
-    function end(result, why, cells) { if (over) return; over = true; clock.stop(); render(cells); finish(result, why); }
-    function place(i, p) { b[i] = p; last = i; const w = winAt(i, p); if (w) { end(p === ME ? 'win' : 'lose', p === ME ? '다섯 줄 완성' : `${g.opp.name}이(가) 다섯 줄 완성`, w); return true; } if (!b.includes(0)) { end('draw', '판이 가득 찼어요'); return true; } return false; }
-    function toAI() { frost = new Set(); turn = OP; clock.stop(); render(); setTimeout(ai, 650); }
-    function ai() {
-      if (over) return; aiN++;
-      if (!aiUsed && aiN === 5) { aiUsed = true; const t = best(ME), x = t % N, y = (t / N) | 0;   // 상대도 한 번 스킬: 내가 노리는 자리 주변 3×3 얼리기
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(x + dx, y + dy) === 0) frost.add((y + dy) * N + x + dx);
-        fx(`${g.opp.name} · 「${g.opp.skills[0]}」`); log(`<b>${esc(g.opp.name)}</b>이(가) 「${esc(g.opp.skills[0])}」을(를) 썼다! 다음 차례에 파란 칸에는 둘 수 없어요`, 'fx'); turn = ME; render(); clock.start(); return; }
-      const i = best(OP); if (place(i, OP)) return; turn = ME; render(); clock.start();
-    }
-    el.onclick = e => {
-      const c = e.target.closest('[data-i]'); if (!c || over || turn !== ME) return; const i = +c.dataset.i;
-      if (mode === 'erase') { if (b[i] !== OP) return; b[i] = 0; mode = null; uses--; used = 0; c.insertAdjacentHTML('beforeend', '<span class="poof"></span>');
-        fx(`「${g.me.skills[0]}」 · 돌 하나가 사라졌다`); log(`<b>나</b> · 「${esc(g.me.skills[0])}」으로 상대 돌 하나를 지웠어요`, 'fx'); setTimeout(toAI, 450); return; }
-      if (b[i] || frost.has(i)) return;
-      if (place(i, ME)) return;
-      if (extra) { extra = false; log(`<b>나</b> · 「${esc(g.me.skills[1])}」 한 번 더!`, 'fx'); render(); return; }
-      toAI();
-    };
-    $('#sk1').onclick = () => { if (!b.includes(OP)) return toast('지울 상대 돌이 아직 없어요.'); mode = mode === 'erase' ? null : 'erase'; render(); };
-    $('#sk2').onclick = () => { if (extra) return; extra = true; uses--; used = 1; fx(`「${g.me.skills[1]}」 · 이번 차례에 두 번`); render(); };
-    $('#ff').onclick = () => { if (turn === ME && !over) clock.ff(540); };
-    $('#gg').onclick = () => end('lose', '기권'); $('#gw').onclick = () => end('win', '데모 승리'); $('#gd').onclick = () => end('draw', '데모 무승부');
-    log(`대국 시작 · ${ME === 1 ? '내가 흑(선수)' : `${esc(g.opp.name)}이(가) 흑(선수)`}이에요`);
-    render(); if (turn === ME) clock.start(); else { setTimeout(ai, 800); }
+    const win = s.line || [];
+    el.innerHTML = s.board.map((v, i) => { const x = i % N, y = (i / N) | 0, star = [3, 7, 11].includes(x) && [3, 7, 11].includes(y);
+      const cls = ['c', x === 0 && 'l', x === N - 1 && 'r', y === 0 && 't', y === N - 1 && 'bt', star && 'star'].filter(Boolean).join(' ');
+      return `<button type="button" class="${cls}" data-i="${i}">${star ? '<i class="dot"></i>' : ''}${v ? `<span class="st ${v === 1 ? 'b' : 'w'}${i === s.last ? ' last' : ''}${win.includes(i) ? ' win' : ''}"></span>` : '<span class="ghost"></span>'}</button>`; }).join('');
   }
-
-  function chess(g) {
-    const el = $('#board'), meCard = $('#p-me'), oppCard = $('#p-opp');
-    if (typeof Chess === 'undefined') { el.outerHTML = '<p class="gl" style="padding:20px">체스 규칙 코드를 불러오지 못했어요 (인터넷 연결 확인)</p>'; return; }
-    const MY = g.first === 'me' ? 'w' : 'b', OPC = MY === 'w' ? 'b' : 'w';
+  const GL = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }, F = 'abcdefgh';
+  function renderChess() {
+    const s = V.state, el = $('#board');
+    if (typeof Chess === 'undefined') { el.innerHTML = '<p class="gl" style="padding:20px">체스 규칙 코드를 불러오지 못했어요 (인터넷 연결 확인)</p>'; return; }
+    const ch = new Chess(s.fen), MY = MatchEngine.colorOf(s, V.side), OPC = MY === 'w' ? 'b' : 'w', flip = MY === 'b';
     $('#me-side').textContent = MY === 'w' ? '♔ 백 · 선수' : '♚ 흑 · 후수'; $('#opp-side').textContent = OPC === 'w' ? '♔ 백 · 선수' : '♚ 흑 · 후수';
-    $('#ic1').innerHTML = IC.frost; $('#ic2').innerHTML = IC.again; $('#sk1-ds').textContent = '얼리기 · 상대 기물 하나를 한 차례 묶어요'; $('#sk2-ds').textContent = '한 번 더 · 이번 차례에 두 번 움직여요';
-    el.className = 'ch-board';
-    const GL = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }, VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 }, F = 'abcdefgh';
-    const ch = new Chess(); let sel = null, over = false, aim = false, extra = false, uses = 2, used = -1, frozenOp = null, frozenMe = null, last = null, aiN = 0, aiUsed = false;
-    const clock = clockOf($('#me-clock'), meCard, () => end('lose', '10분 동안 두지 않아 자동 패배'));
-    const setTurn = c => { const f = ch.fen().split(' '); f[1] = c; f[3] = '-'; ch.load(f.join(' ')); };
-    const kingSq = c => { for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const p = ch.board()[r][f]; if (p && p.type === 'k' && p.color === c) return F[f] + (8 - r); } };
-    const flip = MY === 'b';
-    function render() {
-      const bd = ch.board(), tg = sel ? ch.moves({ square: sel, verbose: true }) : [], chk = ch.in_check() ? kingSq(ch.turn()) : null;
-      el.classList.toggle('aim', aim);
-      const rows = flip ? [...bd].reverse().map(r => [...r].reverse()) : bd;
-      el.innerHTML = rows.map((row, ri) => row.map((p, fi) => { const r = flip ? 7 - ri : ri, f = flip ? 7 - fi : fi, sq = F[f] + (8 - r), t = tg.find(m => m.to === sq);
-        const cls = ['q', (r + f) % 2 ? 'dk' : 'lt', sel === sq && 'sel', t && 'tg', t && t.captured && 'cap', last && (last.from === sq || last.to === sq) && 'last', chk === sq && 'chk', (frozenOp === sq || frozenMe === sq) && 'frost'].filter(Boolean).join(' ');
-        return `<button type="button" class="${cls}" data-s="${sq}">${p ? `<span class="pc ${p.color}">${GL[p.type]}︎</span>` : ''}${fi === 7 ? `<span class="co f">${8 - r}</span>` : ''}${ri === 7 ? `<span class="co r">${F[f]}</span>` : ''}</button>`; }).join('')).join('');
-      const mine = ch.turn() === MY && !over;
-      meCard.classList.toggle('turn', mine); oppCard.classList.toggle('turn', !mine && !over);
-      $('#uses').textContent = '남은 횟수 ' + uses;
-      ['sk1', 'sk2'].forEach((id, k) => { const s = $('#' + id); s.disabled = !mine || uses < 1 || used === k || ch.in_check(); s.classList.toggle('armed', (k === 0 && aim) || (k === 1 && extra)); });
+    const bd = ch.board(), tg = sel ? ch.moves({ square: sel, verbose: true }) : [], chk = ch.in_check() ? (() => { for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const p = bd[r][f]; if (p && p.type === 'k' && p.color === ch.turn()) return F[f] + (8 - r); } })() : null;
+    el.className = 'ch-board'; el.classList.toggle('aim', aim === 'sk');
+    const rows = flip ? [...bd].reverse().map(r => [...r].reverse()) : bd, last = s.last || {}, frz = s.frozen && s.frozen.sq;
+    el.innerHTML = rows.map((row, ri) => row.map((p, fi) => { const r = flip ? 7 - ri : ri, f = flip ? 7 - fi : fi, sq = F[f] + (8 - r), t = tg.find(m => m.to === sq);
+      const cls = ['q', (r + f) % 2 ? 'dk' : 'lt', sel === sq && 'sel', t && 'tg', t && t.captured && 'cap', (last.from === sq || last.to === sq) && 'last', chk === sq && 'chk', frz === sq && 'frost'].filter(Boolean).join(' ');
+      return `<button type="button" class="${cls}" data-s="${sq}">${p ? `<span class="pc ${p.color}">${GL[p.type]}︎</span>` : ''}${fi === 7 ? `<span class="co f">${8 - r}</span>` : ''}${ri === 7 ? `<span class="co r">${F[f]}</span>` : ''}</button>`; }).join('')).join('');
+  }
+  $('#board').onclick = e => {
+    if (!V || busy) return; const s = V.state; if (s.phase !== 'play' || s.turn !== V.side) return;
+    if (V.game === 'gomoku') {
+      const c = e.target.closest('[data-i]'); if (!c) return; const i = +c.dataset.i;
+      if (aim === 'sk') { if (s.board[i] !== 3 - MatchEngine.stoneOf(s, V.side)) return; aim = null; return act({ t: 'skill', k: 0, i }); }
+      if (s.board[i]) return;
+      return act({ t: 'place', i });
     }
-    function end(result, why) { if (over) return; over = true; clock.stop(); render(); finish(result, why); }
-    const checkEnd = () => { if (ch.in_checkmate()) { end(ch.turn() === MY ? 'lose' : 'win', '체크메이트'); return true; } if (ch.in_draw() || ch.in_stalemate()) { end('draw', ch.in_stalemate() ? '스테일메이트' : '무승부'); return true; } return false; };
-    function toAI() { sel = null; clock.stop(); render(); setTimeout(ai, 600); }
-    function ai() {
-      if (over) return; aiN++;
-      if (!aiUsed && aiN === 4 && !ch.in_check()) {
-        setTurn(MY); const opts = [...new Set(ch.moves({ verbose: true }).filter(m => m.piece !== 'k').map(m => m.from))];
-        if (opts.length > 1) { aiUsed = true; frozenMe = opts[Math.floor(Math.random() * opts.length)];
-          fx(`${g.opp.name} · 「${g.opp.skills[0]}」`); log(`<b>${esc(g.opp.name)}</b>이(가) 「${esc(g.opp.skills[0])}」을(를) 썼다! ${frozenMe} 기물이 이번 차례에 못 움직여요`, 'fx'); render(); clock.start(); return; }
-        setTurn(OPC);
-      }
-      let ms = ch.moves({ verbose: true }); const free = ms.filter(m => m.from !== frozenOp); if (free.length) ms = free; frozenOp = null;
-      ms.sort((a, c) => (VAL[c.captured] || 0) - (VAL[a.captured] || 0) + (Math.random() - .5) * .8);
-      const m = ms[0]; last = ch.move(m); log(`${esc(g.opp.name)} · ${m.san}`);
-      if (checkEnd()) return; render(); clock.start();
-    }
-    el.onclick = e => {
-      const q = e.target.closest('[data-s]'); if (!q || over || ch.turn() !== MY) return; const sq = q.dataset.s, p = ch.get(sq);
-      if (aim) { if (!p || p.color !== OPC || p.type === 'k') return; frozenOp = sq; aim = false; uses--; used = 0;
-        fx(`「${g.me.skills[0]}」 · 얼어붙었다`); log(`<b>나</b> · 「${esc(g.me.skills[0])}」으로 ${sq} 기물을 얼렸어요`, 'fx'); setTurn(OPC); toAI(); return; }
-      if (sel) { const m = ch.moves({ square: sel, verbose: true }).find(x => x.to === sq);
-        if (m) { last = ch.move({ from: sel, to: sq, promotion: 'q' }); sel = null; frozenMe = null; log(`나 · ${last.san}`);
-          if (checkEnd()) return;
-          if (extra) { extra = false; if (ch.in_check()) log(`체크를 건 수라서 「${esc(g.me.skills[1])}」는 여기서 끝나요`, 'fx'); else { setTurn(MY); log(`<b>나</b> · 「${esc(g.me.skills[1])}」 한 번 더!`, 'fx'); render(); return; } }
-          toAI(); return; } }
-      sel = p && p.color === MY && sq !== frozenMe ? sq : null; render();
-    };
-    $('#sk1').onclick = () => { aim = !aim; sel = null; render(); };
-    $('#sk2').onclick = () => { if (extra) return; extra = true; uses--; used = 1; fx(`「${g.me.skills[1]}」 · 이번 차례에 두 번`); render(); };
-    $('#ff').onclick = () => { if (ch.turn() === MY && !over) clock.ff(540); };
-    $('#gg').onclick = () => end('lose', '기권'); $('#gw').onclick = () => end('win', '데모 승리'); $('#gd').onclick = () => end('draw', '데모 무승부');
-    log(`대국 시작 · ${MY === 'w' ? '내가 백(선수)' : `${esc(g.opp.name)}이(가) 백(선수)`}이에요`);
-    render(); if (MY === 'w') clock.start(); else setTimeout(ai, 800);
+    const q = e.target.closest('[data-s]'); if (!q) return; const sq = q.dataset.s, ch = new Chess(s.fen), MY = MatchEngine.colorOf(s, V.side), p = ch.get(sq);
+    if (aim === 'sk') { if (!p || p.color === MY || p.type === 'k') return; aim = null; return act({ t: 'skill', k: 0, sq }); }
+    if (sel && ch.moves({ square: sel, verbose: true }).some(m => m.to === sq)) { const from = sel; sel = null; return act({ t: 'move', from, to: sq }); }
+    sel = p && p.color === MY && !(s.frozen && s.frozen.side === V.side && s.frozen.sq === sq) ? sq : null; render();
+  };
+  $('#sk1').onclick = () => {
+    const s = V && V.state; if (!s || s.turn !== V.side) return;
+    if (V.game === 'gomoku' && !s.board.includes(3 - MatchEngine.stoneOf(s, V.side))) return toast('지울 상대 돌이 아직 없어요.');
+    aim = aim === 'sk' ? null : 'sk'; sel = null; render();
+  };
+  $('#sk2').onclick = () => { if (V && !V.state.extra) act({ t: 'skill', k: 1 }); };
+  $('#resign').onclick = async () => { if (V && await askConfirm('기권할까요? 지는 걸로 정산돼요.')) act({ t: 'resign' }); };
+
+  /* ---------- 결과 ---------- */
+  function finish() {
+    if ($('#v-res').dataset.id === V.id) return; $('#v-res').dataset.id = V.id;
+    const v = V; clearInterval(clockT); clockT = null; if (sub) { sub.stop(); sub = null; }
+    const result = v.result || v.state.winner, win = result === v.side, draw_ = result === 'draw', why = v.why || v.state.why || '';
+    const lose = (b) => b.kind === 'coin' ? `영전 −${b.amount.toLocaleString()}` : b.kind === 'stat' ? `술력 −${b.amount}` : '내 메시지가 상대에게 공개돼요';
+    const gain = (b) => b.kind === 'coin' ? `영전 +${b.amount.toLocaleString()}` : b.kind === 'stat' ? `술력 +${b.amount}` : '상대 메시지 공개';
+    const detail = draw_ ? '건 것을 서로 돌려받았어요' : win ? gain(v.oppBet) : lose(v.myBet);
+    setTimeout(() => {
+      show('v-res');
+      const ico = draw_ ? '<path d="M5 9.5h14M5 14.5h14"/>' : win ? '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>' : '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" opacity=".35"/><path d="M4 20L20 4"/>';
+      $('#res').innerHTML = `<div class="gl rs ${draw_ ? 'draw' : win ? 'win' : 'lose'}"><div class="tabhd"><span class="tab"><i></i>대국 결과</span><span class="ln"><i></i><i></i><i></i></span><span class="code">${draw_ ? '무승부' : win ? '승리' : '패배'}</span></div>
+          <div class="rs-badge"><span class="rs-por" style="${avStyle(v.me)}"></span><svg class="rs-ic" viewBox="0 0 24 24">${ico}</svg></div>
+          <div class="rs-body"><h3>${esc(v.opp.name)}${draw_ ? '와(과) 무승부' : win ? '에게 승리했어요' : '에게 졌어요'}</h3>
+            <div class="sc">${v.game === 'chess' ? '체스' : '오목'} · ${esc(why)}</div><div class="gain"><span>베팅</span><b class="${/[0-9]/.test(detail) ? '' : 'txt'}">${esc(detail)}</b></div></div>
+          <div class="rs-ft"><span class="rs-uid">MATCH · ${esc(String(v.id).slice(-6).toUpperCase())}</span><button type="button" class="mt-btn w" id="back">대국 로비로</button></div></div>
+        ${v.loot != null ? `<div class="gl rs-loot"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(v.opp.name)}의 봉인된 메시지</small><p>${esc(v.loot)}</p><div class="from">― ${esc(v.opp.name)}</div></div></div>` : ''}`;
+      $('#back').onclick = () => { leave(); $('#v-res').dataset.id = ''; lobby(); };
+    }, 1300);
   }
 
   lobby();
