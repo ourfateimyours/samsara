@@ -60,13 +60,13 @@ App.ready.then(async user => {
   if (!user) { location.replace('login.html?next=attendance.html'); return; }
   const today = Store.kstDay(), A = Store.ATTEND;
   const [ty, tm] = today.split('-').map(Number);
-  let view = { y: ty, m: tm }, wal, rows = [], shop = [];
+  let view = { y: ty, m: tm }, wal, rows = [], shop = [], cards = [];
   const ymd = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
   // 지난 400일 출석을 불러와요 (달력 · 연속 계산용)
   async function loadAll() {
     const from = new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10);
-    const [w, todayRows, mineRows, sh] = await Promise.all([Store.wallet(), Store.attendance(today), Store.myAttendance(from), Store.shopItems()]);
-    wal = w; shop = sh; rows = mineRows.filter(r => r.day !== today).concat(todayRows);
+    const [w, todayRows, mineRows, sh, cs] = await Promise.all([Store.wallet(), Store.attendance(today), Store.myAttendance(from), Store.shopItems(), Store.charCards().catch(() => [])]);
+    wal = w; shop = sh; cards = cs; rows = mineRows.filter(r => r.day !== today).concat(todayRows);
   }
 
   const item = id => shop.find(i => i.id === id);
@@ -119,13 +119,21 @@ App.ready.then(async user => {
     $('#next').disabled = y === ty && m === tm;
   }
 
+  // 말풍선 색: 그 사람의 첫 게시 캐릭터 색 (글자는 흰색이라 아주 밝은 색은 조금 어둡게)
+  const bubbleOf = uid => {
+    const c = cards.find(x => x.owner_id === uid), col = c && c.data && c.data.color;
+    if (!/^#[0-9a-f]{6}$/i.test(col || '')) return '';
+    const n = parseInt(col.slice(1), 16), luma = (n >> 16) * .299 + (n >> 8 & 255) * .587 + (n & 255) * .114;
+    return `background:${luma > 165 ? `color-mix(in srgb, ${col} 62%, #000)` : col}`;
+  };
+
   function renderRoll() {
     const list = rows.filter(r => r.day === today).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     $('#roll-n').textContent = `${list.length}명`;
     const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
     $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
       <span class="who" style="${r.tag ? `color:${esc(r.tag)}` : ''}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
-      ${r.comment ? `<span class="cm">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
+      ${r.comment ? `<span class="cm" style="${bubbleOf(r.user_id)}">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
   }
 
   const renderAll = () => { renderWallet(); renderStamp(); renderTrack(); renderCal(); renderRoll(); };
