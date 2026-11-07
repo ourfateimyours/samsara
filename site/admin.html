@@ -244,57 +244,62 @@ App.ready.then(async user => {
     };
   }
 
-  /* ---------- 지급: 영전 · 스탯 선물 상자 / 전체가 골라진 채로 시작 · 누르면 빠져요 ---------- */
+  /* ---------- 지급: 전체 선택을 누르면 이름이 뜨고, 이름을 누르면 빠져요 · 서버에는 한 번만 보내요 ---------- */
   async function coinTab() {
     const pane = curPane;
-    const [all, chars, wallets] = await Promise.all([Store.allProfiles(), Store.charNames().catch(() => []), Store.adminWallets().catch(() => ({}))]);
-    const members = all.filter(m => (m.approval || 'approved') === 'approved'), nick = id => (members.find(m => m.id === id) || {}).nickname || '?';
-    const namesOf = id => chars.filter(c => c.owner_id === id).map(c => c.data.name).filter(Boolean);
+    const [all, chars] = await Promise.all([Store.allProfiles(), Store.charNames().catch(() => [])]);
+    const members = all.filter(m => (m.approval || 'approved') === 'approved');
+    const list = {
+      coin: members.map(m => { const names = chars.filter(c => c.owner_id === m.id).map(c => c.data.name).filter(Boolean); return { id: m.id, name: names.join(' · ') || m.nickname, q: m.nickname + ' ' + names.join(' ') }; }),
+      stat: chars.map(c => ({ id: c.id, name: c.data.name || '?', q: c.data.name || '' }))
+    };
+    const picked = { coin: new Set(), stat: new Set() };
     let mode = 'coin';
-    const off = { coin: new Set(), stat: new Set() };
-    // 영전은 사람마다 (지갑이 하나) · 스탯 상자는 캐릭터마다
-    const list = () => mode === 'coin'
-      ? members.map(m => ({ id: m.id, title: namesOf(m.id).join(' · ') || '게시된 캐릭터 없음', sub: `@${m.nickname} · ${((wallets[m.id] || {}).coins || 0).toLocaleString()} 영전`, q: m.nickname + ' ' + namesOf(m.id).join(' ') }))
-      : chars.map(c => ({ id: c.id, title: c.data.name || '?', sub: '@' + nick(c.owner_id), q: (c.data.name || '') + ' ' + nick(c.owner_id) }));
-    pane.innerHTML = `<section class="adm-card"><header><b>🪙 지급</b><span class="label" id="cg-n"></span></header>
-      ${ADMIN ? '<div class="review-tabs" style="margin-bottom:12px"><button data-m="coin" class="on">🪙 영전</button><button data-m="stat">🎁 스탯 선물 상자</button></div>' : ''}
-      <div class="give-row" id="cg-coin"><label class="field"><span>영전 <small>빼려면 앞에 - (예: -20)</small></span><input type="number" id="cg-amt" placeholder="50"></label>
-        <label class="field" style="flex:2"><span>메모 <small>기록에 남아요 · 예) 이벤트 보상</small></span><input id="cg-note" maxlength="60"></label>
-        <div class="give-q">${[10, 50, 100].map(n => `<button type="button" class="icon-btn" data-qc="${n}">+${n}</button>`).join('')}</div></div>
-      <p class="hint-text" id="cg-stat" hidden>캐릭터마다 상자가 하나씩 가요. 받은 사람이 메인에서 열 때 스탯이 정해져요.</p>
-      <div class="cg-tools"><button type="button" class="btn sm ghost" id="cg-all">전체 선택</button><button type="button" class="btn sm ghost" id="cg-none">전체 해제</button><input class="input" id="cg-q" type="search" placeholder="닉네임 · 캐릭터 검색"><button class="btn sm" id="cg-go">지급</button></div>
-      <p class="hint-text">누르면 대상에서 빠지고, 다시 누르면 들어가요.</p>
-      <div class="cg-list" id="cg-list"></div></section>`;
+    pane.innerHTML = `<section class="adm-card cg">
+      ${ADMIN ? '<div class="cg-mode"><button type="button" data-m="coin" class="on">영전</button><button type="button" data-m="stat">스탯 선물 상자</button></div>' : ''}
+      <div class="cg-amt" id="cg-coin"><label class="field"><span>영전 <small>빼려면 앞에 -</small></span><input type="number" id="cg-amt" placeholder="50"></label>
+        <div class="cg-q">${[10, 50, 100].map(n => `<button type="button" class="btn sm ghost" data-qc="${n}">+${n}</button>`).join('')}</div></div>
+      <label class="field"><span>이유 <small>메인에서 사리가 알려 줘요 · 예) 이벤트 보상</small></span><input id="cg-note" maxlength="60" placeholder="비워도 돼요"></label>
+      <div class="cg-who"><b>받을 사람</b><span id="cg-n"></span><button type="button" class="btn sm ghost" id="cg-all">전체 선택</button><button type="button" class="btn sm ghost" id="cg-none">비우기</button></div>
+      <div class="cg-add"><input class="input" id="cg-q" type="search" placeholder="이름으로 한 명씩 추가" autocomplete="off"><div class="cg-sug" id="cg-sug" hidden></div></div>
+      <div class="cg-chips" id="cg-chips"></div>
+      <button class="btn cg-go" id="cg-go">지급</button></section>`;
     const draw = () => {
-      const q = $('#cg-q').value.trim().toLowerCase(), rows = list(), o = off[mode];
-      $('#cg-list').innerHTML = rows.filter(r => !q || r.q.toLowerCase().includes(q)).map(r => `<button type="button" class="cg-c ${o.has(r.id) ? 'off' : ''}" data-id="${esc(r.id)}"><i>${o.has(r.id) ? '' : '✓'}</i><b>${esc(r.title)}</b><small>${esc(r.sub)}</small></button>`).join('') || '<p class="dim">찾는 대상이 없어요.</p>';
-      $('#cg-n').textContent = `${rows.length - o.size}${mode === 'coin' ? '명' : '개'} 선택 / 전체 ${rows.length}${mode === 'coin' ? '명' : '개'}`;
-      $('#cg-coin').hidden = mode !== 'coin'; $('#cg-stat').hidden = mode === 'coin'; $('#cg-go').textContent = mode === 'coin' ? '지급' : '상자 보내기';
+      const p = picked[mode], rows = list[mode].filter(r => p.has(r.id));
+      $('#cg-chips').innerHTML = rows.map(r => `<button type="button" class="cg-chip" data-id="${esc(r.id)}" title="누르면 빠져요">${esc(r.name)}<i>×</i></button>`).join('');
+      $('#cg-n').textContent = rows.length ? `${rows.length}${mode === 'coin' ? '명' : '개'}` : '';
+      $('#cg-coin').hidden = mode !== 'coin';
+      $('#cg-go').textContent = mode === 'coin' ? '영전 지급' : '상자 보내기';
+    };
+    const sug = () => {
+      const q = $('#cg-q').value.trim().toLowerCase(), box = $('#cg-sug');
+      const rows = q ? list[mode].filter(r => !picked[mode].has(r.id) && r.q.toLowerCase().includes(q)).slice(0, 6) : [];
+      box.hidden = !rows.length;
+      box.innerHTML = rows.map(r => `<button type="button" data-add="${esc(r.id)}">${esc(r.name)}</button>`).join('');
     };
     draw();
-    $('#cg-q').oninput = draw;
-    $('#cg-all').onclick = () => { off[mode].clear(); draw(); };
-    $('#cg-none').onclick = () => { list().forEach(r => off[mode].add(r.id)); draw(); };
-    $('#cg-list').onclick = e => { const b = e.target.closest('[data-id]'); if (!b) return; const id = b.dataset.id, o = off[mode]; o.has(id) ? o.delete(id) : o.add(id); draw(); };
+    $('#cg-q').oninput = sug;
     pane.onclick = async e => {
-      const mb = e.target.closest('[data-m]'); if (mb) { mode = mb.dataset.m; $$('[data-m]', pane).forEach(x => x.classList.toggle('on', x === mb)); $('#cg-q').value = ''; return draw(); }
-      const qc = e.target.closest('[data-qc]'); if (qc) { $('#cg-amt').value = qc.dataset.qc; return; }
-      const go = e.target.closest('#cg-go'); if (!go) return;
-      const who = list().filter(r => !off[mode].has(r.id)), n = parseInt($('#cg-amt').value, 10);
+      const t = e.target;
+      const mb = t.closest('[data-m]');
+      if (mb) { mode = mb.dataset.m; $$('[data-m]', pane).forEach(x => x.classList.toggle('on', x === mb)); $('#cg-q').value = ''; sug(); return draw(); }
+      const qc = t.closest('[data-qc]'); if (qc) { $('#cg-amt').value = qc.dataset.qc; return; }
+      if (t.closest('#cg-all')) { list[mode].forEach(r => picked[mode].add(r.id)); return draw(); }
+      if (t.closest('#cg-none')) { picked[mode].clear(); return draw(); }
+      const add = t.closest('[data-add]'); if (add) { picked[mode].add(add.dataset.add); $('#cg-q').value = ''; sug(); return draw(); }
+      const chip = t.closest('.cg-chip'); if (chip) { picked[mode].delete(chip.dataset.id); return draw(); }
+      const go = t.closest('#cg-go'); if (!go) return;
+      const ids = [...picked[mode]], n = parseInt($('#cg-amt').value, 10), note = $('#cg-note').value.trim();
       if (mode === 'coin' && !n) return toast('지급할 영전을 적어 주세요.', 'err');
-      if (!who.length) return toast('대상을 골라 주세요.', 'err');
-      if (!await askConfirm(mode === 'coin' ? `${who.length}명에게 영전 ${n > 0 ? n + ' 지급' : -n + ' 회수'}할까요?` : `캐릭터 ${who.length}개에게 스탯 선물 상자를 보낼까요?`)) return;
-      go.disabled = true; const note = $('#cg-note').value.trim(), failed = [];
-      for (let i = 0; i < who.length; i++) {
-        go.textContent = `보내는 중 ${i + 1} / ${who.length}`;
-        try {
-          if (mode === 'coin') { await Store.giveCoins(who[i].id, n, note); wallets[who[i].id] = Object.assign({}, wallets[who[i].id], { coins: ((wallets[who[i].id] || {}).coins || 0) + n }); }
-          else await Store.adminGiftBox(who[i].id);
-        } catch (ex) { failed.push(who[i].title); }
-      }
-      go.disabled = false; draw();
-      if (failed.length) toast(`${who.length - failed.length}건 완료 · 실패: ${failed.join(', ')}`, 'err');
-      else toast(mode === 'coin' ? `${who.length}명에게 영전 ${n > 0 ? '+' : ''}${n}` : `선물 상자 ${who.length}개를 보냈어요 🎁`);
+      if (!ids.length) return toast('받을 사람을 골라 주세요.', 'err');
+      if (!await askConfirm(mode === 'coin' ? `${ids.length}명에게 영전 ${n > 0 ? n + ' 지급' : -n + ' 회수'}할까요?` : `캐릭터 ${ids.length}개에게 스탯 선물 상자를 보낼까요?`)) return;
+      go.disabled = true;
+      try {
+        if (mode === 'coin') await Store.giveBulk(ids, n, note); else await Store.giftBulk(ids, note);
+        toast(mode === 'coin' ? `${ids.length}명에게 영전 ${n > 0 ? '+' : ''}${n}` : `선물 상자 ${ids.length}개를 보냈어요`);
+        picked[mode].clear(); $('#cg-amt').value = ''; $('#cg-note').value = ''; draw();
+      } catch (ex) { toast(ex.message, 'err'); }
+      go.disabled = false;
     };
   }
 

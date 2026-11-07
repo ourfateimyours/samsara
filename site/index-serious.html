@@ -287,6 +287,11 @@ App.ready.then(async user => {
   const pool = CAT_LINES.length > 1 ? CAT_LINES.filter(l => l !== lastLine) : CAT_LINES;
   const todayLine = pool[Math.floor(Math.random() * pool.length)];
   try { localStorage.setItem(LINE_KEY, todayLine); } catch (e) {}
+  // 관리자가 지급한 이유를 사리가 알려 줘요 (알려 준 뒤 지워요)
+  const ro = s => { const c = String(s).charCodeAt(String(s).length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 && c % 28 !== 8 ? '으로' : '로'; };
+  const coinNotes = (wal && wal.coin_notes) || [];
+  coinNotes.forEach((n, i) => setTimeout(() => speak(`오늘 ${n.memo ? esc(n.memo) + ro(n.memo) + ' ' : ''}${n.kind === 'gift' ? '선물을' : '돈을'} 받았다냥 최고다냥!`), 2300 + i * 3400));
+  if (coinNotes.length) Store.coinNotesSeen().catch(() => {});
   setTimeout(() => speak(todayLine), 900);   // 들어오면 오늘의 한마디
   // 누르면: 고양이가 통 튀고, 투명한 알림이 위로 떠올라 사라져요
   // 가끔(약 12%) 호감도가 떨어지면 → "실망했다냥....." 하고 고양이가 화면에서 사라져요 (30초 뒤 슬그머니 돌아와요)
@@ -408,7 +413,7 @@ Store.matchStatus().then(s => {
     } catch (e) { toast(e.message); }
     if (gifts.length) { await pause(3400); giftTurn(); }
   };
-  Store.myGifts().then(gs => { gifts = gs || []; if (gifts.length) setTimeout(giftTurn, 2600); }).catch(() => {});  $('#churu').onclick = async () => {
+  Store.myGifts().then(gs => { gifts = gs || []; if (gifts.length) setTimeout(giftTurn, 2600 + coinNotes.length * 3400); }).catch(() => {});  $('#churu').onclick = async () => {
     try {   // 츄르: 하루 한 번 · 호감도는 서버가 정해요
       const r = await Store.useSnack(); wal = r.wallet; churu(); affShow(); speak(CHURU_LINES[Math.floor(Math.random() * CHURU_LINES.length)]);
       if (r.changed > 0) likeToast(`<b>♥</b> 호감도가 올라갑니다 +${r.changed}`, r.changed >= 10 ? 'gift' : '');
