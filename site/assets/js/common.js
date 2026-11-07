@@ -652,6 +652,13 @@
   window.pastMe = p => { if (!p) return; (Array.isArray(p) ? p : [p]).forEach(x => x && Q.push(x)); show(); };
 })();
 
+/* 천장 연출: 실제로 알림이 있을 때만 파일을 받아요 */
+window.luckLoad = () => window.__luck || (window.__luck = new Promise((ok, no) => {
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/css/luck.css'; document.head.appendChild(l);
+  const s = document.createElement('script'); s.src = 'assets/js/luck.js'; s.onload = () => ok(window.Luck); s.onerror = no; document.head.appendChild(s);
+}));
+window.luckShow = n => n ? luckLoad().then(L => L.show(n)).catch(() => {}) : null;
+
 window.playClosed = (el, what) => {
   const n = 1 + Math.floor(Math.random() * 4), nm = what === 'lesson' ? '후계자 수업' : '대국';
   const line = what === 'lesson' ? '지금은 수업에 참여할 수 없다냐앙<br>문이 열리면 다시 와라냥' : '지금은 대국에 참여할 수 없다냐앙<br>판이 열리면 다시 와라냥';

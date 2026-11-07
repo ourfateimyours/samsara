@@ -204,7 +204,7 @@
       async buy(me, nick, id, opt = {}) {
         if (/^(p_|h_)/.test(id)) {   // 복주머니 · 응원 쪽지는 따로 (결과 · 쪽지를 서버에서)
           const s = ok(await sb.rpc('shop_special', { p_id: id, p_to: opt.to || null, p_msg: String(opt.msg || '').slice(0, 40), p_amount: Math.floor(Number(opt.amount) || 0) }));
-          return { wallet: Object.assign(emptyWallet(), s.wallet || {}), detail: s.detail || '', pouch: s.pouch || null };
+          return { wallet: Object.assign(emptyWallet(), s.wallet || {}), detail: s.detail || '', pouch: s.pouch || null, luck: s.luck || null };
         }
         const r = ok(await sb.rpc('buy_item', { p_id: id, p_to: opt.to || null, p_char: opt.char || null }));
         return { wallet: Object.assign(emptyWallet(), r.wallet || {}), detail: r.detail || '' };
@@ -235,11 +235,24 @@
       async lessonItemSave(subj, it) { return ok(await sb.rpc('lesson_item_save', { p_subj: subj, p_item: it })); },
       async lessonItemDel(subj, id) { return ok(await sb.rpc('lesson_item_del', { p_subj: subj, p_id: id })); },
       async lessonStart(me, subj, charId, msg) { return ok(await sb.rpc('lesson_start_x', { p_subj: subj, p_char: charId, p_msg: msg || '', p_art: null })); },   
-      async lessonAnswer(me, choice) { return ok(await sb.rpc('lesson_answer_x', { p_choice: choice })); },
+      async lessonAnswer(me, choice) { return ok(await sb.rpc('lesson_answer_l', { p_choice: choice })); },
       async lessonNext() { return ok(await sb.rpc('lesson_next')); },
       async lessonHint() { return ok(await sb.rpc('lesson_hint')); },
-      async matchStatus() { return { canPlay: false, soon: true }; }, async matchRooms() { return []; },
-      async matchOpen() { throw new Error('대국은 곧 열려요.'); }, async matchCancel() {}, async matchJoin() { throw new Error('대국은 곧 열려요.'); }, async matchSettle() { throw new Error('대국은 곧 열려요.'); },
+      // 대국: 방 · 정산은 서버 함수 · 수 검사는 match-move · 상대가 둘 때만 신호를 받아요 (화면을 연 동안만)
+      async matchStatus() { return ok(await sb.rpc('match_status')); },
+      async matchRooms() { return ok(await sb.rpc('match_rooms')) || []; },
+      async matchOpen(me, game, bet, msg) { return ok(await sb.rpc('match_open', { p_game: game, p_kind: bet.kind, p_amount: bet.kind === 'msg' ? 0 : Math.floor(Number(bet.amount) || 0), p_msg: String(msg || '').slice(0, 300) })); },
+      async matchCancel(me, id) { ok(await sb.rpc('match_cancel', { p_id: id })); },
+      async matchJoin(me, id, msg, bet) { return ok(await sb.rpc('match_join', { p_id: id, p_kind: bet.kind, p_amount: bet.kind === 'msg' ? 0 : Math.floor(Number(bet.amount) || 0), p_msg: String(msg || '').slice(0, 300) })); },
+      async matchView(me, id) { return ok(await sb.rpc('match_view', { p_id: id })); },
+      async matchMove(me, id, action) { const { data, error } = await sb.functions.invoke('match-move', { body: { id, action } }); if (error) { let m = error.message; try { m = (await error.context.json()).error || m; } catch (e) {} throw new Error(koError(m)); } if (data && data.error) throw new Error(data.error); return data; },
+      matchSub(id, cb) {
+        const ch = sb.channel('m:' + id, { config: { broadcast: { self: false } } });
+        const ping = () => ch.send({ type: 'broadcast', event: 'p', payload: {} }).catch(() => {});
+        ch.on('broadcast', { event: 'p' }, () => cb()).subscribe(st => { if (st === 'SUBSCRIBED') ping(); });
+        const t = setInterval(() => { if (!document.hidden) cb(); }, 20000);   // 신호를 놓쳤을 때를 대비해서 20초마다 한 번
+        return { ping, stop() { clearInterval(t); sb.removeChannel(ch); } };
+      },
       async cheersToday() { return ok(await sb.rpc('cheers_today')) || []; },
       async adminGiftBox(me, nick, charId) { return ok(await sb.rpc('admin_gift_box', { p_char: charId })); },
       async myGifts() { return ok(await sb.rpc('my_gifts')) || []; },
@@ -496,7 +509,12 @@
     async matchOpen(game, bet, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchOpen(u.id, game, bet, msg); },
     async matchCancel(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchCancel(u.id, id); },
     async matchJoin(id, msg, bet) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchJoin(u.id, id, msg, bet); },
-    async matchSettle(id, result) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.matchSettle(u.id, id, result); },
+    async matchView(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); const r = await B.matchView(u.id, id); if (r && r.done) dropBadges(); return r; },
+    async matchMove(id, action) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.matchMove(u.id, id, action); },
+    matchSub(id, cb) {
+      if (remote) return B.matchSub(id, cb);
+      const t = setInterval(() => { if (!document.hidden) cb(); }, 1100); return { ping() {}, stop() { clearInterval(t); } };
+    },
     async lessonRank(subj) { const u = await this.user(); return B.lessonRank(u && u.id, subj); },
 
     isPublic: r => !!(r && r.published_at),
