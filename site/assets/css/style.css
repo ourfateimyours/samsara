@@ -25,7 +25,7 @@
   --red-line: rgba(255, 255, 255, .28);
   --paper: #e9dcc4;
 
-  --han: "Zhi Mang Xing", "Yuji Boku", "Song Myung", serif;
+  --han: "Zhi Mang Xing", "Song Myung", serif;
   --brush: "KccImKwonTaek", cursive;
   --serif: "Song Myung", "Noto Serif KR", serif;
   --body-serif: "Noto Serif KR", "Song Myung", serif;
@@ -115,7 +115,7 @@ button { cursor: pointer; }
 .nav a:hover i, .nav a.on i { color: var(--red-hi); transform: rotate(-8deg); }
 .nav a:hover::after, .nav a.on::after { transform: scaleX(1); }
 .auth { display: flex; align-items: center; gap: 12px; }
-.who { font-size: 13px; color: var(--paper); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px dashed var(--red-line); }
+.who { font-size: 13px; color: var(--paper); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-btn { display: none; background: none; border: 0; padding: 8px; margin-left: auto; }
 .menu-btn i { display: block; width: 22px; height: 1px; background: var(--text); margin: 5px 0; }
 
@@ -1156,12 +1156,12 @@ body[data-page="home"] .bgm-dock, body[data-page="home"] .mail-fab { backdrop-fi
 .lq-form textarea { min-height: 64px; }
 .lq-ok > span { color: #6fd39a; } .lq-no > span { color: #e98a8a; }
 .lq-rx { display: grid; gap: 6px; margin: 4px 0 10px; }
-.lq-rh, .lq-rr { display: grid; grid-template-columns: 64px minmax(0, 1.4fr) 84px minmax(0, 1.4fr) 34px; gap: 6px; align-items: center; }
+.lq-rh, .lq-rr { display: grid; grid-template-columns: 64px minmax(0, 1fr) 84px 34px; gap: 6px; align-items: center; }
 .lq-rh span { font-size: 11px; opacity: .6; }
 .lq-rr input, .lq-rr select { width: 100%; min-width: 0; }
 .lq-list li { flex-wrap: wrap; } .lq-list li > span { flex: 1 1 180px; min-width: 0; }
 .lq-list .lq-a { opacity: .65; font-size: 12px; }
-@media (max-width: 640px) { .lq-rh { display: none; } .lq-rr { grid-template-columns: 52px minmax(0, 1fr) 74px; } .lq-rr [data-rx="3"] { grid-column: 1 / 3; } }
+@media (max-width: 640px) { .lq-rh { display: none; } .lq-rr { grid-template-columns: 52px minmax(0, 1fr) 74px 34px; } }
 
 .play-closed { max-width: 380px; margin: 60px auto; padding: 28px 24px 26px; text-align: center; display: grid; justify-items: center; gap: 8px; border-radius: 18px;
   background: linear-gradient(160deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .015)); border: 1px solid rgba(255, 255, 255, .12); color: #fff; }
@@ -1211,7 +1211,7 @@ body[data-page="home"] .bgm-dock, body[data-page="home"] .mail-fab { backdrop-fi
 .tf-seal { display: inline-block; margin: 0 4px; padding: 0 7px; font: 700 .92em/1.55 'Noto Serif KR', serif; letter-spacing: .12em; color: var(--g); border: 1.5px solid var(--g); outline: 1px solid color-mix(in srgb, var(--g) 55%, transparent); outline-offset: 2px; transform: rotate(-3deg);
   -webkit-mask: radial-gradient(circle at 30% 40%, #000 55%, rgba(0, 0, 0, .72) 75%, #000 92%); mask: radial-gradient(circle at 30% 40%, #000 55%, rgba(0, 0, 0, .72) 75%, #000 92%); box-shadow: 0 0 12px color-mix(in srgb, var(--g) 30%, transparent) inset; }
 /* 블록 서식: 글 흐름과 상관없이 같은 모양 (글꼴 · 줄 간격 · 정렬 초기화) */
-.tf-qa, .tf-im, .tf-ml, .tf-dn, .tf-rt { white-space: normal; text-align: left; letter-spacing: 0; text-shadow: none; }
+.tf-qa, .tf-im, .tf-ml, .tf-dn, .tf-rt, .tf-nv, .tf-kp, .tf-kw { white-space: normal; text-align: left; letter-spacing: 0; text-shadow: none; }
 .tf-qa { width: min(300px, 100%); margin: 12px auto; border-radius: 16px; overflow: hidden; background: #fff; color: #111; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .06); font: 400 14px/1.6 'IBM Plex Sans KR', sans-serif; }
 .tf-qa .qh { padding: 18px 16px 14px; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.4; background: linear-gradient(135deg, var(--g), color-mix(in srgb, var(--g) 55%, #000)); }
 .tf-qa.pale .qh { color: #111; background: linear-gradient(135deg, #fff, #cfd0d4); }
@@ -1314,3 +1314,30 @@ body[data-page="home"] .bgm-dock, body[data-page="home"] .mail-fab { backdrop-fi
 .fg-ex { font: 400 14px/1.9 var(--sans); color: #d8d9de; white-space: pre-wrap; word-break: keep-all; } .fg-ex .tf-qa, .fg-ex .tf-im, .fg-ex .tf-ml, .fg-ex .tf-dn, .fg-ex .tf-rt { margin: 2px auto; }
 .fg-card code { display: block; padding: 6px 8px; background: #08090b; border: 1px solid rgba(255, 255, 255, .06); font: 11.5px/1.5 'JetBrains Mono', monospace; color: #9a9da6; white-space: pre-wrap; word-break: break-all; }
 @media (prefers-reduced-motion: reduce) { .tf-shake, .tf-type, .tf-shine, .tf-neon, .tf-dn .bl, .tf-dn .sp, .tf-dn .ct::before { animation: none; } .tf-type { width: auto; border-right: 0; } }
+
+/* 네이버 검색창 · 카카오 송금 (소지품 서식) */
+.tf-nv { --nc: var(--g, #03c75a); --ni: var(--gi, #fff); width: min(340px, 100%); margin: 12px auto; padding: 14px; border-radius: 12px; background: #fff; color: #222; font: 400 13.5px 'IBM Plex Sans KR', var(--sans); }
+.tf-nv .nv-box { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 2px solid var(--nc); border-radius: 22px; }
+.tf-nv.pale { --nc: #8a8a8a; --ni: #fff; }
+.tf-nv .nv-box > i { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: var(--nc); color: var(--ni); font: 800 14px/1 sans-serif; font-style: normal; }
+.tf-nv .nv-q { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.tf-nv .nv-s { flex: none; color: var(--nc); }
+.tf-nv .nv-h { display: flex; justify-content: space-between; margin: 12px 4px 4px; font-size: 12px; } .tf-nv .nv-h b { font-weight: 600; } .tf-nv .nv-h span { color: #929294; }
+.tf-nv ul { margin: 0; padding: 0; list-style: none; }
+.tf-nv li { display: flex; align-items: center; gap: 8px; padding: 6px 4px; color: #333; } .tf-nv li svg { flex: none; color: #929294; } .tf-nv li span { flex: 1; min-width: 0; overflow-wrap: anywhere; } .tf-nv li em { color: #b5b5b7; font-style: normal; }
+.tf-kp { width: min(100%, 280px); margin: 12px auto; overflow: hidden; border-radius: 12px; background: #fff; color: #191919; font: 400 14px 'IBM Plex Sans KR', var(--sans); }
+.tf-kp img { display: block; width: 100%; height: auto; }
+.tf-kp .kp-b { padding: 14px 14px 12px; }
+.tf-kp .kp-am { line-height: 1.45; overflow-wrap: anywhere; } .tf-kp .kp-am b { font-weight: 700; font-size: 17px; }
+.tf-kp .kp-btn { display: block; width: 100%; margin-top: 12px; padding: 10px; border: 0; border-radius: 6px; background: #fee500; color: #191919; font: 600 14px 'IBM Plex Sans KR', var(--sans); cursor: pointer; }
+.tf-kp .kp-btn:disabled { background: #eee; color: #888; cursor: default; }
+.tf-kp .kp-ft { padding: 8px 14px; border-top: 1px solid #eee; color: #8a8a8a; font-size: 11.5px; }
+/* 아이메시지 + 송금을 같은 칸에 쓰면 카카오톡 색 (하늘색 바탕 · 노란 내 말풍선) */
+.tf-im.ka { padding: 12px; border-radius: 12px; background: #b2c7d9; color: #191919; gap: 4px; }
+.tf-im.ka .ts, .tf-im.ka .rd { color: #55636f; } .tf-im.ka .tnm { color: #3f4c57; }
+.tf-im.ka .b { border-radius: 12px; } .tf-im.ka .b.o { background: #fff; color: #191919; border-top-left-radius: 3px; } .tf-im.ka .b.m { background: #fee500; color: #191919; border-top-right-radius: 3px; }
+.tf-im.ka .b.t::before { display: none; }
+.tf-kw { width: min(340px, 100%); margin: 12px auto; padding: 12px; border-radius: 12px; background: #b2c7d9; }
+.tf-kw .tf-kp { width: min(78%, 240px); margin: 0; }
+.tf-im.ka:has(+ .tf-kw) { margin-bottom: 0; padding-bottom: 6px; border-radius: 12px 12px 0 0; }
+.tf-im.ka + .tf-kw { margin-top: 0; padding-top: 4px; border-radius: 0 0 12px 12px; }

@@ -815,3 +815,11 @@ body.ls-astra .ls-wrap { position: relative; z-index: 1; }
 #cheer-layer .ch-note.eraser .body { padding: 12px 14px 10px; }
 @media (max-width: 640px) { #cheer-layer .ch-note { width: 150px; } }
 .ls-astra .gm-rank h2::before, .ls-astra .gm-rank h2::after { background: var(--star) right center / 10px 10px no-repeat, linear-gradient(90deg, transparent, rgba(255, 255, 255, .7)) left center / calc(100% - 16px) 1px no-repeat; }
+
+/* 테마곡 문제: 유튜브 재생기는 200px 보다 작으면 자동 재생이 안 돼요 → 음반 크기로 깔고 거의 투명하게 (누르면 재생돼요) */
+.poster .face.disc iframe { inset: 0; width: 100%; height: 100%; min-width: 220px; min-height: 220px; opacity: .01; pointer-events: auto; }
+.ls-sound { display: block; margin: 6px 0 0; font-size: 11px; color: rgba(255, 255, 255, .55); }
+.ls-op.picked, .replies button.picked { outline: 2px solid rgba(255, 255, 255, .75); outline-offset: 1px; }
+/* 문제 푸는 동안: 유리 흐림 · 끝없이 도는 장식을 쉬어요 (버벅임 줄이기) */
+body.ls-playing .gl, body.ls-playing .vn-box, body.ls-playing .ls-hud { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body.ls-playing .ls-hud *, body.ls-playing .gm-orb, body.ls-playing .rk-star { animation: none !important; }
