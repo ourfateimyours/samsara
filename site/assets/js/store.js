@@ -601,6 +601,12 @@
       for (const c of rows) await B.update('characters', c.id, { status: 'draft', draft: c.draft || c.data, published_at: null, submitted_at: null, review_note: '' });
       return rows.length;
     },
+    /* 한 명만 내리기: 레스트와 같아요 (내용은 작성본으로 · 스탯은 계속 잠겨요 · 수정 기간에 다시 제출) */
+    async restOne(id) {
+      await this.requireAdmin(); dropChars(); drop('rel:' + id);
+      const c = await B.get('characters', id); if (!c || !c.published_at) throw new Error('게시된 캐릭터가 아니에요.');
+      return B.update('characters', id, { status: 'draft', draft: c.draft || c.data, published_at: null, submitted_at: null, review_note: '' });
+    },
     async reject(id, note) {
       await this.requireStaff();
       if (!(await this.isAdmin())) return B.staffReview(id, 'reject', note);
