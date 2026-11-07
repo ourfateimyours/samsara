@@ -63,7 +63,7 @@
     radial-gradient(ellipse 90% 55% at 100% 70%, color-mix(in srgb, var(--c) 42%, transparent), transparent 70%), #000; }
 .ph-wall.moon .ph-earth, .ph-wall.moon .ph-halo { width: 130%; left: -13%; top: 59%; }
 .ph-wall.moon .ph-earth { background: #000; }
-.ph-wall.moon .ph-earth img { width: 108%; left: -4%; top: -4%; transform: rotate(1deg); filter: grayscale(.76) brightness(1.04) contrast(1.17); }
+.ph-wall.moon .ph-earth img { width: 108%; left: -4%; top: -4%; transform: rotate(1deg); filter: grayscale(.76) brightness(.9) contrast(1); }
 .ph-wall.moon .ph-earth::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; background: var(--c); opacity: .11; mix-blend-mode: soft-light; }
 .ph-wall.moon .ph-earth::after { z-index: 2; box-shadow: inset 0 0 21px 3.5px color-mix(in srgb, var(--c) 64%, transparent), inset -21px -10px 113px rgba(0, 0, 0, .76); }
 .ph-wall.moon .ph-halo { box-shadow: 0 0 31px 6.9px color-mix(in srgb, var(--c) 55%, transparent), 0 0 92px 28.75px color-mix(in srgb, var(--c) 31%, transparent); }
