@@ -696,9 +696,10 @@ body.board-page { overflow: hidden; }
 .note .n-body { font: 400 19px/1.25 var(--hand); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: hidden; }
 .note .n-meta { margin-top: 10px; font: 10px var(--mono); color: rgba(25, 28, 42, .55); letter-spacing: .04em; }
 .note .n-meta a, .note .n-title a { text-decoration: underline; text-decoration-color: rgba(0, 0, 0, .3); }
-.note .n-tools { position: absolute; top: -30px; right: 0; display: none; gap: 4px; }
+/* 수정 · 떼기: 쪽지 안 오른쪽 위에 (예전엔 쪽지 밖 위쪽이라 마우스를 옮기면 사라졌어요) · 누르면 읽기 창에서도 할 수 있어요 */
+.note .n-tools { position: absolute; top: 6px; right: 6px; z-index: 4; display: none; gap: 4px; }
 .note:hover .n-tools, .note:focus-within .n-tools { display: flex; }
-.note .n-tools button { font-size: 11px; padding: 3px 9px; border: 0; background: #111; color: #eee; }
+.note .n-tools button { font: 600 12px var(--sans); padding: 6px 11px; border: 0; border-radius: 6px; background: rgba(17, 17, 17, .88); color: #eee; cursor: pointer; }
 .note .n-tools button:hover { background: var(--red); }
 .note.polaroid { background: #f1ebe0; padding: 14px 12px 12px; }
 .note.polaroid .photo { aspect-ratio: 1; background: #10121c; overflow: hidden; margin-bottom: 10px; }
@@ -708,6 +709,46 @@ body.board-page { overflow: hidden; }
 .note.f-dahyeon { --hand: 'OngleipParkDahyeon', var(--sans); }
 .note.f-jaram .n-title { font-size: 21px; line-height: 1.25; } .note.f-jaram .n-body { font-size: 14.5px; line-height: 1.55; }
 .note.f-dahyeon .n-title { font-size: 25px; line-height: 1.15; } .note.f-dahyeon .n-body { font-size: 18px; line-height: 1.35; }
+.note.f-gothic { --hand: var(--sans); }   /* 고딕체: 사이트 기본 고딕(프리텐다드) · 새로 받는 글꼴 없음 */
+.note.f-gothic .n-title { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; } .note.f-gothic .n-body { font-size: 13.5px; line-height: 1.6; }
+.nf-f.f-gothic b { font: 600 15px var(--sans); }
+/* 보드 스티커 (관리자가 고른 투명 PNG) */
+.note .stk { position: absolute; z-index: 3; width: 76px; height: 76px; margin: -9px 0 0 -9px; object-fit: contain; transform: rotate(var(--sr, 0deg)); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); pointer-events: none; }
+.nf-stk { display: flex; flex-wrap: wrap; gap: 8px; }
+.nf-stk label { position: relative; cursor: pointer; }
+.nf-stk input { position: absolute; opacity: 0; pointer-events: none; }
+.nf-stk img { display: block; width: 66px; height: 66px; padding: 6px; object-fit: contain; border: 1px solid var(--line-2); border-radius: 10px; background: rgba(255, 255, 255, .04); transition: border-color .2s, background .2s, transform .2s; }
+.nf-stk input:checked + img { border-color: var(--red); background: rgba(200, 22, 29, .18); transform: translateY(-2px); }
+.nf-stk input:focus-visible + img { outline: 1px solid var(--red); }
+/* 읽기 창에서는 위쪽 가장자리에만 (글 · 버튼 · 닫기를 안 가리게) */
+.note-read .nr-stk { position: absolute; z-index: 2; top: -88px; width: 84px; height: 84px; object-fit: contain; transform: rotate(var(--sr, 0deg)); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .35)); pointer-events: none; }
+.note-read .nr-stk.p0 { left: -34px; } .note-read .nr-stk.p1 { left: 20%; top: -96px; } .note-read .nr-stk.p2 { right: 16%; top: -92px; }
+.modal-back:has(.note-read-modal) { padding-top: 90px; }
+/* 쪽지 읽기 창: 종이 한 장 · 쪽지 색 띠 · 빨간 압정 · 글은 또렷한 고딕 */
+.modal.note-read-modal { width: min(500px, 100%); overflow: visible; border: 0; color: #1c1e29; background:
+  repeating-linear-gradient(180deg, transparent 0 31px, rgba(60, 50, 40, .06) 31px 32px), linear-gradient(170deg, #fbf7ef, #f1e9da);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .1), 0 30px 70px -18px rgba(0, 0, 0, .85), 0 0 0 1px rgba(255, 255, 255, .5) inset; transform: rotate(-.6deg); }
+.modal.note-read-modal .mc { display: none; }
+.modal.note-read-modal .modal-x { color: rgba(28, 30, 41, .45); } .modal.note-read-modal .modal-x:hover { color: var(--red); }
+.modal.note-read-modal .modal-in { padding: 40px 34px 28px; overflow: visible; }   /* 스티커가 위로 삐져나오게 · 긴 글은 본문 칸 안에서 스크롤 */
+.modal-back:has(.note-read-modal) { padding-top: 70px; }
+.note-read { position: relative; }
+.note-read .nr-band { position: absolute; left: -34px; right: -34px; top: -40px; height: 9px; background: var(--nc); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .12); }
+.note-read .nr-pin { position: absolute; top: -52px; left: 50%; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff8a8f, #c8161d 55%, #6a0a0e); box-shadow: 2px 5px 6px rgba(0, 0, 0, .45); }
+.note-read .nr-kick { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 600 10.5px var(--mono); letter-spacing: .24em; color: #a3171c; }
+.note-read .nr-kick i { width: 7px; height: 7px; transform: rotate(45deg); background: var(--nc); box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
+.note-read h2 { margin: 0; font: 800 23px/1.35 var(--sans); letter-spacing: -.02em; color: #15161f; word-break: keep-all; overflow-wrap: anywhere; }
+.note-read .nr-thread { display: block; width: 72px; height: 2px; margin: 14px 0 16px; background: linear-gradient(90deg, #c8161d, rgba(200, 22, 29, 0)); border-radius: 2px; }
+.note-read .nr-body { margin: 0; font: 400 16px/1.9 var(--sans); letter-spacing: -.005em; color: #2a2c38; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; max-height: 56vh; overflow-y: auto; }
+.note-read .nr-body.dim { color: rgba(42, 44, 56, .5); }
+.note-read .nr-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(28, 30, 41, .22); font: 500 12px var(--sans); color: rgba(28, 30, 41, .55); }
+.note-read .nr-who { padding: 2px 9px; border-radius: 99px; background: rgba(28, 30, 41, .08); color: #2a2c38; font-weight: 600; }
+.note-read .nr-meta a { margin-left: auto; color: #a3171c; font-weight: 600; text-decoration: none; } .note-read .nr-meta a:hover { text-decoration: underline; }
+.note-read .nr-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.note-read .nr-btn { padding: 9px 18px; border-radius: 99px; border: 1px solid rgba(28, 30, 41, .25); background: transparent; color: #2a2c38; font: 600 13px var(--sans); cursor: pointer; transition: background .2s, color .2s; }
+.note-read .nr-btn:hover { background: rgba(28, 30, 41, .07); }
+.note-read .nr-btn.go { border-color: #a3171c; background: #a3171c; color: #fff; } .note-read .nr-btn.go:hover { background: #c8161d; }
+@media (max-width: 520px) { .modal.note-read-modal .modal-in { padding: 38px 20px 22px; } .note-read .nr-band { left: -20px; right: -20px; top: -38px; } .note-read .nr-pin { top: -50px; } .note-read .nr-body { font-size: 15.5px; } }
 .nf-fonts { display: flex; gap: 8px; }
 .nf-f { position: relative; cursor: pointer; }
 .nf-f input { position: absolute; opacity: 0; pointer-events: none; }
