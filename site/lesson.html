@@ -53,8 +53,7 @@ App.ready.then(async user => {
   const mine = chars.filter(c => c.owner_id === user.id && c.published_at && c.data && c.data.name);
   let cur = (status.today && mine.find(c => c.id === status.today.char_id)) || mine[0];
   try { const s = localStorage.getItem('naru:lesson:char'); if (!status.today && mine.find(c => c.id === s)) cur = mine.find(c => c.id === s); } catch (e) {}
-  let rankTab = 'all';   // 랭킹은 '전체'(오늘 점수 합계)부터
-  const RK = ['all'].concat(KEYS), RKN = k => k === 'all' ? '전체' : L[k].name;
+  const rankTab = 'all';   // 랭킹은 전체(오늘 점수 합계) 하나만 · 과목별 탭은 없앴어요 (요청도 한 번)
 
   const statsOf = c => {
     const base = Object.fromEntries(parseKV(c.data.stats)), b = Store.statBonus(badges[user.id], items, c.id);
@@ -87,7 +86,7 @@ App.ready.then(async user => {
           <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${done.grade} · 결과 보기` : full ? '🔒 내일' : '시작 ▸'}</span></div>
           ${done ? `<span class="gm-seal">${done.grade}</span>` : ''}</button>`; }).join('')}</div>
       <section class="gm-rank"><span class="rk-corner a" aria-hidden="true">${STAR}</span><span class="rk-corner b" aria-hidden="true">${STAR}</span><header><div><h2>오늘의 수업 랭킹</h2></div>
-          <div class="gm-tabs">${RK.map(k => `<button type="button" data-r="${k}" class="${k === rankTab ? 'on' : ''}" style="--ac:${AC[k]};--ad:${AD[k]}">${RKN(k)}</button>`).join('')}</div></header>
+          <small class="rk-sub">오늘 들은 과목 점수 합계</small></header>
         ${Store.mode === 'demo' ? `<div class="rk-demo">데모 미리보기 · 내가 <button type="button" data-pv="1">1등</button><button type="button" data-pv="2">2등</button><button type="button" data-pv="3">3등</button><button type="button" data-pv="5">5등</button><button type="button" data-pv="0">끄기</button></div>` : ''}
         <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
     if (Store.mode === 'demo' && list.length) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
@@ -99,8 +98,7 @@ App.ready.then(async user => {
       if (b.classList.contains('done')) return result(doneOf(b.dataset.s));
       if (!b.disabled) start(b.dataset.s);
     });
-    $$('.gm-tabs button', main).forEach(b => b.onclick = () => { rankTab = b.dataset.r; $$('.gm-tabs button', main).forEach(x => x.classList.toggle('on', x === b)); drawRank(); });
-    $$('.rk-demo button', main).forEach(b => b.onclick = () => { rankPv = +b.dataset.pv; $$('.rk-demo button', main).forEach(x => x.classList.toggle('on', x === b && rankPv > 0)); drawRank(); });
+   $$('.rk-demo button', main).forEach(b => b.onclick = () => { rankPv = +b.dataset.pv; $$('.rk-demo button', main).forEach(x => x.classList.toggle('on', x === b && rankPv > 0)); drawRank(); });
   }
   const CHEER = { pencil: ['✏ 연필심', '#ffb36b'], sharp: ['✒ 샤프심', '#7ab8ff'], eraser: ['지우개', '#ff7aa8'] };
   const burst = (el, n = 16) => {
@@ -351,9 +349,11 @@ App.ready.then(async user => {
       <div class="ls-seal">${t.grade}</div><h3>${l.title} · ${t.grade}등</h3><div class="sc">${line}</div>
       <div class="ls-gain"><span>${l.stat}</span><b>${t.delta > 0 ? '+' + t.delta : t.delta < 0 ? '−' + -t.delta : '±0'}</b>${t.before != null ? `<em>${num(t.before)} → ${num(t.after)}</em>` : ''}</div>
       ${t.coins > 0 ? `<div class="ls-rk">${t.grade === '丁' ? '위로금' : t.grade + ' 보상'} <b>${num(t.coins)} 영전</b></div>` : ''}
-      ${t.rank ? `<div class="ls-rk">오늘의 ${l.name} 랭킹 <b>${t.rank}위</b></div>` : ''}
+      <div class="ls-rk" id="res-rk" hidden></div>
       <div class="acts"><button type="button" class="ls-btn" id="back">수업 목록으로</button><a class="ls-btn w" href="index.html">로비로</a></div></div>`;
-    $('#back').onclick = async () => { badges = await Store.badges().catch(() => badges); rankTab = t.subj; home(); };
+    $('#back').onclick = async () => { badges = await Store.badges().catch(() => badges); home(); };
+    // 오늘의 수업 랭킹(전체)에서 내 순위 · 목록으로 돌아가면 이 결과를 그대로 다시 써요 (1분 기억)
+    Store.lessonRank('all').then(rows => { const i = rows.findIndex(r => r.me), el = $('#res-rk'); if (i >= 0 && el) { el.innerHTML = `오늘의 수업 랭킹 <b>${i + 1}위</b>`; el.hidden = false; } }).catch(() => {});
   }
 
   home();
