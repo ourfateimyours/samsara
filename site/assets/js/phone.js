@@ -130,6 +130,7 @@ window.Phone = (function () {
       if (k) { k.classList.remove('again'); void k.offsetWidth; k.classList.add('again'); }
     });
     const kr = $('.kr', ov); if (kr) kr.addEventListener('pointerenter', () => { kr.classList.remove('again'); void kr.offsetWidth; kr.classList.add('again'); });
+    if (!opt.preview) markBeats(row.id, ov);
     ov._k = e => { if (e.key === 'Escape') close(); };
     addEventListener('keydown', ov._k);
     ov._fit = fit;
@@ -149,7 +150,25 @@ window.Phone = (function () {
       ? `<div class="ttl"><b>부재중 전화</b><time>${t}</time></div><div class="msg">${who}${n.missed > 1 ? ` (${n.missed})` : ''}${n.msg ? '\n' + esc(n.msg) : ''}</div>`
       : `<div class="ttl"><b>${who}</b><time>${t}</time></div><div class="msg">${esc(n.msg) || '…'}</div>`;
     // 누르면 잘린 메시지가 펼쳐지기만 해요
-    return `<div class="noti ${n.type}" style="--i:${i}" role="button" tabindex="0">${lead}${body}</div>`;
+    return `<div class="noti ${n.type}" style="--i:${i};--bc:${esc(normChar(n.from.data || {}).color || '#888')}" data-from="${esc(n.from.id)}" role="button" tabindex="0">${lead}${body}</div>`;
+  }
+
+  /* 심박을 많이 주고받은 사이의 메시지 (휴대폰 주인과 보낸 사람, 두 사람 눈에만)
+     1단계 모서리 색 · 2단계 이름 옆 하트 · 3단계 칸 아래 심전도 선 + 옅은 테두리. 단계는 서버가 정해서 알려 줘요 */
+  const HEART = '<svg class="kh" viewBox="0 0 12 11" aria-hidden="true"><path d="M6 10.6C2.6 7.9.4 6 .4 3.4.4 1.6 1.8.3 3.4.3c1.1 0 2 .6 2.6 1.5C6.6.9 7.5.3 8.6.3c1.6 0 3 1.3 3 3.1C11.6 6 9.4 7.9 6 10.6z"/></svg>';
+  const ECG = 'M0 10H196L202 10 206 6 210 10H220L224 13 229 1 234 15 238 10H250L256 7 262 10H300';
+  const LINE = '<i class="kb"></i><svg class="kl" viewBox="0 0 300 16" preserveAspectRatio="none" aria-hidden="true">'
+    + [30, 25, 20, 16, 12, 9, 6, 3.5].map(L => `<path class="t" style="--L:${L}" d="${ECG}" pathLength="100"/>`).join('') + '</svg>';
+  async function markBeats(charId, box) {
+    if (!window.Store || !Store.beatMarks) return;
+    const m = await Store.beatMarks(charId);
+    if (!m || !box.isConnected) return;
+    box.querySelectorAll('.noti.imessage[data-from]').forEach(n => {
+      const lv = m[n.dataset.from]; if (!lv) return;
+      n.classList.add('b' + lv);
+      if (lv === 2) { const b = n.querySelector('.ttl b'); if (b) b.insertAdjacentHTML('afterend', HEART); }
+      if (lv === 3) n.insertAdjacentHTML('beforeend', LINE);
+    });
   }
   function nameOf(c) { return (c.data && c.data.name) || '?'; }
 
