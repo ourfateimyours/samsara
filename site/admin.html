@@ -571,6 +571,28 @@ App.ready.then(async user => {
     });
   }
 
+  /* 오늘 수업 기록 · 기회 돌려주기 (한 줄 = 한 과목 · 두 과목 들은 사람은 두 줄이라 하나만 돌려줄 수도 있어요) */
+  async function lessonToday() {
+    const pane = curPane, SN = { kor: '국어', soc: '사회', mor: '도덕심', art: '미술' };
+    pane.innerHTML = '<section class="adm-card"><p class="dim">불러오는 중…</p></section>';
+    let rows = [];
+    try { rows = await Store.adminLessonsToday(); }
+    catch (e) { pane.innerHTML = `<section class="adm-card"><p class="dim">불러오지 못했어요 · ${esc(e.message || e)}<br>수업-기회.sql 을 먼저 실행했는지 확인해 주세요.</p></section>`; return; }
+    const prog = r => r.done ? `${r.grade || '?'} · ${Number(r.score || 0).toLocaleString()}점` : `<b style="color:#ff8a80">진행 중 · ${r.answered === r.i ? r.i + 1 : r.i} / ${r.total} 풀고 멈춤</b>`;
+    const fx = r => [r.delta ? `${r.delta > 0 ? '+' : ''}${r.delta} 스탯` : '', r.consol ? `위로금 ${r.consol}` : ''].filter(Boolean).join(' · ');
+    pane.innerHTML = `<section class="adm-card"><header><b>📋 오늘 수업 기록</b><span class="label">${rows.length}개 · 자정에 초기화</span></header>
+      <p class="hint-text">오류로 수업을 제대로 못 한 회원에게 그 과목 기회를 돌려줘요. 돌려주면 그 수업이 없던 일이 돼요 — 그 수업으로 바뀐 스탯을 되돌리고, 꽝 위로금을 거두고, 랭킹에서 빠져요. 두 과목을 들은 회원은 두 줄로 나와서 하나만 돌려줄 수 있어요.</p>
+      <ul class="adm-list">${rows.map(r => `<li data-id="${esc(r.id)}"><b>${esc(r.nick)}</b><span>${esc(r.name)}</span><span>${SN[r.subj] || esc(r.subj)}</span><span>${prog(r)}</span>${fx(r) ? `<span>${esc(fx(r))}</span>` : ''}<span>${new Date(r.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+        <button class="icon-btn danger" data-reset style="margin-left:auto">기회 돌려주기</button></li>`).join('') || '<li class="dim">오늘 수업을 들은 회원이 없어요.</li>'}</ul></section>`;
+    pane.querySelectorAll('[data-reset]').forEach(b => b.onclick = async () => {
+      const li = b.closest('li'), r = rows.find(x => x.id === li.dataset.id); if (!r) return;
+      if (!confirm(`${r.nick} (${r.name}) 의 오늘 ${SN[r.subj] || r.subj} 수업을 없던 일로 하고 기회를 돌려줄까요?\n${fx(r) ? `그 수업으로 생긴 ${fx(r)} 도 되돌려요.` : ''}`)) return;
+      b.disabled = true;
+      try { await Store.adminLessonReset(r.id); toast(`${r.nick} 에게 ${SN[r.subj] || r.subj} 기회를 돌려줬어요`); lessonToday(); }
+      catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    });
+  }
+
   const HOUSES = ['본가', '경파', '염가', '염업'];
   async function lessonQ(subj) {
     const pane = curPane;
@@ -669,7 +691,7 @@ App.ready.then(async user => {
   }
 
   const TABS = { review, join, site, period, members: () => membersTab(), coin: coinTab, shop: shopTab, banner: bannerTab, rptA, rptB,
-    play: playTab, lq_soc: () => lessonQ('soc'), lq_mor: () => lessonQ('mor'), lq_art: () => lessonQ('art') };
+    play: playTab, lq_today: lessonToday, lq_soc: () => lessonQ('soc'), lq_mor: () => lessonQ('mor'), lq_art: () => lessonQ('art') };
   joinBadge();
   /* 큰 메뉴 4개 → 안에 작은 탭 */
   const GROUPS = {
@@ -677,7 +699,7 @@ App.ready.then(async user => {
     member: [['members', '회원 · 지갑'], ['join', '가입 신청'], ['rptB', '홈페이지 디자인'], ['rptA', '회원 기록']],
     coin: [['coin', '지급']],
     shop: [['shop', '물건 · 구매 · 선물 기록']],
-    play: [['play', '열기 · 닫기 · 스탯'], ['lq_soc', '사회 문자'], ['lq_mor', '도덕심 부탁'], ['lq_art', '미술 스토리']],
+    play: [['play', '열기 · 닫기 · 스탯'], ['lq_today', '오늘 수업 기록'], ['lq_soc', '사회 문자'], ['lq_mor', '도덕심 부탁'], ['lq_art', '미술 스토리']],
     site: [['site', '설정 · BGM'], ['banner', '메인 배너']]
   };
   const openTab = t => {

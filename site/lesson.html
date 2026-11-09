@@ -53,7 +53,8 @@ App.ready.then(async user => {
   const mine = chars.filter(c => c.owner_id === user.id && c.published_at && c.data && c.data.name);
   let cur = (status.today && mine.find(c => c.id === status.today.char_id)) || mine[0];
   try { const s = localStorage.getItem('naru:lesson:char'); if (!status.today && mine.find(c => c.id === s)) cur = mine.find(c => c.id === s); } catch (e) {}
-  let rankTab = (status.today && status.today.subj) || 'kor';
+  let rankTab = 'all';   // 랭킹은 '전체'(오늘 점수 합계)부터
+  const RK = ['all'].concat(KEYS), RKN = k => k === 'all' ? '전체' : L[k].name;
 
   const statsOf = c => {
     const base = Object.fromEntries(parseKV(c.data.stats)), b = Store.statBonus(badges[user.id], items, c.id);
@@ -66,7 +67,7 @@ App.ready.then(async user => {
     mor: '<svg viewBox="0 0 24 24"><path d="M4 10h13v3.5a6.5 6.5 0 0 1-13 0z"/><path d="M17 11.2h1.6a2.4 2.4 0 0 1 0 4.8H16.4"/><path d="M8 3.5c-.8 1.2.8 1.8 0 3M12 3.5c-.8 1.2.8 1.8 0 3" opacity=".6"/><path d="M3 21h15"/></svg>',
     art: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>'
   };
-  const AC = { kor: '#9fd4ff', soc: '#8ff0c4', mor: '#ffb3c9', art: '#dcb8ff' }, AD = { kor: '#2f86d6', soc: '#1d9e6e', mor: '#de4f7a', art: '#8f55e0' };   // AC: 옅은 빛깔 · AD: 글자 · 선에 쓰는 진한 빛깔
+  const AC = { all: '#f4e9c8', kor: '#9fd4ff', soc: '#8ff0c4', mor: '#ffb3c9', art: '#dcb8ff' }, AD = { all: '#b08a2e', kor: '#2f86d6', soc: '#1d9e6e', mor: '#de4f7a', art: '#8f55e0' };   // AC: 옅은 빛깔 · AD: 글자 · 선에 쓰는 진한 빛깔
   const DAY_MAX = 2;   // 하루 두 과목까지 (같은 과목은 하루 한 번)
   const todays = () => status.list || (status.today ? [status.today] : []);
   function home() {
@@ -86,7 +87,7 @@ App.ready.then(async user => {
           <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${done.grade} · 결과 보기` : full ? '🔒 내일' : '시작 ▸'}</span></div>
           ${done ? `<span class="gm-seal">${done.grade}</span>` : ''}</button>`; }).join('')}</div>
       <section class="gm-rank"><span class="rk-corner a" aria-hidden="true">${STAR}</span><span class="rk-corner b" aria-hidden="true">${STAR}</span><header><div><h2>오늘의 수업 랭킹</h2></div>
-          <div class="gm-tabs">${KEYS.map(k => `<button type="button" data-r="${k}" class="${k === rankTab ? 'on' : ''}" style="--ac:${AC[k]};--ad:${AD[k]}">${L[k].name}</button>`).join('')}</div></header>
+          <div class="gm-tabs">${RK.map(k => `<button type="button" data-r="${k}" class="${k === rankTab ? 'on' : ''}" style="--ac:${AC[k]};--ad:${AD[k]}">${RKN(k)}</button>`).join('')}</div></header>
         ${Store.mode === 'demo' ? `<div class="rk-demo">데모 미리보기 · 내가 <button type="button" data-pv="1">1등</button><button type="button" data-pv="2">2등</button><button type="button" data-pv="3">3등</button><button type="button" data-pv="5">5등</button><button type="button" data-pv="0">끄기</button></div>` : ''}
         <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
     if (Store.mode === 'demo' && list.length) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
@@ -156,17 +157,17 @@ App.ready.then(async user => {
     mineBox.innerHTML = (myIdx >= 0 ? `<div class="rk-me-chip"><span class="rk-me-star">${STAR}</span><div><small>나의 순위</small><b>${myIdx + 1}<i>위</i></b></div>
         <div class="rk-me-sc"><small>${myIdx ? `${myIdx}위까지 ${num(rows[myIdx - 1].score - rows[myIdx].score)}점` : '점수'}</small><b>${num(rows[myIdx].score)}</b></div></div>` : '')
       + (run ? `<div class="rk-run" aria-label="오늘의 수석 ${esc(rows[0].name)}"><div class="rk-track"><span>${run}</span></div></div>`
-        : `<span class="rk-me-star off">${STAR}</span><p>아직 오늘 ${L[want].name} 수업 기록이 없어요.</p>`);
+        : `<span class="rk-me-star off">${STAR}</span><p>아직 오늘 ${want === 'all' ? '' : L[want].name + ' '}수업 기록이 없어요.</p>`);
     mineBox.classList.toggle('on', myIdx >= 0); mineBox.classList.toggle('gold', myIdx === 0);
     const cell = (r, n) => !r ? `<div class="rk-c p${n} empty"><div class="rk-card"><span class="rk-num">${n}</span><span class="ls-av rk-av"></span><b>비어 있어요</b><em>—</em></div></div>`
       : `<div class="rk-c p${n} ${r.me ? 'me' : ''}" style="--cc:${esc(r.color || '#c4b6ff')}">
           <span class="rk-beam" aria-hidden="true"></span>${n === 1 ? `<span class="rk-star" aria-hidden="true">${STAR}</span>` : ''}
           <div class="rk-card"><span class="rk-num">${n}</span>
           <span class="rk-avw">${av(r, 'ls-av rk-av')}${r.me ? '<span class="rk-tag">나</span>' : ''}</span>
-          <b>${esc(r.name)}</b><em>${num(r.score)}</em><small>${n === 1 ? '오늘의 수석' : n === 2 ? '차석' : '삼석'}</small></div></div>`;    pod.innerHTML = cell(rows[1], 2) + cell(rows[0], 1) + cell(rows[2], 3);
+          <b>${esc(r.name)}</b><em>${num(r.score)}</em><small>${n === 1 ? '오늘의 수석' : n === 2 ? '차석' : '삼석'}${want === 'all' && r.n ? ` · ${r.n}과목` : ''}</small></div></div>`;    pod.innerHTML = cell(rows[1], 2) + cell(rows[0], 1) + cell(rows[2], 3);
     ol.innerHTML = rows.slice(3).map((r, i) => `<li class="${r.me ? 'me' : ''}" style="--cc:${esc(r.color || '#c4b6ff')}"><span class="n">${i + 4}</span>${av(r)}<span class="nm">${esc(r.name)}${r.me ? ' <i>나</i>' : ''}</span>
         <span class="bar"><i style="--w:${Math.max(4, Math.round(r.score / top * 100))}%"></i></span><b>${num(r.score)}</b></li>`).join('')
-      || (rows.length ? '' : `<li class="ls-none">아직 오늘 ${L[want].name} 수업을 들은 사람이 없어요. 첫 번째 주인공이 되어 보세요.</li>`);
+      || (rows.length ? '' : `<li class="ls-none">아직 오늘 ${want === 'all' ? '' : L[want].name + ' '}수업을 들은 사람이 없어요. 첫 번째 주인공이 되어 보세요.</li>`);
   }
   let tick = null;
   const timer = (secs, onEnd) => {
@@ -344,12 +345,12 @@ App.ready.then(async user => {
 
   function result(t, st) {
     stop(); document.body.classList.remove('ls-playing'); dispatchEvent(new CustomEvent('naru:video-sound', { detail: false })); const l = L[t.subj], g = G.indexOf(t.grade);
-    const line = t.subj === 'kor' ? `SCORE ${num(t.score)} · ${t.right} / ${t.total} · MAX ${t.combo_max} COMBO`
-      : t.subj === 'art' ? `SCORE ${num(t.score)} · ${t.res}` : `SCORE ${num(t.score)} · ${t.right} / ${t.total}`;
+    const line = t.subj === 'kor' ? `SCORE ${num(t.score)} / ${num(l.max || 0)} · ${t.right} / ${t.total} · MAX ${t.combo_max} COMBO`
+      : t.subj === 'art' ? `SCORE ${num(t.score)} / ${num(l.max || 0)} · ${t.res}` : `SCORE ${num(t.score)} / ${num(l.max || 0)} · ${t.right} / ${t.total}`;
     main.innerHTML = `<div class="gl ls-res"><div class="ls-grades">${G.map((x, i) => `<span class="${i === g ? 'on' : ''}">${x}</span>`).join('')}</div>
       <div class="ls-seal">${t.grade}</div><h3>${l.title} · ${t.grade}등</h3><div class="sc">${line}</div>
       <div class="ls-gain"><span>${l.stat}</span><b>${t.delta > 0 ? '+' + t.delta : t.delta < 0 ? '−' + -t.delta : '±0'}</b>${t.before != null ? `<em>${num(t.before)} → ${num(t.after)}</em>` : ''}</div>
-      ${t.coins > 0 ? `<div class="ls-rk">스탯은 꽝 · 위로금 <b>${num(t.coins)} 영전</b></div>` : ''}
+      ${t.coins > 0 ? `<div class="ls-rk">${t.grade === '丁' ? '위로금' : t.grade + ' 보상'} <b>${num(t.coins)} 영전</b></div>` : ''}
       ${t.rank ? `<div class="ls-rk">오늘의 ${l.name} 랭킹 <b>${t.rank}위</b></div>` : ''}
       <div class="acts"><button type="button" class="ls-btn" id="back">수업 목록으로</button><a class="ls-btn w" href="index.html">로비로</a></div></div>`;
     $('#back').onclick = async () => { badges = await Store.badges().catch(() => badges); rankTab = t.subj; home(); };

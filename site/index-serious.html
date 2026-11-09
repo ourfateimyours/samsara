@@ -55,8 +55,8 @@
 
   <!-- 왼쪽 버튼 옆: 후계자 수업 · 대국 (홀로그램 유리 두 장 · 폰에선 미니 게임 아래로 옮겨져요) -->
   <aside class="lb-heir" id="heir" aria-label="후계자 수업 · 대국">
-      <a class="hr-pane" id="hr-lesson" href="lesson.html" aria-label="후계자 수업 · 하루 한 과목"><i class="hr-spark" aria-hidden="true"></i>
-        <span class="hr-han" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.2c2.8-1 5.8-.8 9 1.2 3.2-2 6.2-2.2 9-1.2v12.6c-2.8-1-5.8-.8-9 1.2-3.2-2-6.2-2.2-9-1.2z"/><path d="M12 7.4v12.6"/><path d="M6 10.2c1.4-.3 2.8-.1 4 .5M6 13.4c1.4-.3 2.8-.1 4 .5" opacity=".6"/><path d="M18.4 1.6l.55 1.45 1.45.55-1.45.55-.55 1.45-.55-1.45-1.45-.55 1.45-.55z" fill="currentColor" stroke="none"/></svg></span><span class="hr-txt"><small>ACADEMY</small><b>후계자 수업</b></span><em class="hr-st" id="hr-lesson-st">오늘 1회</em></a>
+      <a class="hr-pane" id="hr-lesson" href="lesson.html" aria-label="후계자 수업 · 하루 두 과목"><i class="hr-spark" aria-hidden="true"></i>
+        <span class="hr-han" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.2c2.8-1 5.8-.8 9 1.2 3.2-2 6.2-2.2 9-1.2v12.6c-2.8-1-5.8-.8-9 1.2-3.2-2-6.2-2.2-9-1.2z"/><path d="M12 7.4v12.6"/><path d="M6 10.2c1.4-.3 2.8-.1 4 .5M6 13.4c1.4-.3 2.8-.1 4 .5" opacity=".6"/><path d="M18.4 1.6l.55 1.45 1.45.55-1.45.55-.55 1.45-.55-1.45-1.45-.55 1.45-.55z" fill="currentColor" stroke="none"/></svg></span><span class="hr-txt"><small>ACADEMY</small><b>후계자 수업</b></span><em class="hr-st" id="hr-lesson-st">2회</em></a>
       <a class="hr-pane" id="hr-match" href="match.html" aria-label="대국 · 이틀에 1판"><i class="hr-spark" aria-hidden="true"></i>
         <span class="hr-han" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" opacity=".5"/><circle cx="9" cy="9" r="2.7" fill="currentColor"/><circle cx="15" cy="15" r="2.7" fill="#14122a" stroke-width="1.6"/></svg></span><span class="hr-txt"><small>DUEL</small><b>대국</b></span><em class="hr-st" id="hr-match-st">…</em></a>
   </aside>
@@ -365,8 +365,8 @@ Store.matchStatus().then(s => {
   $('#hr-match').classList.add('done');
 }).catch(() => {});Store.lessonStatus().then(s => {
   const list = (s && s.list) || (s && s.today ? [s.today] : []); if (!list.length || $('#hr-lesson').classList.contains('closed')) return;   // 하루 두 과목까지
-  if (list.length >= 2) { $('#hr-lesson').classList.add('done'); $('#hr-lesson-st').textContent = `${list.map(x => x.grade).join(' · ')} 修了`; }
-  else $('#hr-lesson-st').textContent = `${list[0].grade} 修了 · 1회 남음`;
+  if (list.length >= 2) { $('#hr-lesson').classList.add('done'); $('#hr-lesson-st').textContent = list.map(x => x.grade).join(''); $('#hr-lesson').title = '오늘 수업 끝 · ' + list.map(x => x.grade).join(' · '); }   // 배너가 좁아서 등급만 (예: 丙乙)
+  else { $('#hr-lesson-st').textContent = list[0].grade; $('#hr-lesson').title = `${list[0].grade} 修了 · 한 과목 더 들을 수 있어요`; }
 }).catch(() => {});Store.pangStatus().then(p => {
     if (!p || !p.played) return;
     const b = $('#pang'); b.classList.add('locked'); b.removeAttribute('href'); b.setAttribute('aria-disabled', 'true');
