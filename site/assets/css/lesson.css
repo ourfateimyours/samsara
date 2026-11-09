@@ -129,10 +129,15 @@
 .story .prog { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 2; }
 .story .prog i { flex: 1; height: 2.5px; border-radius: 2px; background: rgba(255, 255, 255, .3); overflow: hidden; }
 .story .prog i::after { content: ""; display: block; height: 100%; width: 100%; background: #fff; transform-origin: left; transform: scaleX(var(--sx, 0)); }
-.story .who { position: absolute; top: 22px; left: 12px; right: 12px; display: flex; align-items: center; gap: 8px; z-index: 2; font: 600 12.5px var(--sans); text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
-.story .who .ls-av { width: 30px; height: 30px; border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 2px #ee2a7b; }
-.story .who small { font: 400 11.5px var(--sans); color: rgba(255, 255, 255, .7); }
-.story .cap { position: absolute; left: 50%; top: 62%; transform: translateX(-50%) rotate(-3deg); padding: 6px 12px; border-radius: 8px; background: #fff; color: #111; font: 700 14px var(--sans); white-space: nowrap; z-index: 2; }
+/* 실제 인스타 스토리 위쪽처럼: 링 없는 동그란 프로필 · 아이디 · 시간 · 오른쪽 ⋯ ✕ */
+.story .who { position: absolute; top: 22px; left: 12px; right: 12px; display: flex; align-items: center; gap: 8px; z-index: 2; color: #fff; font: 600 13px var(--sans); letter-spacing: -.01em; text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  max-width: none; overflow: visible; }   /* 머리말 닉네임용 .who(폭 120 · 잘림)를 풀어요 */
+.story::before { height: 110px; background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .18) 60%, transparent); }   /* 밝은 사진에서도 위쪽 글씨가 보이게 */
+.story .who .ls-av { width: 32px; height: 32px; flex: none; border: 0 !important; border-radius: 50%; background-size: cover; background-position: 50% 15%; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .35); }
+.story .who b { font-weight: 600; } .story .who small { font: 400 13px var(--sans); color: rgba(255, 255, 255, .72); }
+.story .who .ic { margin-left: auto; display: flex; align-items: center; gap: 14px; font: 400 18px/1 var(--sans); }
+.story .who .ic i { font-style: normal; } .story .who .ic .x { font-size: 20px; font-weight: 300; }
+.story .cap { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); padding: 7px 12px; border-radius: 9px; background: #fff; color: #111; font: 700 15px var(--sans); letter-spacing: -.01em; white-space: nowrap; z-index: 2; }
 .story .send { position: absolute; left: 12px; right: 12px; bottom: 14px; display: flex; gap: 10px; align-items: center; z-index: 2; }
 .story .send span { flex: 1; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .55); font: 400 13px var(--sans); color: rgba(255, 255, 255, .8); background: rgba(0, 0, 0, .2); }
 .story .burst { position: absolute; left: 50%; top: 45%; font-size: 64px; transform: translate(-50%, -50%) scale(0); z-index: 3; pointer-events: none; }
