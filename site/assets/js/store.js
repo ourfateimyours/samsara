@@ -44,10 +44,11 @@
   const pangLevel = id => PANG_LEVELS.find(l => l.id === id) || PANG_LEVELS[0];
   const PANG = { min: 50, max: 1000, ext: 30, grace: 300 };   // ext: 모래시계로 늘릴 수 있는 최대 시간(초)
   const LESSONS = {
-    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 8, secs: 12, lives: 3 },
-    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 5, secs: 5 },
-    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 5, secs: 5, hearts: 5, love: 1.2 },
-    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 3, secs: 10 }
+    // n: 하루 문제 수 · pts: 한 문제 점수 배수 (문제 수가 줄어든 만큼) · 하루 두 과목까지 · ⚠ 수업-문제수.sql lesson_cfg 와 같게
+    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 4, secs: 12, lives: 3, pts: 2 },
+    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 1, secs: 5, pts: 5 },
+    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 2, secs: 5, hearts: 5, love: 1.2, pts: 2.5 },   // 2문제 = 서로 다른 두 인물
+    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 2, secs: 10, pts: 1.5 }
   };
   const GRADES = ['甲', '乙', '丙', '丁'];
   const POUCH_DAY = 3;
@@ -179,6 +180,7 @@
         return ok(await sb.rpc('send_tele', { p_from_char: p.from_char, p_to_char: p.to_char, p_body: p.body }));
       },
       async markTeleRead(me, id) { ok(await sb.rpc('mark_tele_read', { p_id: id })); },
+      async beatMarks(me, charId) { return ok(await sb.rpc('beat_marks', { p_char: charId })) || {}; },   // 심박을 많이 주고받은 사이 · 단계만 (두 당사자에게만)
       async touch(me, page) { await sb.rpc('touch', { p: page }); },
       async rptA() { return ok(await sb.rpc('rpt_a')) || []; },
       async rptB() { return ok(await sb.rpc('rpt_b')) || []; },
@@ -432,6 +434,11 @@
     async teleUnread() {
       const u = await this.user(); if (!u) return 0;
       return remote ? hold('unread:' + u.id, 24e4, () => B.teleUnread(u.id)) : (await B.teles(u.id)).filter(m => m.to_user === u.id && m.owner_id !== u.id && !m.read).length;
+    },
+    // 관계 휴대폰: 이 캐릭터와 심박을 많이 주고받은 캐릭터 → 단계(1~3). 휴대폰을 열 때 한 번만 묻고 10분 기억해요
+    async beatMarks(charId) {
+      const u = await this.user(); if (!u || !charId) return {};
+      try { return await hold('beat:' + u.id + ':' + charId, 6e5, () => B.beatMarks(u.id, charId)); } catch (e) { return {}; }
     },
     async sendTele(p) {
       const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.');
