@@ -39,7 +39,9 @@ App.ready.then(async user => {
   const KEYS = Object.keys(L), ABC = 'ABCD';
   // 수업 화면의 두상은 첫 장면 그림으로 (용량 큰 GIF 를 여러 개 돌리면 버벅여요)
   const still = u => (window.headMp4 && headMp4(u) || {}).poster || u;
-  const av = (c, cls = 'ls-av') => `<span class="${cls}" style="${c && c.head ? `background-image:url('${esc(still(c.head))}');` : ''}${c && c.color ? `border-color:${esc(c.color)}` : ''}"></span>`;
+  // 두상: 첫 장면 그림을 바로 깔고, 그 위에서 움짤(imgur 영상)이 움직여요 · 영상은 imgur 에서 받아서 우리 사용량엔 안 잡혀요
+  const mov = u => u && window.headHTML ? headHTML(u, 'ls-av-v') : '';
+  const av = (c, cls = 'ls-av') => `<span class="${cls}" style="${c && c.head ? `background-image:url('${esc(still(c.head))}');` : ''}${c && c.color ? `border-color:${esc(c.color)}` : ''}">${c && c.head ? mov(c.head) : ''}</span>`;
   const pop = (txt, bad) => { const p = document.createElement('div'); p.className = 'ls-pop' + (bad ? ' bad' : ''); p.textContent = txt; document.body.appendChild(p); setTimeout(() => p.remove(), 950); };
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const num = n => (n || 0).toLocaleString('ko-KR');
@@ -240,7 +242,7 @@ App.ready.then(async user => {
   const KIND = { head: ['頭', 'HEAD'], body: ['身', 'FULL BODY'], item: ['物', 'BELONGING'], persona: ['性', 'PERSONA'], song: ['曲', 'THEME SONG'], quote: ['言', 'QUOTE'], skill: ['術', 'ABILITY'] };
   function kor(st, q) {
     const lives = `<span class="ls-lives">${[0, 1, 2].map(i => `<i class="${i < st.lives ? '' : 'x'}"></i>`).join('')}</span>`, kd = KIND[q.kind] || ['?', ''];
-    const art = q.kind === 'head' ? `<span class="face blur" id="face" style="background-image:url('${esc(still(q.media))}')"></span>`
+    const art = q.kind === 'head' ? `<span class="face blur" id="face" style="background-image:url('${esc(still(q.media))}')">${mov(q.media)}</span>`
       : q.kind === 'body' ? `<span class="face pic"><img id="sil" src="${esc(q.media)}" alt="" referrerpolicy="no-referrer"><span class="tiles" id="tiles">${'<i></i>'.repeat(20)}</span></span>`
       : q.kind === 'item' ? `<span class="face pic light"><img src="${esc(q.media)}" alt="" referrerpolicy="no-referrer"></span>`
       : q.kind === 'song' ? `<span class="face disc"><i></i><iframe id="yt" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(q.media)}?autoplay=1&start=40&controls=0&playsinline=1" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" title="테마곡" tabindex="-1"></iframe></span>`
