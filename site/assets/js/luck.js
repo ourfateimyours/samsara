@@ -10,6 +10,7 @@
     dia: 'M50 2l34 36-34 60L16 38zM16 38h68'
   };
   const COLORS = ['#ff9db5', '#ffc98f', '#ffe97a', '#a8f0b4', '#9fdcff', '#b7a8ff', '#f3a8e6'];
+  const SPARK = 'M50 2c3.6 27 14 39.4 48 48-34 8.6-44.4 21-48 48-3.6-27-14-39.4-48-48 34-8.6 44.4-21 48-48z';   // 네 갈래 반짝이 별
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const clear = () => document.querySelectorAll('.lk-pop, .lk-vig').forEach(x => x.remove());
@@ -18,7 +19,9 @@
     const k = kinds[Math.floor(Math.random() * kinds.length)], s = 12 + Math.random() * 18, c = COLORS[Math.floor(Math.random() * COLORS.length)];
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     el.setAttribute('viewBox', '0 0 100 100'); el.setAttribute('class', 'lk-pc'); el.style.width = el.style.height = s + 'px';
-    el.innerHTML = `<path d="${SHAPE[k]}" fill="${c}" ${k === 'dia' ? 'stroke="#fff" stroke-width="3"' : ''}/>`;
+    // 별은 반반: 하얀 반짝이 별 + 색 그림자 / 모서리가 둥근 색 별
+    if (k === 'star' && Math.random() < .5) { el.innerHTML = `<path d="${SPARK}" fill="#fff"/>`; el.style.filter = `drop-shadow(0 0 3px ${c}) drop-shadow(0 0 7px ${c})`; }
+    else el.innerHTML = `<path d="${SHAPE[k]}" fill="${c}" ${k === 'dia' ? 'stroke="#fff" stroke-width="3"' : k === 'star' ? `stroke="${c}" stroke-width="9" stroke-linejoin="round"` : ''}/>`;
     document.body.appendChild(el);
     const a = Math.random() * Math.PI * 2, d = power * (.45 + Math.random() * .75), dx = Math.cos(a) * d, dy = Math.sin(a) * d, rot = (Math.random() - .5) * 720, T = 1100 + Math.random() * 900;
     const at = (px, py, r, sc) => `translate(${x + px - s / 2}px, ${y + py - s / 2}px) rotate(${r}deg) scale(${sc})`;
@@ -60,7 +63,7 @@
     if (REDUCE) return;
     await wait(650); if (!el.isConnected) return;
     const av = el.querySelector('.lk-sav'), r = av.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, N = 14, GAP = 75, OUT = 480, IN = 720;
-    const nom = () => av.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1, .93)' }, { transform: 'scale(1)' }], { duration: 170 });
+    const nom = () => av.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 170 });   // 동그란 모양 그대로 냠
     for (let i = 0; i < N; i++) {
       const size = 7 + Math.random() * 9, a0 = Math.PI * (.02 + .96 * i / (N - 1)), R = 110 + Math.random() * 90, turn = Math.PI * 1.5;
       const at = (t, sc) => { const rad = R * Math.pow(1 - t, 1.25), ang = a0 + turn * t; return `translate(${cx + Math.cos(ang) * rad * 1.35 - size / 2}px, ${cy + Math.abs(Math.sin(ang)) * rad * .85 * (1 - t) + Math.sin(ang) * rad * .5 * t - size / 2}px) scale(${sc})`; };
