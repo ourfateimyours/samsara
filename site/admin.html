@@ -84,7 +84,23 @@ App.ready.then(async user => {
         <header style="margin-top:22px"><b>◎ 비회원 둘러보기</b>${sw('pubview', s.public_view)}</header>
         <p class="hint-text">켜면 로그인하지 않은 사람도 사이트를 구경할 수 있어요. 끄면(기본) 로그아웃 상태에선 입장 화면만 보여요.</p>
       </section>
-    </div>`;
+    </div>
+    ${ADMIN ? `<section class="adm-card" style="margin-top:18px"><header><b>🏷 보드 스티커</b><span class="label">사건 보드 쪽지에 붙일 수 있는 스티커 · 쪽지마다 최대 3개</span></header>
+      <p class="hint-text">한 줄에 이미지 링크 하나씩 (https:// · 배경이 투명한 PNG 가 예뻐요). 여기서 빼면 이미 붙어 있던 쪽지에서도 안 보여요.</p>
+      <div class="nf-stk" id="stk-pv" style="margin-bottom:10px"></div>
+      <label class="field"><textarea id="stk-list" rows="6" placeholder="https://i.imgur.com/….png">${esc((s.board_stickers || []).join('\n'))}</textarea></label>
+      <div class="modal-foot"><button class="btn" id="stk-save">스티커 저장</button></div></section>` : ''}`;
+    const stkList = () => [...new Set(($('#stk-list') ? $('#stk-list').value : '').split('\n').map(x => x.trim()).filter(Boolean))];
+    const stkPv = () => { const pv = $('#stk-pv'); if (pv) pv.innerHTML = stkList().filter(u => /^https:\/\//.test(u)).map(u => `<label><img src="${esc(u)}" alt="" referrerpolicy="no-referrer"></label>`).join(''); };
+    if ($('#stk-list')) {
+      stkPv(); $('#stk-list').oninput = stkPv;
+      $('#stk-save').onclick = async () => {
+        const list = stkList(); if (list.some(u => !/^https:\/\//.test(u))) return toast('링크는 https:// 로 시작해야 해요.', 'err');
+        if (list.length > 40) return toast('스티커는 40개까지예요.', 'err');
+        try { await Store.saveSettings({ board_stickers: list }); toast(`보드 스티커 ${list.length}개를 저장했어요.`); }
+        catch (e) { toast(e.message, 'err'); }
+      };
+    }
     $('#bgm-save').onclick = async () => {
       const url = $('#bgm-url').value.trim();
       if (url && !/^https?:\/\//.test(url)) return toast('주소는 https:// 로 시작해야 해요.', 'err');
