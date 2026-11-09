@@ -32,8 +32,8 @@ App.ready.then(async user => {
   if (!po.on) toast('수업이 닫혀 있지만 관리자라서 들어왔어요.');
   const CARD = {
     kor: { wm: '國', en: 'WANTED · 人物 問答', how: ['흐린 두상 · 글 단서를 보고 인물 맞히기', '빨리 맞힐수록 점수 ↑ · 연속 정답 콤보', '목숨 3개 · 문제당 12초'] },
-    soc: { wm: '社', en: 'FAMILY MESSENGER', how: ['부모 세대 문자에 가문 분위기에 맞게 답장', '1초 안 보너스 · 3초 무난 · 5초 넘으면 차감', '문자 5통'] },
-    mor: { wm: '德', en: 'SERVICE · 好 感', how: ['랜덤 인물 옆에서 수발 들기', '행동 카드 3장 중 하나 · 맞으면 호감도 ♥', '부탁당 5초 · ♥ 가득이면 점수 +20%'] },
+    soc: { wm: '社', en: 'FAMILY MESSENGER', how: ['부모 세대 문자에 가문 분위기에 맞게 답장', '1초 안 보너스 · 3초 무난 · 5초 넘으면 차감', '문자 1통'] },
+    mor: { wm: '德', en: 'SERVICE · 好 感', how: ['서로 다른 두 인물 옆에서 수발 들기', '행동 카드 3장 중 하나 · 맞으면 호감도 ♥', '부탁당 5초 · ♥ 가득이면 점수 +20%'] },
     art: { wm: '藝', en: 'INSTAGRAM STORY', how: ['인물의 셀피 스토리를 보고 반응 남기기', '고른 반응에 따라 결과가 달라요', '대박 · 무난 · 망함'] }
   };
   const KEYS = Object.keys(L), ABC = 'ABCD';
@@ -65,33 +65,35 @@ App.ready.then(async user => {
     art: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>'
   };
   const AC = { kor: '#9fd4ff', soc: '#8ff0c4', mor: '#ffb3c9', art: '#dcb8ff' }, AD = { kor: '#2f86d6', soc: '#1d9e6e', mor: '#de4f7a', art: '#8f55e0' };   // AC: 옅은 빛깔 · AD: 글자 · 선에 쓰는 진한 빛깔
+  const DAY_MAX = 2;   // 하루 두 과목까지 (같은 과목은 하루 한 번)
+  const todays = () => status.list || (status.today ? [status.today] : []);
   function home() {
-    const t = status.today;
+    const list = todays(), doneOf = k => list.find(x => x.subj === k), full = list.length >= DAY_MAX, t = full;
     if (!mine.length) { main.innerHTML = `<div class="gl ls-msg">게시된 캐릭터가 있어야 수업을 들을 수 있어요.<br><a class="ls-btn" style="display:inline-block;margin-top:16px" href="index.html">로비로</a></div>`; return; }
     main.innerHTML = `<div class="gm-head">
         <div><h1 class="ls-ttl">후계자 수업</h1></div>
-        <div class="gm-today ${t ? 'off' : ''}"><span class="gm-orb"></span><div><b>${t ? '오늘 수업 완료' : '1회 남음'}</b></div><em>00:00 KST 초기화</em></div></div>
+        <div class="gm-today ${t ? 'off' : ''}"><span class="gm-orb"></span><div><b>${full ? '오늘 수업 완료' : `${DAY_MAX - list.length}회 남음`}</b></div><em>00:00 KST 초기화</em></div></div>
       <section class="gm-hero" id="me"></section>
       <div class="gm-sec"><span>✦ 수업 선택</span><i></i></div>
       <div class="gm-cards">${KEYS.map((k, i) => {
-        const l = L[k], c = CARD[k], done = t && t.subj === k;
-        return `<button type="button" class="gm-card ${done ? 'done' : ''}" data-s="${k}" ${t && !done ? 'disabled' : ''} style="--ac:${AC[k]};--ad:${AD[k]}">
+        const l = L[k], c = CARD[k], done = doneOf(k);
+        return `<button type="button" class="gm-card ${done ? 'done' : ''}" data-s="${k}" ${full && !done ? 'disabled' : ''} style="--ac:${AC[k]};--ad:${AD[k]}">
           <span class="gm-corner" aria-hidden="true"></span><span class="gm-no">0${i + 1}</span>
           <span class="gm-ico">${ICO[k]}</span><h3>${l.title}</h3><small class="gm-en">${l.name}</small>
           <ul class="gm-how">${c.how.map(h => `<li>${h}</li>`).join('')}</ul>
-          <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${t.grade} · 결과 보기` : t ? '🔒 내일' : '시작 ▸'}</span></div>
-          ${done ? `<span class="gm-seal">${t.grade}</span>` : ''}</button>`; }).join('')}</div>
+          <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${done.grade} · 결과 보기` : full ? '🔒 내일' : '시작 ▸'}</span></div>
+          ${done ? `<span class="gm-seal">${done.grade}</span>` : ''}</button>`; }).join('')}</div>
       <section class="gm-rank"><span class="rk-corner a" aria-hidden="true">${STAR}</span><span class="rk-corner b" aria-hidden="true">${STAR}</span><header><div><h2>오늘의 수업 랭킹</h2></div>
           <div class="gm-tabs">${KEYS.map(k => `<button type="button" data-r="${k}" class="${k === rankTab ? 'on' : ''}" style="--ac:${AC[k]};--ad:${AD[k]}">${L[k].name}</button>`).join('')}</div></header>
         ${Store.mode === 'demo' ? `<div class="rk-demo">데모 미리보기 · 내가 <button type="button" data-pv="1">1등</button><button type="button" data-pv="2">2등</button><button type="button" data-pv="3">3등</button><button type="button" data-pv="5">5등</button><button type="button" data-pv="0">끄기</button></div>` : ''}
         <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
-    if (Store.mode === 'demo' && t) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
+    if (Store.mode === 'demo' && list.length) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
       $('.gm-today', main).insertAdjacentHTML('beforeend', '<button type="button" class="ls-btn" id="demo-reset">데모 · 다시 하기</button>');
       $('#demo-reset').onclick = () => { try { localStorage.setItem('naru:t:lessons', JSON.stringify(JSON.parse(localStorage.getItem('naru:t:lessons') || '[]').filter(x => !(x.user_id === user.id && x.day === Store.kstDay())))); } catch (e) {} location.reload(); };
     }
     drawMe(); drawRank(); drawCheers();
     $$('.gm-card', main).forEach(b => b.onclick = () => {
-      if (b.classList.contains('done')) return result(t);
+      if (b.classList.contains('done')) return result(doneOf(b.dataset.s));
       if (!b.disabled) start(b.dataset.s);
     });
     $$('.gm-tabs button', main).forEach(b => b.onclick = () => { rankTab = b.dataset.r; $$('.gm-tabs button', main).forEach(x => x.classList.toggle('on', x === b)); drawRank(); });
@@ -127,12 +129,12 @@ App.ready.then(async user => {
       n.onpointerup = () => { sx = null; n.classList.remove('drag'); if (!moved) burst(n, 20); };
     });
   }  function drawMe() {
-    const d = cur.data, locked = !!status.today, hi = locked ? L[status.today.subj].stat : '', st = statsOf(cur), tot = st.reduce((a, [, v]) => a + v, 0);
+    const d = cur.data, hi = todays().map(x => L[x.subj].stat), st = statsOf(cur), tot = st.reduce((a, [, v]) => a + v, 0);
     const box = $('#me'); box.style.setProperty('--cc', d.color || '#c4b6ff');
     box.innerHTML = `<div class="gm-avw">${av(d, 'ls-av gm-av')}<span class="gm-ring" aria-hidden="true"></span></div>
       <div class="gm-id">${d.team ? `<small>${esc(d.team)}</small>` : ''}<b>${esc(d.name)}</b>
         <span class="gm-pow">스탯 합계 <em>${num(tot)}</em></span></div>
-      <div class="gm-stats">${st.map(([k, v]) => `<div class="gm-st ${k === hi ? 'hl' : ''}"><span>${k}</span><b>${num(v)}</b><i style="--w:${Math.max(2, Math.min(100, v))}%"></i></div>`).join('')}</div>`;
+      <div class="gm-stats">${st.map(([k, v]) => `<div class="gm-st ${hi.includes(k) ? 'hl' : ''}"><span>${k}</span><b>${num(v)}</b><i style="--w:${Math.max(2, Math.min(100, v))}%"></i></div>`).join('')}</div>`;
   }
   let rankPv = 0;
   const STAR = '<svg viewBox="0 0 24 24"><path d="M12 0c.9 6.6 4.4 10.1 11 11-6.6.9-10.1 4.4-11 11-.9-6.6-4.4-10.1-11-11 6.6-.9 10.1-4.4 11-11z"/></svg>';
@@ -222,18 +224,18 @@ App.ready.then(async user => {
       const w = $(`[data-i="${r.wrong}"]`, main); if (w) { w.classList.remove('right'); w.classList.add('wrong', 'hinted'); w.disabled = true; }
       pastMe(r.perk); if (again) again(); return null;
     }
-    Object.assign(st, { score: r.score, combo: r.combo, lives: r.lives });
+    Object.assign(st, { combo: r.combo, lives: r.lives }); if (r.score != null) st.score = r.score;   // 인스타는 끝날 때까지 점수가 안 와요
     if (r.spared) setTimeout(() => pastMe(r.perk), 700);   // 외모 특전: 틀린 답을 한 번 봐줬어요 → 과거의 나 문자
     return r;
   }
   async function next(st, r, delay) {
     await wait(delay);
-    if (r.result) { status.today = r.result; if (r.result.perk) setTimeout(() => pastMe(r.result.perk), 1400); if (r.luck) setTimeout(() => luckShow(r.luck), 1600); return result(r.result, st); }   // 스탯 보정이 붙었으면 과거의 나에게서 문자
+    if (r.result) { status.today = r.result; status.list = todays().filter(x => x.subj !== r.result.subj).concat(r.result); if (r.result.perk) setTimeout(() => pastMe(r.result.perk), 1400); if (r.luck) setTimeout(() => luckShow(r.luck), 1600); return result(r.result, st); }   // 스탯 보정이 붙었으면 과거의 나에게서 문자
     let q; try { q = await Store.lessonNext(); } catch (e) { toast(e.message, 'err'); return; }
     play(st, q);
   }
   const hud = (st, extra = '') => `<div class="ls-hud"><span class="t">${L[st.subj].title}<span>${L[st.subj].han}</span></span>${extra}
-    ${st.hint > 0 ? '<button type="button" class="ls-hint" id="ls-hint">💡 힌트</button>' : ''}<span class="ls-combo">${st.combo > 1 ? st.combo + ' COMBO' : ''}</span><span class="score"><small>SCORE</small><b id="sc">${num(st.score)}</b></span><span class="ls-ring" id="ring">0</span></div>`;
+    ${st.hint > 0 ? '<button type="button" class="ls-hint" id="ls-hint">💡 힌트</button>' : ''}<span class="ls-combo">${st.combo > 1 ? st.combo + ' COMBO' : ''}</span><span class="score"><small>SCORE</small><b id="sc">${st.subj === 'art' ? '?' : num(st.score)}</b></span><span class="ls-ring" id="ring">0</span></div>`;   // 인스타는 끝나고 공개
 
   const KIND = { head: ['頭', 'HEAD'], body: ['身', 'FULL BODY'], item: ['物', 'BELONGING'], persona: ['性', 'PERSONA'], song: ['曲', 'THEME SONG'], quote: ['言', 'QUOTE'], skill: ['術', 'ABILITY'] };
   function kor(st, q) {
@@ -298,6 +300,7 @@ App.ready.then(async user => {
   }
   function mor(st, q) {
     const H = L.mor.hearts, w = q.who;
+    if (q.hearts != null) { st.hearts = q.hearts; st.love = !!q.love; }   // 문제마다 다른 인물이라 호감도도 그 인물 것으로
     main.innerHTML = `<div class="gl vn" style="--cc:${esc(w.color || '#fff')}"><div class="vn-stage"><span class="ls-ring" id="ring">0</span>
         <span class="score"><small>SCORE</small><b id="sc">${num(st.score)}</b></span>${av(w)}
         <div class="vn-aff">${esc(w.name)}${gwa(w.name)} 호감도<span class="hearts" id="hearts">${Array.from({ length: H }, (_, i) => `<i class="${i < st.hearts ? '' : 'x'}"></i>`).join('')}</span></div>
@@ -324,18 +327,14 @@ App.ready.then(async user => {
         <img class="shot" src="${esc(q.img)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'사진을 불러올 수 없어요'}))">
         <div class="prog">${Array.from({ length: q.total }, (_, k) => `<i class="${k < q.no - 1 ? 'd' : ''}" ${k === q.no - 1 ? 'id="bar"' : ''}></i>`).join('')}</div>
         <div class="who">${av(w)}<b>${esc(w.handle || w.name)}</b><small>${esc(q.ago || '')}</small></div>
-        ${q.sticker ? `<div class="cap">${esc(q.sticker)}</div>` : ''}<div class="burst" id="burst"></div>
-        <div class="send"><span>메시지 보내기…</span><span style="flex:none;border:0;padding:0;font-size:20px;background:none">♡</span></div></div>
-      <div class="st-side">${hud(st)}<p class="ls-pts" style="text-align:left;margin:-6px 0 12px">STORY ${q.no} / ${q.total}</p><div class="st-replies">${q.opts.map((o, i) => `<button type="button" data-i="${i}"><span class="e">${esc(o[0])}</span>"${esc(o[1])}"</button>`).join('')}</div>
-        <div class="dm" id="dm"></div></div></div>`;
+        ${q.sticker ? `<div class="cap">${esc(q.sticker)}</div>` : ''}<div class="burst" id="burst"></div></div>
+      <div class="st-side">${hud(st)}<p class="ls-pts" style="text-align:left;margin:-6px 0 12px">STORY ${q.no} / ${q.total}</p><div class="st-replies">${q.opts.map((o, i) => `<button type="button" data-i="${i}"><span class="e">${esc(o[0])}</span>"${esc(o[1])}"</button>`).join('')}</div></div></div>`;
     const bar = $('#bar'); window.lsTick = ms => bar.style.setProperty('--sx', Math.min(1, ms / (q.secs * 1000)));
     const go = async i => {
       $$('.st-replies button', main).forEach(b => b.disabled = true);
       if (i >= 0) { $$('.st-replies button', main)[i].classList.add('right'); const b = $('#burst'); b.textContent = q.opts[i][0]; b.classList.add('go'); }
       const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
-      const cls = r.res === '대박' ? '' : r.res === '무난' ? 'mid' : 'bad';
-      $('#dm').innerHTML = `<span class="res ${cls}">${esc(r.res)}</span>`;
-      next(st, r, 1600);
+      next(st, r, 1300);   // 고른 반응의 결과 · 답장은 안 보여요 (끝나고 합계만)
     };
     $$('.st-replies button', main).forEach(b => b.onclick = () => go(+b.dataset.i));
     timer(q.secs, () => go(-1));
@@ -348,6 +347,7 @@ App.ready.then(async user => {
     main.innerHTML = `<div class="gl ls-res"><div class="ls-grades">${G.map((x, i) => `<span class="${i === g ? 'on' : ''}">${x}</span>`).join('')}</div>
       <div class="ls-seal">${t.grade}</div><h3>${l.title} · ${t.grade}등</h3><div class="sc">${line}</div>
       <div class="ls-gain"><span>${l.stat}</span><b>${t.delta > 0 ? '+' + t.delta : t.delta < 0 ? '−' + -t.delta : '±0'}</b>${t.before != null ? `<em>${num(t.before)} → ${num(t.after)}</em>` : ''}</div>
+      ${t.coins > 0 ? `<div class="ls-rk">스탯은 꽝 · 위로금 <b>${num(t.coins)} 영전</b></div>` : ''}
       ${t.rank ? `<div class="ls-rk">오늘의 ${l.name} 랭킹 <b>${t.rank}위</b></div>` : ''}
       <div class="acts"><button type="button" class="ls-btn" id="back">수업 목록으로</button><a class="ls-btn w" href="index.html">로비로</a></div></div>`;
     $('#back').onclick = async () => { badges = await Store.badges().catch(() => badges); rankTab = t.subj; home(); };

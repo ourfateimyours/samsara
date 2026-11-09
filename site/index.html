@@ -360,8 +360,9 @@ Store.matchStatus().then(s => {
   const d = new Date(s.nextAt); el.textContent = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}부터`;
   $('#hr-match').classList.add('done');
 }).catch(() => {});Store.lessonStatus().then(s => {
-  const t = s && s.today; if (!t || $('#hr-lesson').classList.contains('closed')) return;
-  $('#hr-lesson').classList.add('done'); $('#hr-lesson-st').textContent = `${t.grade} 修了`;
+  const list = (s && s.list) || (s && s.today ? [s.today] : []); if (!list.length || $('#hr-lesson').classList.contains('closed')) return;   // 하루 두 과목까지
+  if (list.length >= 2) { $('#hr-lesson').classList.add('done'); $('#hr-lesson-st').textContent = `${list.map(x => x.grade).join(' · ')} 修了`; }
+  else $('#hr-lesson-st').textContent = `${list[0].grade} 修了 · 1회 남음`;
 }).catch(() => {});Store.pangStatus().then(p => {
     if (!p || !p.played) return;
     const b = $('#pang'); b.classList.add('locked'); b.removeAttribute('href'); b.setAttribute('aria-disabled', 'true');
