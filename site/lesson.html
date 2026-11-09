@@ -31,9 +31,9 @@ App.ready.then(async user => {
   if (!po.open) { playClosed(main, 'lesson'); return; }
   if (!po.on) toast('수업이 닫혀 있지만 관리자라서 들어왔어요.');
   const CARD = {
-    kor: { wm: '國', en: 'WANTED · 人物 問答', how: ['흐린 두상 · 글 단서를 보고 인물 맞히기', '빨리 맞힐수록 점수 ↑ · 연속 정답 콤보', '목숨 3개 · 문제당 12초'] },
-    soc: { wm: '社', en: 'FAMILY MESSENGER', how: ['부모 세대 문자에 가문 분위기에 맞게 답장', '1초 안 보너스 · 3초 무난 · 5초 넘으면 차감', '문자 1통'] },
-    mor: { wm: '德', en: 'SERVICE · 好 感', how: ['서로 다른 두 인물 옆에서 수발 들기', '행동 카드 3장 중 하나 · 맞으면 호감도 ♥', '부탁당 5초 · ♥ 가득이면 점수 +20%'] },
+    kor: { wm: '國', en: 'WANTED · 人物 問答', how: ['흐린 두상 · 글 단서를 보고 인물 맞히기', '빨리 맞힐수록 점수 ↑ · 연속 정답 콤보', '목숨 3개 · 문제당 15초'] },
+    soc: { wm: '社', en: 'FAMILY MESSENGER', how: ['부모 세대 문자에 가문 분위기에 맞게 답장', '3초 보너스 · 5초 점수권 · 10초 무난 · 15초 넘으면 차감', '문자 1통'] },
+    mor: { wm: '德', en: 'SERVICE · 好 感', how: ['서로 다른 두 인물 옆에서 수발 들기', '행동 카드 3장 중 하나 · 맞으면 호감도 ♥', '부탁당 15초 · 빠를수록 점수 ↑ · ♥ 가득이면 +20%'] },
     art: { wm: '藝', en: 'INSTAGRAM STORY', how: ['인물의 셀피 스토리를 보고 반응 남기기', '고른 반응에 따라 결과가 달라요', '대박 · 무난 · 망함'] }
   };
   const KEYS = Object.keys(L), ABC = 'ABCD';
@@ -74,7 +74,7 @@ App.ready.then(async user => {
     if (!mine.length) { main.innerHTML = `<div class="gl ls-msg">게시된 캐릭터가 있어야 수업을 들을 수 있어요.<br><a class="ls-btn" style="display:inline-block;margin-top:16px" href="index.html">로비로</a></div>`; return; }
     main.innerHTML = `<div class="gm-head">
         <div><h1 class="ls-ttl">후계자 수업</h1></div>
-        <div class="gm-today ${t ? 'off' : ''}"><span class="gm-orb"></span><div><b>${full ? '오늘 수업 완료' : `${DAY_MAX - list.length}회 남음`}</b></div><em>00:00 KST 초기화</em></div></div>
+        <div class="gm-today ${t ? 'off' : ''}"><span class="gm-orb"></span><div><b>${full ? '오늘 수업 완료' : `${DAY_MAX - list.length}회 남음`}</b></div><em>매일 오전 8시 초기화</em></div></div>
       <section class="gm-hero" id="me"></section>
       <div class="gm-sec"><span>✦ 수업 선택</span><i></i></div>
       <div class="gm-cards">${KEYS.map((k, i) => {
@@ -91,7 +91,7 @@ App.ready.then(async user => {
         <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
     if (Store.mode === 'demo' && list.length) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
       $('.gm-today', main).insertAdjacentHTML('beforeend', '<button type="button" class="ls-btn" id="demo-reset">데모 · 다시 하기</button>');
-      $('#demo-reset').onclick = () => { try { localStorage.setItem('naru:t:lessons', JSON.stringify(JSON.parse(localStorage.getItem('naru:t:lessons') || '[]').filter(x => !(x.user_id === user.id && x.day === Store.kstDay())))); } catch (e) {} location.reload(); };
+      $('#demo-reset').onclick = () => { try { localStorage.setItem('naru:t:lessons', JSON.stringify(JSON.parse(localStorage.getItem('naru:t:lessons') || '[]').filter(x => !(x.user_id === user.id && x.day === Store.lessonDay())))); } catch (e) {} location.reload(); };
     }
     drawMe(); drawRank(); drawCheers();
     $$('.gm-card', main).forEach(b => b.onclick = () => {
@@ -281,15 +281,15 @@ App.ready.then(async user => {
         <div class="replies">${q.opts.map((o, i) => `<button type="button" data-i="${i}">${esc(o)}</button>`).join('')}</div>
         <div class="im-input"><span class="im-plus">+</span><span class="im-field">iMessage</span></div></div></div>
       <div class="msg-side">${hud(st)}<div class="tone" id="tone">
-        <div data-t="fast"><b>0 ~ 1초</b> 정답이면 보너스 · 최대 +1,500</div><div data-t="ok"><b>1 ~ 3초</b> 무난 · 빠를수록 더</div>
-        <div data-t="slow"><b>3 ~ 5초</b> 핀잔 · +400 ~ 700</div><div data-t="late"><b>5초 넘음 · 틀린 답</b> −500</div></div>
+        <div data-t="fast"><b>0 ~ 3초</b> 보너스 · +3,000</div><div data-t="good"><b>3 ~ 5초</b> 점수권 · +2,400</div><div data-t="ok"><b>5 ~ 10초</b> 무난 · +1,650</div>
+        <div data-t="slow"><b>10 ~ 15초</b> 핀잔 · +900</div><div data-t="late"><b>15초 넘음</b> −600</div><div data-t="wrong"><b>틀린 답</b> 0</div></div>
         <p class="ls-pts" style="text-align:left">${esc(q.house)} · ${q.no} / ${q.total}통</p></div></div>`;
     const chat = $('#chat'); chat.scrollTop = chat.scrollHeight;
     const go = async i => {
       $$('.replies button', main).forEach(b => b.disabled = true);
       const r = await answer(st, i, () => timer(q.secs, () => go(-1))); if (!r) return;
       $$('.replies button', main).forEach((b, k) => { if (k === r.ok) b.classList.add('right'); else if (k === i) b.classList.add('wrong'); });
-      $$('#tone div').forEach(d => d.classList.toggle('on', d.dataset.t === r.tier || (r.tier === 'wrong' && d.dataset.t === 'late')));
+      $$('#tone div').forEach(d => d.classList.toggle('on', d.dataset.t === r.tier));
       if (i >= 0) { log.push({ out: q.opts[i] }); chat.insertAdjacentHTML('beforeend', bub({ out: q.opts[i] }) + '<small class="im-read">읽음</small>'); }
       if (r.scold) { log.push({ scold: r.scold }); setTimeout(() => { chat.insertAdjacentHTML('beforeend', bub({ scold: r.scold })); chat.scrollTop = chat.scrollHeight; }, 450); }
       chat.scrollTop = chat.scrollHeight; $('#sc').textContent = num(r.score);

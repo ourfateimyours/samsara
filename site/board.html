@@ -46,19 +46,13 @@ App.ready.then(async user => {
   // 쪽지 글씨체: 쓸 때 쪽지마다 골라요 (인천교육자람체 / 온글잎 박다현체 / 사이트 고딕체 · 고딕은 이미 받은 글꼴이라 트래픽이 늘지 않아요)
   const NOTE_FONTS = { jaram: '자람체', dahyeon: '박다현체', gothic: '고딕체' };
 
-  // 스티커: 관리자 사이트 탭 '보드 스티커' 목록에 있는 것만 보여요 (쪽지마다 최대 3개)
-  const STK_MAX = 3;
+  // 스티커: 다른 사람이 남의 쪽지에 붙여요 (한 사람 1개 · 쪽지당 5개 · 붙일 자리 · 규칙은 서버가 정해요)
+  //   관리자 사이트 탭 '보드 스티커' 목록에 있는 것만 보여요
+  const STK_MAX = 5;
   let STICKERS = [];
   const stkOf = n => (Array.isArray(n.stickers) ? n.stickers : []).filter(s => s && STICKERS.includes(s.u)).slice(0, STK_MAX);
   const stkHTML = (n, cls) => stkOf(n).map(s => `<img class="${cls}" src="${esc(s.u)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()"
       style="left:${+s.x || 0}%;top:${+s.y || 0}%;--sr:${+s.r || 0}deg">`).join('');
-  // 붙는 자리: 쪽지 모서리 · 가장자리 (살짝 삐져나오게)
-  const SPOTS = [[-15, -12], [76, -13], [-18, 74], [78, 76], [38, -18], [86, 38], [-19, 34]];   // 글자를 덜 가리게 바깥쪽으로
-  function placeStickers(urls, prev) {
-    const keep = (prev || []).filter(s => urls.includes(s.u)), used = keep.map(s => s.x + ',' + s.y);
-    const free = SPOTS.filter(p => !used.includes(p[0] + ',' + p[1])).sort(() => Math.random() - .5);
-    return urls.map(u => keep.find(s => s.u === u) || (p => ({ u, x: p[0], y: p[1], r: Math.round((Math.random() - .5) * 36) }))(free.shift() || SPOTS[0]));
-  }
 
   async function load() {
     try {
@@ -181,12 +175,28 @@ App.ready.then(async user => {
         <span class="nr-thread" aria-hidden="true"></span>
         ${n.body ? `<p class="nr-body">${esc(n.body)}</p>` : '<p class="nr-body dim">적힌 내용이 없어요.</p>'}
         <div class="nr-meta"><span class="nr-who">${esc(n.author)}</span><span>${fmtDate(n.created_at)}</span>${ch ? `<a href="character.html?id=${encodeURIComponent(ch.id)}">${esc(ch.data.name)} 프로필 ›</a>` : ''}</div>
+        ${stkPanel(n, mine)}
         ${mine ? `<div class="nr-acts"><button type="button" class="nr-btn" data-nr="del">떼기</button><button type="button" class="nr-btn go" data-nr="edit">수정</button></div>` : ''}
       </div>`, 'note-read-modal');
     if (mine) {
       $('[data-nr="edit"]', m).onclick = () => editNote(n);
       $('[data-nr="del"]', m).onclick = () => delNote(n);
     }
+    // 스티커 붙이기 · 떼기 → 쪽지를 다시 그리고 읽기 창도 새로
+    const after = st => { n.stickers = st; render(); readNote(n); };
+    $$('[data-stk-add]', m).forEach(b => b.onclick = async () => { b.disabled = true; try { after(await Store.noteStickerAdd(n.id, b.dataset.stkAdd)); toast('스티커를 붙였어요 ✦'); } catch (e) { toast(e.message, 'err'); b.disabled = false; } });
+    $$('[data-stk-del]', m).forEach(b => b.onclick = async () => { b.disabled = true; try { after(await Store.noteStickerDel(n.id, b.dataset.stkDel)); toast('스티커를 뗐어요'); } catch (e) { toast(e.message, 'err'); b.disabled = false; } });
+  }
+  // 읽기 창 아래 스티커 칸: 붙은 스티커(내가 붙였거나 내 쪽지면 ✕) + 남의 쪽지면 붙일 스티커
+  function stkPanel(n, mine) {
+    if (!STICKERS.length) return '';
+    const on = stkOf(n), myStk = user && on.find(s => s.by === user.id);
+    const canAdd = user && !mine && !myStk && on.length < STK_MAX;
+    const tiles = on.map(s => `<span class="nr-st-on"><img src="${esc(s.u)}" alt="" referrerpolicy="no-referrer">${user && (mine || s.by === user.id) ? `<button type="button" data-stk-del="${esc(s.id || '')}" title="떼기">✕</button>` : ''}</span>`).join('');
+    const hint = !user ? '입장하면 스티커를 붙일 수 있어요.' : mine ? (on.length ? '내 쪽지에 붙은 스티커 · ✕ 로 뗄 수 있어요' : '다른 사람이 이 쪽지에 스티커를 붙일 수 있어요.')
+      : myStk ? '내가 붙인 스티커는 ✕ 로 떼고 다시 붙일 수 있어요.' : on.length >= STK_MAX ? '스티커가 꽉 찼어요.' : '스티커를 하나 붙여 주세요 · 한 사람 1개';
+    return `<div class="nr-stks">${tiles ? `<div class="nr-st-row">${tiles}</div>` : ''}<p>${hint}</p>
+      ${canAdd ? `<div class="nf-stk">${STICKERS.map(u => `<button type="button" class="nr-st-add" data-stk-add="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div>` : ''}</div>`;
   }
 
   function setLinking(on) {
@@ -249,8 +259,6 @@ App.ready.then(async user => {
           `<label><input type="radio" name="color" value="${k}" ${k === color ? 'checked' : ''}><span style="background:${v}"></span></label>`).join('')}</div></div>
         <div class="field"><span>글씨체</span><div class="nf-fonts">${Object.entries(NOTE_FONTS).map(([k, l]) =>
           `<label class="nf-f f-${k}"><input type="radio" name="font" value="${k}" ${k === font ? 'checked' : ''}><b>${l}</b></label>`).join('')}</div></div>
-        ${STICKERS.length ? `<div class="field"><span>스티커 <small>최대 ${STK_MAX}개 · 쪽지 모서리에 붙어요</small></span><div class="nf-stk">${STICKERS.map(u =>
-          `<label><input type="checkbox" name="stk" value="${esc(u)}" ${stkOf(n || {}).some(s => s.u === u) ? 'checked' : ''}><img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></label>`).join('')}</div></div>` : ''}
         <div class="field"><span>모브 사진 <small>외부 이미지 링크 · 넣으면 폴라로이드가 돼요</small></span>
           <div class="img-pick"><div class="thumb" id="nph" style="background-image:${cssUrl(n && n.photo)}"></div>
             <div class="ctrl"><input name="photo" type="url" inputmode="url" placeholder="https://… (이미지 주소)" value="${esc((n && n.photo) || '')}"></div></div></div>
@@ -260,14 +268,11 @@ App.ready.then(async user => {
     const f = $('#nf', m);
     $('[data-cancel]', m).onclick = closeModal;
     f.photo.oninput = () => { $('#nph', m).style.backgroundImage = cssUrl(safeUrl(f.photo.value.trim())); };
-    $$('input[name="stk"]', m).forEach(c => c.onchange = () => { if ($$('input[name="stk"]:checked', m).length > STK_MAX) { c.checked = false; toast(`스티커는 ${STK_MAX}개까지 붙일 수 있어요.`); } });
     f.onsubmit = async e => {
       e.preventDefault();
       const photo = f.photo.value.trim();
       if (photo && !/^https?:\/\//i.test(photo)) return $('#nerr', m).textContent = '사진은 https:// 로 시작하는 이미지 링크로 넣어 주세요.';
       const data = { title: f.title.value.trim(), body: f.body.value.trim(), color: f.color.value, font: f.font.value, photo };
-      const picked = $$('input[name="stk"]:checked', m).map(c => c.value).slice(0, STK_MAX);
-      if (picked.length || stkOf(n || {}).length) data.stickers = placeStickers(picked, n && n.stickers);   // 스티커를 고르거나 뺄 때만 보내요
       if (!data.title && !data.body && !data.photo && !(n && n.character_id)) return $('#nerr', m).textContent = '제목이나 내용을 적어 주세요.';
       try {
         if (n) Object.assign(n, await Store.update('notes', n.id, data));

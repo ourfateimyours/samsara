@@ -595,10 +595,10 @@ App.ready.then(async user => {
     try { rows = await Store.adminLessonsToday(); }
     catch (e) { pane.innerHTML = `<section class="adm-card"><p class="dim">불러오지 못했어요 · ${esc(e.message || e)}<br>수업-기회.sql 을 먼저 실행했는지 확인해 주세요.</p></section>`; return; }
     const prog = r => r.done ? `${r.grade || '?'} · ${Number(r.score || 0).toLocaleString()}점` : `<b style="color:#ff8a80">진행 중 · ${r.answered === r.i ? r.i + 1 : r.i} / ${r.total} 풀고 멈춤</b>`;
-    const fx = r => [r.delta ? `${r.delta > 0 ? '+' : ''}${r.delta} 스탯` : '', r.consol ? `위로금 ${r.consol}` : ''].filter(Boolean).join(' · ');
-    pane.innerHTML = `<section class="adm-card"><header><b>📋 오늘 수업 기록</b><span class="label">${rows.length}개 · 자정에 초기화</span></header>
+    const fx = r => [r.delta ? `${r.delta > 0 ? '+' : ''}${r.delta} 스탯` : '', r.consol ? `영전 ${r.consol}` : ''].filter(Boolean).join(' · ');
+    pane.innerHTML = `<section class="adm-card"><header><b>📋 오늘 수업 기록</b><span class="label">어제 · 오늘 ${rows.length}개 · 수업 하루는 오전 8시에 바뀌어요</span></header>
       <p class="hint-text">오류로 수업을 제대로 못 한 회원에게 그 과목 기회를 돌려줘요. 돌려주면 그 수업이 없던 일이 돼요 — 그 수업으로 바뀐 스탯을 되돌리고, 꽝 위로금을 거두고, 랭킹에서 빠져요. 두 과목을 들은 회원은 두 줄로 나와서 하나만 돌려줄 수 있어요.</p>
-      <ul class="adm-list">${rows.map(r => `<li data-id="${esc(r.id)}"><b>${esc(r.nick)}</b><span>${esc(r.name)}</span><span>${SN[r.subj] || esc(r.subj)}</span><span>${prog(r)}</span>${fx(r) ? `<span>${esc(fx(r))}</span>` : ''}<span>${new Date(r.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+      <ul class="adm-list">${rows.map(r => `<li data-id="${esc(r.id)}">${r.today === false ? '<span style="color:#ffb36b">어제</span>' : ''}<b>${esc(r.nick)}</b><span>${esc(r.name)}</span><span>${SN[r.subj] || esc(r.subj)}</span><span>${prog(r)}</span>${fx(r) ? `<span>${esc(fx(r))}</span>` : ''}<span>${new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         <button class="icon-btn danger" data-reset style="margin-left:auto">기회 돌려주기</button></li>`).join('') || '<li class="dim">오늘 수업을 들은 회원이 없어요.</li>'}</ul></section>`;
     pane.querySelectorAll('[data-reset]').forEach(b => b.onclick = async () => {
       const li = b.closest('li'), r = rows.find(x => x.id === li.dataset.id); if (!r) return;
