@@ -121,14 +121,14 @@ App.ready.then(async user => {
     if (gift && !others.length) return toast('선물할 다른 멤버가 아직 없어요.', 'err');
     const charsOf = uid => (uid === user.id ? mine : allChars.filter(c => c.owner_id === uid)).map(c => ({ id: c.id, name: normChar(c.data || c.draft).name || '이름 없음' }));
     const m = openModal(`<div class="buy-ask"><div class="eyebrow">${gift ? 'Gift' : 'Purchase'}</div><h3>${esc(it.name)}</h3>
-      ${gift ? `<label class="field"><span>받을 사람</span><select class="input" id="bx-to">${others.map(o => `<option value="${esc(o.id)}">${esc(o.nickname)}</option>`).join('')}</select></label>` : ''}
+      ${gift ? `<label class="field"><span>받을 사람</span><select class="input" id="bx-to">${it.kind === 'cheer' ? '<option value="">✦ 전체 · 받는 사람 이름 없이</option>' : ''}${others.map(o => `<option value="${esc(o.id)}">${esc(o.nickname)}</option>`).join('')}</select></label>` : ''}
       ${it.kind === 'boost' ? `<label class="field"><span>스탯을 올릴 캐릭터</span><select class="input" id="bx-ch"></select></label>` : ''}
       ${it.kind === 'pouch' ? `<label class="field"><span>얼마짜리 복주머니? <small>${it.price} 영전부터 · 끝 없음</small></span><input class="input" id="bx-amt" type="number" min="${it.price}" step="100" value="${it.price}" inputmode="numeric"></label>` : ''}
       ${it.kind === 'cheer' ? `<label class="field"><span>응원 한마디 <small>40자 · 보낸 사람은 안 알려 줘요</small></span><input class="input" id="bx-msg" maxlength="40" placeholder="예) 오늘 수업 甲 받자!"></label>` : ''}
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
         : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.kind === 'ticket' ? '지정권은 사용할 때 관리자에게 알려 주세요.'
-        : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '받는 사람의 오늘 수업 페이지 맨 위에 하루 동안 붙어 있다가, 자정이 지나면 사라져요.' : ''}</p>
+        : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
       sel.innerHTML = cs.length ? cs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') : '<option value="">캐릭터가 없어요</option>'; };
@@ -145,7 +145,7 @@ App.ready.then(async user => {
         const r = await Store.buy(it.id, { to, char: ch, msg, amount });
         if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); if (r.luck) setTimeout(() => luckShow(r.luck), 1500); return pouchOpen(it, r.pouch); }
         wal = r.wallet; items = await Store.shopItems().catch(() => items); closeModal(); renderAll();   // 남은 수량 · 품절 다시 받아 오기
-        toast(it.kind === 'cheer' ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
+        toast(it.kind === 'cheer' ? (to ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : '모두에게 익명 응원 쪽지를 붙였어요 ✦') : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
       } catch (err) { toast(err.message, 'err'); if (/품절/.test(err.message)) { items = await Store.shopItems().catch(() => items); closeModal(); renderAll(); } }
     };
   }

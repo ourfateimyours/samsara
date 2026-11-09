@@ -86,7 +86,7 @@ App.ready.then(async user => {
           <div class="gm-ft"><span class="gm-stat">▲ ${l.stat}</span><span class="gm-go">${done ? `${done.grade} · 결과 보기` : full ? '🔒 내일' : '시작 ▸'}</span></div>
           ${done ? `<span class="gm-seal">${done.grade}</span>` : ''}</button>`; }).join('')}</div>
       <section class="gm-rank"><span class="rk-corner a" aria-hidden="true">${STAR}</span><span class="rk-corner b" aria-hidden="true">${STAR}</span><header><div><h2>오늘의 수업 랭킹</h2></div>
-          <small class="rk-sub">오늘 들은 과목 점수 합계</small></header>
+          <div class="gm-tabs"><button type="button" class="on" style="--ac:${AC.all};--ad:${AD.all}" title="오늘 들은 과목 점수 합계">전체</button></div></header>
         ${Store.mode === 'demo' ? `<div class="rk-demo">데모 미리보기 · 내가 <button type="button" data-pv="1">1등</button><button type="button" data-pv="2">2등</button><button type="button" data-pv="3">3등</button><button type="button" data-pv="5">5등</button><button type="button" data-pv="0">끄기</button></div>` : ''}
         <div class="rk-mine" id="rkme"></div><div class="rk-pod" id="pod"></div><ol class="rk-list" id="rk"></ol></section>`;
     if (Store.mode === 'demo' && list.length) {   // 데모 전용: 몇 번이고 다시 해 보기 (실제 사이트엔 안 나와요)
