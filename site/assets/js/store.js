@@ -45,10 +45,11 @@
   const PANG = { min: 50, max: 1000, ext: 30, grace: 300 };   // ext: 모래시계로 늘릴 수 있는 최대 시간(초)
   const LESSONS = {
     // n: 하루 문제 수 · pts: 한 문제 점수 배수 (문제 수가 줄어든 만큼) · 하루 두 과목까지 · ⚠ 수업-문제수.sql lesson_cfg 와 같게
-    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 4, secs: 12, lives: 3, pts: 2 },
-    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 1, secs: 5, pts: 5 },
-    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 2, secs: 5, hearts: 5, love: 1.2, pts: 2.5 },   // 2문제 = 서로 다른 두 인물
-    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 2, secs: 10, pts: 1.5 }
+    // max: 만점 · 등급은 모든 과목 만점 대비 % (80 甲 · 60 乙 · 30 丙)
+    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 4, secs: 12, lives: 3, pts: 1.087, max: 5000 },
+    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 1, secs: 5, pts: 2, max: 3000 },
+    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 2, secs: 5, hearts: 5, love: 1.2, pts: 1.042, max: 3000 },   // 2문제 = 서로 다른 두 인물
+    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 2, secs: 10, pts: .5, max: 3000 }
   };
   const GRADES = ['甲', '乙', '丙', '丁'];
   const POUCH_DAY = 3;
@@ -240,6 +241,8 @@
       async lessonAnswer(me, choice) { return ok(await sb.rpc('lesson_answer_l', { p_choice: choice })); },
       async lessonNext() { return ok(await sb.rpc('lesson_next')); },
       async lessonHint() { return ok(await sb.rpc('lesson_hint')); },
+      async adminLessonsToday() { return ok(await sb.rpc('admin_lessons_today')) || []; },
+      async adminLessonReset(id) { return ok(await sb.rpc('admin_lesson_reset', { p_id: id })); },
       // 대국: 방 · 정산은 서버 함수 · 수 검사는 match-move · 상대가 둘 때만 신호를 받아요 (화면을 연 동안만)
       async matchStatus() { return ok(await sb.rpc('match_status')); },
       async matchRooms() { return ok(await sb.rpc('match_rooms')) || []; },
@@ -503,9 +506,12 @@
     async lessonItemDel(subj, id) { await this.requireAdmin(); return B.lessonItemDel(subj, id); },
     async lessonStatus() { const u = await this.user(); if (!u) return { today: null }; return B.lessonStatus(u.id); },
     async lessonStart(subj, charId, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonStart(u.id, subj, charId, msg); },   // msg: 1등이 되면 랭킹 전광판에 흐를 한마디 (40자)
-    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj); return r; },   // 끝나면 그 과목 랭킹은 새로
+    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj, 'lrank:all'); return r; },   // 끝나면 그 과목 랭킹은 새로
     async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
     async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
+    // 관리자: 오늘 수업 기록 · 기회 돌려주기 (그 수업으로 바뀐 스탯 · 위로금까지 되돌려요)
+    async adminLessonsToday() { await this.requireAdmin(); return B.adminLessonsToday(); },
+    async adminLessonReset(id) { await this.requireAdmin(); dropBadges(); drop('lrank:kor', 'lrank:soc', 'lrank:mor', 'lrank:art', 'lrank:all'); return B.adminLessonReset(id); },
     async cheersToday() { const u = await this.user(); if (!u) return []; return remote ? hold('cheers', 12e4, () => B.cheersToday(u.id)) : B.cheersToday(u.id); },   // 수업 목록을 다시 그릴 때마다 묻지 않게 2분 기억
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
     async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
