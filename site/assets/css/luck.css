@@ -32,11 +32,11 @@
 .lk-sari::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 26px; background: linear-gradient(150deg, #fff, #fff8fc 55%, #f6f3ff); }
 .lk-sari.go { animation: lkIn .8s cubic-bezier(.2, 1.5, .4, 1) forwards, lkOut 1.8s ease-in forwards 6s; }
 @keyframes lkIn { 0% { transform: translate(-50%, -150%) scale(.9); } 100% { transform: translate(-50%, 0) scale(1); } }
-.lk-sav { position: relative; grid-row: span 2; width: 66px; height: 66px; display: block; }
+.lk-sav { position: relative; grid-row: span 2; width: 66px; height: 66px; flex: none; aspect-ratio: 1; align-self: center; display: block; }   /* 어떤 화면에서도 정원 */
 .lk-sav::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from var(--lk-a, 0deg), #ff9db5, #ffc98f, #fff09a, #a8f0b4, #9fdcff, #b7a8ff, #f3a8e6, #ff9db5); animation: lkRbw 2.4s linear infinite; }
-.lk-sari .lk-av { position: absolute; inset: 3px; width: auto; height: auto; border: 2px solid #fff; background: #fff url('../img/mascot/sm/cat1.webp') center 30% / 125% no-repeat; }
+.lk-sari .lk-av { position: absolute; inset: 3px; width: auto; height: auto; box-sizing: border-box; border: 2px solid #fff; background: #fff url('../img/mascot/sm/cat1.webp') center 30% / 125% no-repeat; }
 .lk-sav.gulp { animation: lkGulp .55s cubic-bezier(.3, 1.6, .5, 1); }
-@keyframes lkGulp { 0% { transform: scale(1); } 35% { transform: scale(1.22, .86); } 65% { transform: scale(.92, 1.1); } 100% { transform: scale(1); } }
+@keyframes lkGulp { 0% { transform: scale(1); } 35% { transform: scale(1.2); } 65% { transform: scale(.94); } 100% { transform: scale(1); } }   /* 꿀꺽: 찌그러지지 않고 통통 */
 .lk-sari .lk-top b { padding: 1px 11px; border-radius: 99px; color: #fff; font-size: 12.5px; letter-spacing: .1em; background: linear-gradient(90deg, #ff9db5, #ffb37a, #7fd69a, #7cc4f5, #a890ff); }
 .lk-sari .lk-top small { color: #a29cb6; }
 .lk-sari .lk-msg { font-size: 15.5px; line-height: 1.42; }
