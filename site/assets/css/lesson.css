@@ -828,3 +828,7 @@ body.ls-astra .ls-wrap { position: relative; z-index: 1; }
 /* 문제 푸는 동안: 유리 흐림 · 끝없이 도는 장식을 쉬어요 (버벅임 줄이기) */
 body.ls-playing .gl, body.ls-playing .vn-box, body.ls-playing .ls-hud { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 body.ls-playing .ls-hud *, body.ls-playing .gm-orb, body.ls-playing .rk-star { animation: none !important; }
+/* 두상 움짤: 첫 장면 그림 위에 영상을 꽉 채워요 (lesson.html av · 수배서 흐린 두상) */
+.ls-av { position: relative; overflow: hidden; }
+.vn-stage .ls-av { position: absolute; }
+.ls-av > .ls-av-v, .poster .face > .ls-av-v { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; border-radius: inherit; pointer-events: none; }
