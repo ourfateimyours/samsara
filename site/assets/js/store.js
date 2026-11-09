@@ -244,6 +244,8 @@
       async lessonAnswer(me, choice) { return ok(await sb.rpc('lesson_answer_l', { p_choice: choice })); },
       async lessonNext() { return ok(await sb.rpc('lesson_next')); },
       async lessonHint() { return ok(await sb.rpc('lesson_hint')); },
+      async noteStickerAdd(me, noteId, url) { return ok(await sb.rpc('note_sticker_add', { p_note: noteId, p_url: url })) || []; },
+      async noteStickerDel(me, noteId, id) { return ok(await sb.rpc('note_sticker_del', { p_note: noteId, p_id: id })) || []; },
       async adminLessonsToday() { return ok(await sb.rpc('admin_lessons_today')) || []; },
       async adminLessonReset(id) { return ok(await sb.rpc('admin_lesson_reset', { p_id: id })); },
       // 대국: 방 · 정산은 서버 함수 · 수 검사는 match-move · 상대가 둘 때만 신호를 받아요 (화면을 연 동안만)
@@ -512,6 +514,9 @@
     async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj, 'lrank:all'); return r; },   // 끝나면 그 과목 랭킹은 새로
     async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
     async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
+    // 사건 보드 스티커: 남의 쪽지에 붙이기 · 떼기 (규칙은 서버에서)
+    async noteStickerAdd(noteId, url) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.noteStickerAdd(u.id, noteId, url); },
+    async noteStickerDel(noteId, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.noteStickerDel(u.id, noteId, id); },
     // 관리자: 오늘 수업 기록 · 기회 돌려주기 (그 수업으로 바뀐 스탯 · 위로금까지 되돌려요)
     async adminLessonsToday() { await this.requireAdmin(); return B.adminLessonsToday(); },
     async adminLessonReset(id) { await this.requireAdmin(); dropBadges(); drop('lrank:kor', 'lrank:soc', 'lrank:mor', 'lrank:art', 'lrank:all'); return B.adminLessonReset(id); },
