@@ -28,6 +28,7 @@
   const dayStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
   /* 출석 · 상점 — 날짜는 한국 시간 기준 'YYYY-MM-DD' */
   const kstDay = (t = Date.now()) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
+  const lessonDay = (t = Date.now()) => kstDay(t - 8 * 3600e3);   // 수업의 하루는 오전 8시부터 (⚠ 수업-9시.sql lesson_day 와 같게)
   // 출석 영전: 연속 출석 1~7일째에 받는 양 · 7일을 채우면 다음 날부터 다시 1일째 (하루라도 빠져도 1일째로)
   const ATTEND = { week: [10, 15, 20, 25, 30, 30, 50] };
   const attendReward = streak => ATTEND.week[(Math.max(1, streak) - 1) % 7];
@@ -46,10 +47,11 @@
   const LESSONS = {
     // n: 하루 문제 수 · pts: 한 문제 점수 배수 (문제 수가 줄어든 만큼) · 하루 두 과목까지 · ⚠ 수업-문제수.sql lesson_cfg 와 같게
     // max: 만점 · 등급은 모든 과목 만점 대비 % (80 甲 · 60 乙 · 30 丙)
-    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 4, secs: 12, lives: 3, pts: 1.087, max: 5000 },
-    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 1, secs: 5, pts: 2, max: 3000 },
-    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 2, secs: 5, hearts: 5, love: 1.2, pts: 1.042, max: 3000 },   // 2문제 = 서로 다른 두 인물
-    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 2, secs: 10, pts: .5, max: 3000 }
+    // 모든 과목 15초 · 시간 구간 점수 (3초 100% · 5초 80% · 10초 55% · 15초 30% · 넘으면 −20%) · ⚠ 수업-시간.sql 과 같게
+    kor:  { name: '국어', han: '國語', title: '수배서', stat: '지력', n: 4, secs: 15, lives: 3, max: 5000 },
+    soc:  { name: '사회', han: '社會', title: '가서', stat: '이성', n: 1, secs: 15, max: 3000 },
+    mor:  { name: '도덕심', han: '道德', title: '시봉', stat: '근력', n: 2, secs: 15, hearts: 5, love: 1.2, max: 3000 },   // 2문제 = 서로 다른 두 인물
+    art:  { name: '미술', han: '美術', title: '스토리', stat: '행운', n: 2, secs: 15, max: 3000 }
   };
   const GRADES = ['甲', '乙', '丙', '丁'];
   const POUCH_DAY = 3;
@@ -91,12 +93,13 @@
     lesson_on: false, match_on: false,       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
-    lobby_banners: []   // 메인 왼쪽 아래 배너 [{ tag, title, text, link, c1, c2, angle, ghost }]
+    lobby_banners: [],   // 메인 왼쪽 아래 배너 [{ tag, title, text, link, c1, c2, angle, ghost }]
+    board_stickers: ['https://i.imgur.com/RwKWE0z.png', 'https://i.imgur.com/qdfAM60.png', 'https://i.imgur.com/XhFJYF1.png', 'https://i.imgur.com/Z2BN6L8.png', 'https://i.imgur.com/hYURJd0.png', 'https://i.imgur.com/CuCgPLq.png']   // 사건 보드 스티커 (관리자 사이트 탭)
   };
 
   /* 데모 모드(Supabase 설정 없음)에서만: 데모 저장소 · 규칙은 demo-store.js (⚠ 사이트에 올리지 않는 파일) */
   if (!remoteOn) {
-    window.__storeShared = { newId, now, byCreated, DAILY, dayStart, kstDay, attendReward, STATS, FROM, isFromTitle, titleText, CAT, PANG, PANG_LEVELS, pangLevel, LESSONS, GRADES, POUCH_DAY, MATCH, soldOut, LOG_DAYS, streakOf, emptyWallet, affToday, PROFILE_KEYS, DEFAULT_SETTINGS };
+    window.__storeShared = { newId, now, byCreated, DAILY, dayStart, kstDay, lessonDay, attendReward, STATS, FROM, isFromTitle, titleText, CAT, PANG, PANG_LEVELS, pangLevel, LESSONS, GRADES, POUCH_DAY, MATCH, soldOut, LOG_DAYS, streakOf, emptyWallet, affToday, PROFILE_KEYS, DEFAULT_SETTINGS };
     document.write('<script src="assets/js/demo-store.js"><\/script>');
   }
 
@@ -494,7 +497,7 @@
     async pangStatus() { const u = await this.user(); if (!u) return { played: false }; return B.pangStatus(u.id); },
     async pangStart(bet, level) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.pangStart(u.id, bet, level); },
     async pangFinish(moves) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.pangFinish(u.id, moves); },
-    LESSONS, GRADES,
+    LESSONS, GRADES, lessonDay,
     async playOpen(kind) {
       const [s, u] = await Promise.all([this.settings(), this.user()]);
       let asMember = false; try { asMember = localStorage.getItem('naru:asMember') === '1'; } catch (e) {}   // 관리자 '회원 화면으로 보기'
