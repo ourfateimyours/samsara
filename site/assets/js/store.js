@@ -503,10 +503,10 @@
     async lessonItemDel(subj, id) { await this.requireAdmin(); return B.lessonItemDel(subj, id); },
     async lessonStatus() { const u = await this.user(); if (!u) return { today: null }; return B.lessonStatus(u.id); },
     async lessonStart(subj, charId, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonStart(u.id, subj, charId, msg); },   // msg: 1등이 되면 랭킹 전광판에 흐를 한마디 (40자)
-    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.lessonAnswer(u.id, choice); },
+    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj); return r; },   // 끝나면 그 과목 랭킹은 새로
     async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
     async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
-    async cheersToday() { const u = await this.user(); if (!u) return []; return B.cheersToday(u.id); },
+    async cheersToday() { const u = await this.user(); if (!u) return []; return remote ? hold('cheers', 12e4, () => B.cheersToday(u.id)) : B.cheersToday(u.id); },   // 수업 목록을 다시 그릴 때마다 묻지 않게 2분 기억
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
     async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
     async adminGiftBox(charId) { await this.requireAdmin(); const u = await this.user(); return B.adminGiftBox(u.id, u.nickname, charId); },
@@ -522,7 +522,7 @@
       if (remote) return B.matchSub(id, cb);
       const t = setInterval(() => { if (!document.hidden) cb(); }, 1100); return { ping() {}, stop() { clearInterval(t); } };
     },
-    async lessonRank(subj) { const u = await this.user(); return B.lessonRank(u && u.id, subj); },
+    async lessonRank(subj) { const u = await this.user(); return remote ? hold('lrank:' + subj, 6e4, () => B.lessonRank(u && u.id, subj)) : B.lessonRank(u && u.id, subj); },   // 랭킹 탭을 오갈 때마다 묻지 않게 1분 기억 (내 수업이 끝나면 바로 새로)
 
     isPublic: r => !!(r && r.published_at),
     /* 공개 목록: 게시된 캐릭터만 (게시본 기준) */
