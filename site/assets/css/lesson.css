@@ -832,3 +832,4 @@ body.ls-playing .ls-hud *, body.ls-playing .gm-orb, body.ls-playing .rk-star { a
 .ls-av { position: relative; overflow: hidden; }
 .vn-stage .ls-av { position: absolute; }
 .ls-av > .ls-av-v, .poster .face > .ls-av-v { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; border-radius: inherit; pointer-events: none; }
+.gm-rank header .rk-sub { display: block; margin-top: 8px; text-align: center; font: 500 11.5px var(--sans); letter-spacing: .04em; color: rgba(255, 255, 255, .6); }   /* 랭킹 = 오늘 점수 합계 하나 */
