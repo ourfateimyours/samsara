@@ -714,15 +714,30 @@ body.board-page { overflow: hidden; }
 .nf-f.f-gothic b { font: 600 15px var(--sans); }
 /* 보드 스티커 (관리자가 고른 투명 PNG) */
 .note .stk { position: absolute; z-index: 3; width: 76px; height: 76px; margin: -9px 0 0 -9px; object-fit: contain; transform: rotate(var(--sr, 0deg)); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); pointer-events: none; }
-.nf-stk { display: flex; flex-wrap: wrap; gap: 8px; }
-.nf-stk label { position: relative; cursor: pointer; }
+/* 스티커 고르기: 한 칸 안에 작은 타일로 가지런히 */
+.nf-stk { display: grid !important; grid-template-columns: repeat(auto-fill, 54px); gap: 8px; padding: 10px; border: 1px solid var(--line-2); border-radius: 10px; background: rgba(255, 255, 255, .03); }
+.nf-stk label { position: relative; display: block !important; width: 54px !important; margin: 0 !important; cursor: pointer; }
 .nf-stk input { position: absolute; opacity: 0; pointer-events: none; }
-.nf-stk img { display: block; width: 66px; height: 66px; padding: 6px; object-fit: contain; border: 1px solid var(--line-2); border-radius: 10px; background: rgba(255, 255, 255, .04); transition: border-color .2s, background .2s, transform .2s; }
+.nf-stk img { display: block; width: 54px; height: 54px; padding: 5px; object-fit: contain; border: 1px solid var(--line-2); border-radius: 9px; background: rgba(255, 255, 255, .04); transition: border-color .2s, background .2s, transform .2s; }
 .nf-stk input:checked + img { border-color: var(--red); background: rgba(200, 22, 29, .18); transform: translateY(-2px); }
 .nf-stk input:focus-visible + img { outline: 1px solid var(--red); }
 /* 읽기 창에서는 위쪽 가장자리에만 (글 · 버튼 · 닫기를 안 가리게) */
 .note-read .nr-stk { position: absolute; z-index: 2; top: -88px; width: 84px; height: 84px; object-fit: contain; transform: rotate(var(--sr, 0deg)); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .35)); pointer-events: none; }
 .note-read .nr-stk.p0 { left: -34px; } .note-read .nr-stk.p1 { left: 20%; top: -96px; } .note-read .nr-stk.p2 { right: 16%; top: -92px; }
+.note-read .nr-stk.p3 { left: 40%; top: -100px; } .note-read .nr-stk.p4 { right: -30px; top: -84px; }
+/* 읽기 창 아래 스티커 칸 (종이 위라 밝은 톤) */
+.note-read .nr-stks { margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(28, 30, 41, .22); }
+.note-read .nr-stks p { margin: 0 0 10px; font: 500 12px var(--sans); color: rgba(28, 30, 41, .55); }
+.note-read .nr-st-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.note-read .nr-st-on { position: relative; width: 46px; height: 46px; }
+.note-read .nr-st-on img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .25)); }
+.note-read .nr-st-on button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: #1c1e29; color: #fff; font: 700 10px/20px var(--sans); cursor: pointer; }
+.note-read .nr-st-on button:hover { background: #a3171c; }
+.note-read .nf-stk { border-color: rgba(28, 30, 41, .18); background: rgba(28, 30, 41, .04); }
+.note-read .nr-st-add { padding: 0; border: 0; background: none; cursor: pointer; }
+.note-read .nr-st-add img { border-color: rgba(28, 30, 41, .18); background: #fff; }
+.note-read .nr-st-add:hover img { border-color: #a3171c; transform: translateY(-2px) rotate(-4deg); }
+.note-read .nr-st-add[disabled] { opacity: .5; cursor: wait; }
 .modal-back:has(.note-read-modal) { padding-top: 90px; }
 /* 쪽지 읽기 창: 종이 한 장 · 쪽지 색 띠 · 빨간 압정 · 글은 또렷한 고딕 */
 .modal.note-read-modal { width: min(500px, 100%); overflow: visible; border: 0; color: #1c1e29; background:
