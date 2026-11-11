@@ -90,7 +90,8 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false,       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
+    lesson_on: false, match_on: false, stock_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+      // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
     lobby_banners: [],   // 메인 왼쪽 아래 배너 [{ tag, title, text, link, c1, c2, angle, ghost }]
@@ -248,6 +249,19 @@
       async noteStickerDel(me, noteId, id) { return ok(await sb.rpc('note_sticker_del', { p_note: noteId, p_id: id })) || []; },
       async adminLessonsToday() { return ok(await sb.rpc('admin_lessons_today')) || []; },
       async adminLessonReset(id) { return ok(await sb.rpc('admin_lesson_reset', { p_id: id })); },
+      // 빼빼로 증권: 규칙 · 가격은 서버 함수 · 전광판 한 줄만 실시간으로 받아요 (화면을 연 동안만 · 주기적 요청 없음)
+      async stockView() { return ok(await sb.rpc('stock_view')); },
+      async stockJoin(me, charId) { return ok(await sb.rpc('stock_join', { p_char: charId })); },
+      async stockTrade(me, charId, qty) { return ok(await sb.rpc('stock_trade', { p_char: charId, p_qty: qty })); },
+      stockSub(cb) {
+        const ch = sb.channel('stock-board').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stock_board' }, p => { if (p && p.new && p.new.data) cb(p.new.data); }).subscribe();
+        return { stop() { sb.removeChannel(ch); } };
+      },
+      async stockAdmin() { return ok(await sb.rpc('stock_admin')); },
+      async stockOpen(ends, cash) { return ok(await sb.rpc('stock_open', { p_ends: ends, p_cash: cash })); },
+      async stockClose() { return ok(await sb.rpc('stock_close')); },
+      async stockPickNext(ids) { return ok(await sb.rpc('stock_pick_next', { p_ids: ids })); },
+      async stockReward() { return ok(await sb.rpc('stock_reward')); },
       // 대국: 방 · 정산은 서버 함수 · 수 검사는 match-move · 상대가 둘 때만 신호를 받아요 (화면을 연 동안만)
       async matchStatus() { return ok(await sb.rpc('match_status')); },
       async matchRooms() { return ok(await sb.rpc('match_rooms')) || []; },
@@ -520,6 +534,16 @@
     // 관리자: 오늘 수업 기록 · 기회 돌려주기 (그 수업으로 바뀐 스탯 · 위로금까지 되돌려요)
     async adminLessonsToday() { await this.requireAdmin(); return B.adminLessonsToday(); },
     async adminLessonReset(id) { await this.requireAdmin(); dropBadges(); drop('lrank:kor', 'lrank:soc', 'lrank:mor', 'lrank:art', 'lrank:all'); return B.adminLessonReset(id); },
+    // 빼빼로 증권
+    async stockView() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.stockView(u.id); },
+    async stockJoin(charId) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.stockJoin(u.id, charId); },
+    async stockTrade(charId, qty) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.stockTrade(u.id, charId, qty); },
+    stockSub(cb) { return B.stockSub(cb); },
+    async stockAdmin() { await this.requireAdmin(); return B.stockAdmin(); },
+    async stockOpen(ends, cash) { await this.requireAdmin(); drop('settings'); cachedSettings = null; return B.stockOpen(ends, cash); },
+    async stockClose() { await this.requireAdmin(); drop('settings'); cachedSettings = null; return B.stockClose(); },
+    async stockPickNext(ids) { await this.requireAdmin(); return B.stockPickNext(ids); },
+    async stockReward() { await this.requireAdmin(); return B.stockReward(); },
     async cheersToday() { const u = await this.user(); if (!u) return []; return remote ? hold('cheers', 12e4, () => B.cheersToday(u.id)) : B.cheersToday(u.id); },   // 수업 목록을 다시 그릴 때마다 묻지 않게 2분 기억
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
     async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
