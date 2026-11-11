@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>상영관 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+body.th-page { --ink: #f4f6fb; --tx: rgba(232, 238, 250, .8); --sub: rgba(214, 224, 245, .5); --ln: rgba(255, 255, 255, .09); --soft: rgba(255, 255, 255, .055); --live: #ff5d7a;
+  background: radial-gradient(ellipse 70% 45% at 75% -8%, rgba(110, 135, 230, .28), transparent 70%), radial-gradient(ellipse 50% 40% at -5% 105%, rgba(210, 150, 230, .14), transparent 70%), linear-gradient(#0c0f1e 0%, #14151d 55%, #18181c 100%);
+  background-attachment: fixed; }
+html:has(body.th-page) { background: #0c0f1e; }
+/* 은은한 밤하늘: 별 · 가끔 별똥별 (수업 페이지와 같은 결) */
+body.th-page::before { content: ""; display: block; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .85;
+  background: radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, .8), transparent), radial-gradient(1.4px 1.4px at 200px 160px, #fff, transparent),
+    radial-gradient(1px 1px at 60px 200px, rgba(255, 255, 255, .6), transparent), radial-gradient(1px 1px at 250px 40px, rgba(255, 255, 255, .7), transparent), radial-gradient(1.2px 1.2px at 170px 250px, rgba(200, 215, 255, .9), transparent);
+  background-size: 280px 280px; -webkit-mask: linear-gradient(#000 0%, rgba(0, 0, 0, .5) 50%, transparent 85%); mask: linear-gradient(#000 0%, rgba(0, 0, 0, .5) 50%, transparent 85%); animation: thTw 5s ease-in-out infinite; }
+@keyframes thTw { 50% { opacity: .5; } }
+body.th-page::after { content: ""; display: block; position: fixed; top: 12%; left: 70%; width: 160px; height: 1.5px; z-index: 0; pointer-events: none; border-radius: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .95), rgba(160, 190, 255, .4) 40%, transparent); transform: rotate(-28deg); transform-origin: 0 50%; opacity: 0; animation: thShoot 9s ease-in 2s infinite; }
+@keyframes thShoot { 0% { opacity: 0; translate: 0 0; } 3% { opacity: 1; } 12% { opacity: 0; translate: -420px 220px; } 100% { opacity: 0; translate: -420px 220px; } }
+@media (prefers-reduced-motion: reduce) { body.th-page::before, body.th-page::after { animation: none; } }
+.tx { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 84px 20px 120px; font-family: var(--sans); color: var(--tx); letter-spacing: -.015em; }
+.tx button, .mc button, .mc input, .mc select { font-family: var(--sans); letter-spacing: -.015em; }
+.eb { display: block; font: 600 10.5px var(--sans); letter-spacing: .24em; color: rgba(200, 215, 255, .5); text-transform: uppercase; }
+.shut { padding: 60px 0; text-align: center; color: var(--sub); font-size: 14px; }
+
+.b { font: 600 13px var(--sans); color: var(--ink); background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; padding: 9px 16px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
+.b:hover { background: rgba(255, 255, 255, .1); }
+.b.pr { background: #fff; color: #151824; border-color: #fff; }
+.b.pr:hover { background: #e6eaf4; }
+.b.gh { border-color: transparent; color: var(--sub); padding-inline: 10px; }
+.b:disabled { opacity: .45; cursor: default; }
+
+/* 목록 */
+.lh { display: flex; align-items: flex-end; gap: 16px; padding: 4px 2px 22px; }
+.lh h1 { margin: 8px 0 4px; font: 800 34px/1.1 var(--sans); color: var(--ink); letter-spacing: -.035em; }
+.lh p { margin: 0; font-size: 14px; color: var(--sub); }
+.lh .b { margin-left: auto; }
+.tabs { display: flex; gap: 2px; margin: 0 0 18px; border-bottom: 1px solid var(--ln); }
+.tabs span { font: 600 12.5px/1 var(--sans); letter-spacing: -.02em; color: var(--sub); padding: 9px 9px 10px; cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; }
+.tabs span:first-child { padding-left: 2px; }
+.tabs span.on { color: var(--ink); border-color: var(--ink); }
+.tabs em { font: 500 10.5px/1 var(--sans); letter-spacing: 0; color: rgba(255, 255, 255, .3); margin-left: 3px; vertical-align: 1px; }
+.rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 18px; }
+.rm { cursor: pointer; min-width: 0; }
+.rm.big { grid-column: span 2; grid-row: span 2; }
+.rm .th { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: var(--soft); }
+.rm .th > div { position: absolute; inset: 0; background: center / cover; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+.rm:hover .th > div { transform: scale(1.035); }
+.rm .th::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(transparent, rgba(10,12,18,.45)); pointer-events: none; }
+.rm .th.tp::after { display: none; }
+.rm .th.tp { box-shadow: inset 0 0 0 1px var(--ln); }
+.rm .lv { position: absolute; left: 10px; bottom: 9px; z-index: 1; display: flex; align-items: center; gap: 6px; font: 700 11px var(--sans); color: #fff; letter-spacing: .02em; }
+.rm .lv i { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 3px rgba(255,77,109,.25); animation: bl 1.8s infinite; }
+.rm .th.tp .lv { color: var(--tx); }
+.rm .mn { position: absolute; right: 10px; top: 10px; z-index: 1; font: 700 10.5px var(--sans); color: #151824; background: #fff; border-radius: 999px; padding: 3px 9px; }
+@keyframes bl { 50% { opacity: .35; } }
+.wm { display: grid; place-items: center; font: 800 17px var(--sans); letter-spacing: .32em; padding-left: .32em; }
+.wm.nf { background: linear-gradient(160deg, rgba(255, 255, 255, .03) 30%, rgba(229, 60, 80, .16)); color: #f0a6ad; }
+.wm.dp { background: linear-gradient(160deg, rgba(255, 255, 255, .03) 30%, rgba(80, 120, 240, .18)); color: #aac0f7; }
+.wm.etc { background: linear-gradient(160deg, rgba(255, 255, 255, .03) 30%, rgba(150, 120, 240, .16)); color: #c7baf3; }
+.rm .bd { padding: 12px 2px 0; }
+.rm .bd b { display: block; font: 700 15.5px/1.35 var(--sans); color: var(--ink); letter-spacing: -.025em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rm.big .bd b { font-size: 21px; }
+.rm .bd span { display: block; margin-top: 3px; font-size: 12.5px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rm .bd span u, .adm { text-decoration: none; color: var(--tx); }
+.adm, .rm .bd span.adm { display: inline; margin: 0; color: #e8c27a; font-size: 11.5px; }
+.empty { padding: 70px 16px; text-align: center; border-radius: 18px; background: var(--soft); }
+.empty b { display: block; font: 700 17px var(--sans); color: var(--ink); margin-bottom: 6px; }
+.empty span { font-size: 13.5px; color: var(--sub); }
+
+/* 방 안 */
+.bk { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 13px; color: var(--sub); cursor: pointer; background: none; border: 0; padding: 0; }
+.bk:hover { color: var(--ink); }
+.scr { position: relative; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #0d0e12; }
+.scr > div:first-child, .scr iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.scr .tap { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: rgba(12,14,20,.3); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); cursor: pointer; }
+.scr .tap div { text-align: center; }
+.scr .tap b { display: inline-flex; align-items: center; gap: 10px; font: 700 15px var(--sans); color: #151824; background: #fff; border-radius: 999px; padding: 14px 26px; box-shadow: 0 12px 30px -12px rgba(0,0,0,.4); }
+.scr .tap small { display: block; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,.85); }
+.scr .shield { position: absolute; inset: 0; z-index: 1; }   /* 보는 사람은 영상을 눌러 멈추지 못하게 */
+.info { display: flex; align-items: flex-start; gap: 16px; padding: 20px 2px 18px; border-bottom: 1px solid var(--ln); }
+.info .meta { flex: 1; min-width: 0; }
+.info .live { display: inline-flex; align-items: center; gap: 6px; font: 700 11px var(--sans); letter-spacing: .12em; color: var(--live); }
+.info .live i { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: bl 1.8s infinite; }
+.info .live.off { color: var(--sub); } .info .live.off i { background: rgba(255, 255, 255, .3); animation: none; }
+.info h1 { margin: 6px 0 4px; font: 800 24px/1.25 var(--sans); color: var(--ink); letter-spacing: -.03em; word-break: keep-all; overflow-wrap: anywhere; }
+.info p { margin: 0; font-size: 13px; color: var(--sub); overflow-wrap: anywhere; }
+.info p u { text-decoration: none; color: var(--tx); font-weight: 600; }
+.info .act { display: flex; gap: 6px; padding-top: 18px; flex-wrap: wrap; }
+.vw { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 16px 2px; }
+.vw > span { font: 600 12px var(--sans); color: var(--sub); margin-right: 6px; }
+.vw i { font-style: normal; font-size: 13px; color: var(--tx); padding: 5px 12px; border-radius: 999px; background: var(--soft); }
+.vw i.me { background: transparent; box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); font-weight: 600; }
+.vw i em { font-style: normal; font-size: 11px; color: var(--sub); margin-left: 4px; font-weight: 500; }
+
+.pty { aspect-ratio: 16 / 9; border-radius: 18px; display: grid; place-items: center; text-align: center; box-shadow: inset 0 0 0 1px var(--ln); padding: 16px; }
+.pty .wm { background: none; display: block; font-size: 13px; letter-spacing: .4em; }
+.pty h2 { margin: 16px 0 6px; font: 800 30px var(--sans); color: var(--ink); letter-spacing: -.035em; word-break: keep-all; overflow-wrap: anywhere; }
+.pty p { margin: 0 0 22px; font-size: 14px; color: var(--sub); }
+.pty a.b { display: inline-block; text-decoration: none; font-size: 14px; padding: 13px 26px; }
+.pty small { display: block; margin-top: 16px; font-size: 12px; color: rgba(255, 255, 255, .38); }
+.pty.nf { background: linear-gradient(170deg, rgba(255, 255, 255, .03) 40%, rgba(229, 60, 80, .14)); } .pty.nf .wm { color: #f0a6ad; }
+.pty.dp { background: linear-gradient(170deg, rgba(255, 255, 255, .03) 40%, rgba(80, 120, 240, .16)); } .pty.dp .wm { color: #aac0f7; }
+.pty.etc { background: linear-gradient(170deg, rgba(255, 255, 255, .03) 40%, rgba(150, 120, 240, .14)); } .pty.etc .wm { color: #c7baf3; }
+.pty.end { background: var(--soft); box-shadow: none; }
+
+/* 창 */
+.md { position: fixed; inset: 0; z-index: 60; background: rgba(6, 8, 18, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: grid; place-items: center; padding: 16px; animation: fi .2s ease-out; }
+@keyframes fi { from { opacity: 0; } }
+.mc { width: min(400px, 100%); box-sizing: border-box; background: #151826; border-radius: 22px; padding: 30px 26px 22px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 40px 80px -30px rgba(0, 0, 0, .7); font-family: var(--sans); color: var(--tx); letter-spacing: -.015em; animation: up .25s cubic-bezier(.2,.8,.2,1); max-height: calc(100vh - 32px); overflow: auto; }
+@keyframes up { from { transform: translateY(10px); opacity: 0; } }
+.mc h3 { margin: 6px 0 4px; font: 800 22px var(--sans); color: var(--ink); letter-spacing: -.03em; overflow-wrap: anywhere; }
+.mc > p { margin: 0 0 20px; font-size: 13.5px; color: var(--sub); }
+.tag { text-align: center; padding: 26px 16px 20px; border-radius: 16px; background: var(--soft); }
+.tag small { display: block; font: 600 10px var(--sans); letter-spacing: .28em; color: rgba(255, 255, 255, .35); }
+.tag input { display: block; width: 100%; margin: 8px 0 12px; text-align: center; font: 800 30px var(--sans); letter-spacing: -.03em; color: var(--ink); background: transparent; border: 0; box-shadow: none; outline: none; padding: 0; }
+.tag button { font: 600 12.5px var(--sans); color: var(--tx); background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.mc label { display: block; font: 600 12px var(--sans); color: var(--sub); margin: 14px 0 7px; }
+.mc .in { display: block; width: 100%; box-sizing: border-box; font: 15px var(--sans); color: var(--ink); background: rgba(255, 255, 255, .04); box-shadow: none; border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; padding: 12px 13px; outline: none; }
+.mc .in::placeholder { color: rgba(255, 255, 255, .3); }
+.mc .in:focus { border-color: rgba(255, 255, 255, .5); }
+.mc .row { display: flex; gap: 8px; align-items: center; }
+.mc .row .in { flex: 1; min-width: 0; }
+.mc .row button { flex: none; }
+.mc .hint { display: block; margin-top: 7px; font-size: 12px; color: var(--sub); min-height: 1em; }
+.mc .hint.ok { color: #7fd6b0; } .mc .hint.no { color: var(--live); }
+.seg { display: flex; gap: 6px; }
+.seg span { flex: 1; text-align: center; font: 600 13px var(--sans); color: var(--tx); border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; padding: 10px 0; cursor: pointer; }
+.seg span.on { border-color: var(--ink); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.mc .ft { display: flex; gap: 8px; margin-top: 22px; }
+.mc .ft .b { flex: 1; padding: 12px; font-size: 14px; }
+
+@media (max-width: 760px) { .rooms { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) {
+  .tx { padding-inline: 16px; }
+  .lh { flex-wrap: wrap; } .lh h1 { font-size: 28px; } .lh .b { margin-left: 0; }
+  .rooms { grid-template-columns: 1fr; gap: 22px; } .rm.big { grid-column: auto; grid-row: auto; } .rm.big .bd b { font-size: 17px; }
+  .info { flex-direction: column; gap: 4px; } .info h1 { font-size: 20px; } .info .act { padding-top: 10px; }
+  .pty { aspect-ratio: auto; min-height: 260px; } .pty h2 { font-size: 22px; } .pty p { margin-bottom: 14px; }
+}
+</style>
+</head>
+<body data-page="theater" class="th-page" data-nofooter>
+<div class="tx" id="tx"><p class="shut">불러오는 중…</p></div>
+<div id="md"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) return;
+  const tx = $('#tx'), md = $('#md');
+  // 상영관이 꺼져 있으면 회원은 못 들어와요 (관리자는 늘) · 설정은 사이트가 이미 기억해 둔 걸 써요
+  const cfg = await Store.settings().catch(() => ({}));
+  if (!(cfg && cfg.theater_on) && user.grade !== 'admin') { tx.innerHTML = '<div class="empty" style="margin-top:20px"><b>지금은 상영관이 쉬는 중이에요</b><span>다시 열리면 메인에 상영관 버튼이 생겨요</span></div>'; return; }
+  const SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '류', '홍'];
+  const GIV = ['지우', '서진', '하람', '도윤', '나연', '민준', '서연', '하윤', '시우', '예린', '지호', '수아', '은찬', '다인', '태오', '채원', '유나', '건우', '소율', '현서', '이안', '주원', '세아', '로운'];
+  const pick = a => a[Math.floor(Math.random() * a.length)], rname = () => pick(SUR) + pick(GIV);
+  const SVC = { nf: 'NETFLIX', dp: 'DISNEY+', etc: 'TELEPARTY' };
+  const ago = t => { const m = Math.floor((Date.now() - Date.parse(t)) / 60000); return m < 1 ? '방금 열림' : m < 60 ? m + '분 전' : Math.floor(m / 60) + '시간 전'; };
+  const fmtT = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
+
+  // 링크 읽기: 유튜브 영상 id · 텔레파티 초대 링크
+  const ytId = s => {
+    s = String(s || '').trim(); if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+    try {
+      const u = new URL(s), h = u.hostname.replace(/^(www|m|music)\./, ''), ok = v => /^[A-Za-z0-9_-]{11}$/.test(v || '') ? v : null;
+      if (h === 'youtu.be') return ok(u.pathname.slice(1, 12));
+      if (h === 'youtube.com' || h === 'youtube-nocookie.com') { const v = u.searchParams.get('v'); if (v) return ok(v); const m = u.pathname.match(/^\/(shorts|live|embed|v)\/([A-Za-z0-9_-]{11})/); if (m) return m[2]; }
+    } catch (e) {}
+    return null;
+  };
+  const partyUrl = s => { try { const u = new URL(String(s || '').trim()); if (u.protocol === 'https:' && /(^|\.)teleparty\.com$/.test(u.hostname) && u.href.length <= 400 && !/[\s<>"'\\]/.test(u.href)) return u.href; } catch (e) {} return null; };
+
+  /* ───────── 목록 ───────── */
+  let rooms = [], tab = 'all';
+  async function showList() {
+    leave(); md.innerHTML = '';
+    tx.innerHTML = '<p class="shut">불러오는 중…</p>';
+    try { rooms = await Store.theaterRooms(); } catch (e) { tx.innerHTML = `<p class="shut">${esc(e.message)}</p>`; return; }
+    drawList();
+  }
+  function drawList() {
+    const n = { all: rooms.length, yt: rooms.filter(r => r.kind === 'yt').length, party: rooms.filter(r => r.kind === 'party').length };
+    const L = rooms.filter(r => tab === 'all' || r.kind === tab);
+    const card = (r, i) => `<div class="rm${i === 0 && L.length > 2 ? ' big' : ''}" data-room="${esc(r.id)}">
+      <div class="th${r.kind === 'yt' ? '' : ' tp'}">${r.kind === 'yt' ? `<div style="background-image:url(https://i.ytimg.com/vi/${encodeURIComponent(r.thumb)}/${i === 0 ? 'hq' : 'mq'}default.jpg)"></div>` : `<div class="wm ${esc(r.svc)}">${SVC[r.svc] || 'TELEPARTY'}</div>`}
+        <span class="lv"><i></i>${r.kind === 'yt' ? 'ON AIR' : '텔레파티'}</span>${r.mine ? '<span class="mn">내 방</span>' : ''}</div>
+      <div class="bd"><b>${esc(r.title)}</b><span><u>${esc(r.nick)}</u> · ${ago(r.created_at)}${r.who ? ` <span class="adm">· ${esc(r.who)}</span>` : ''}</span></div></div>`;
+    tx.innerHTML = `<div class="lh"><div><span class="eb">Samsara Theater</span><h1>상영관</h1><p>링크 하나로 같이 보고 같이 들어요</p></div><button class="b pr" id="mk">방 만들기</button></div>
+      <div class="tabs">${[['all', '전체'], ['yt', '유튜브'], ['party', '텔레파티']].map(([k, t]) => `<span data-tab="${k}" class="${tab === k ? 'on' : ''}">${t}<em>${n[k]}</em></span>`).join('')}</div>
+      ${L.length ? `<div class="rooms">${L.map(card).join('')}</div>` : `<div class="empty"><b>지금 열린 방이 없어요</b><span>유튜브 링크로 첫 방을 열어 보세요</span></div>`}`;
+  }
+
+  /* ───────── 방 만들기 ───────── */
+  function makeModal() {
+    let svc = 'nf';
+    md.innerHTML = `<div class="md"><div class="mc"><span class="eb">New Room</span><h3>방 만들기</h3><p>방을 만든 사람이 재생과 멈춤을 맡아요</p>
+      <label for="m-t">방 이름</label><input class="in" id="m-t" maxlength="20" placeholder="새벽 감성 노래방">
+      <label for="m-l">링크</label><input class="in" id="m-l" placeholder="유튜브 링크나 텔레파티 초대 링크" autocomplete="off"><span class="hint" id="m-h"></span>
+      <div id="m-svc" hidden><label>무엇을 보나요</label><div class="seg">${Object.entries({ nf: '넷플릭스', dp: '디즈니+', etc: '기타' }).map(([k, t]) => `<span data-svc="${k}" class="${k === svc ? 'on' : ''}">${t}</span>`).join('')}</div></div>
+      <label for="nk">내 익명 이름</label><div class="row"><input class="in" id="nk" maxlength="10" value="${rname()}"><button class="b" id="dice" type="button" title="다른 이름">🎲</button></div>
+      <div class="ft"><button class="b" data-x>취소</button><button class="b pr" id="m-go">만들기</button></div></div></div>`;
+    const read = () => { const s = $('#m-l').value, y = ytId(s), p = y ? null : partyUrl(s); return { y, p, s }; };
+    $('#m-l').oninput = () => {
+      const { y, p, s } = read(), h = $('#m-h');
+      h.className = 'hint' + (y || p ? ' ok' : s.trim() ? ' no' : ''); h.textContent = y ? '유튜브 영상이에요' : p ? '텔레파티 초대 링크예요 · 각자 자기 계정으로 봐요' : s.trim() ? '유튜브나 텔레파티 링크만 올릴 수 있어요' : '';
+      $('#m-svc').hidden = !p;
+    };
+    md.querySelector('.seg').onclick = e => { const k = e.target.dataset.svc; if (!k) return; svc = k; md.querySelectorAll('.seg span').forEach(x => x.classList.toggle('on', x.dataset.svc === k)); };
+    $('#m-go').onclick = async e => {
+      const { y, p } = read(), t = $('#m-t').value.trim(), n = $('#nk').value.trim();
+      if (!t) return toast('방 이름을 적어 주세요', 'err'); if (!y && !p) return toast('유튜브나 텔레파티 링크를 넣어 주세요', 'err'); if (!n) return toast('익명 이름을 적어 주세요', 'err');
+      e.target.disabled = true;
+      try { const id = await Store.theaterOpen(t, y ? 'yt' : 'party', p ? svc : '', y || p, n); md.innerHTML = ''; go(id); }
+      catch (err) { toast(err.message, 'err'); e.target.disabled = false; }
+    };
+    setTimeout(() => $('#m-t').focus(), 50);
+  }
+
+  /* ───────── 방 ───────── */
+  let R = null, sub = null, player = null, tick = null, started = false, applying = 0, people = [], myName = '', skew = 0, sending = false, lastSent = 0, sendT = null;
+  const srvNow = () => Date.now() + skew;
+  const target = s => { if (!s.playing) return s.pos; let t = s.pos + (srvNow() - Date.parse(s.at)) / 1000; if (s.dur > 0) t = Math.min(t, s.dur); return t; };
+  function leave() {
+    if (sub) { sub.stop(); sub = null; }
+    if (tick) { clearInterval(tick); tick = null; }
+    if (sendT) { clearTimeout(sendT); sendT = null; }
+    if (napT) { clearTimeout(napT); napT = null; } napped = false; connect = () => {};
+    if (player) { try { player.destroy(); } catch (e) {} player = null; }
+    R = null; started = false; people = [];
+  }
+
+  async function showRoom(id) {
+    leave(); md.innerHTML = '';
+    tx.innerHTML = '<p class="shut">불러오는 중…</p>';
+    let v; try { v = await Store.theaterView(id); } catch (e) { tx.innerHTML = `<p class="shut">${esc(e.message)}</p>`; return; }
+    if (!v || v.gone || v.closed) return ended('이미 끝난 상영이에요');
+    skew = Date.parse(v.now) - Date.now();
+    if (v.kind === 'party') return drawParty(v);   // 텔레파티는 신호가 필요 없어요 · 요청 1번으로 끝
+    if (v.mine) { myName = v.nick; return enter(v); }
+    nickModal(v);
+  }
+  function nickModal(v) {
+    md.innerHTML = `<div class="md"><div class="mc"><span class="eb">Anonymous</span><h3>${esc(v.title)}</h3><p>이 방에서는 아래 이름으로만 보여요</p>
+      <div class="tag"><small>MY NAME</small><input id="nk" value="${rname()}" maxlength="10" aria-label="익명 이름"><button id="dice" type="button">🎲 다른 이름</button></div>
+      <div class="ft"><button class="b" data-x data-back>취소</button><button class="b pr" id="n-go">들어가기</button></div></div></div>`;
+    $('#n-go').onclick = () => { const n = $('#nk').value.trim(); if (!n) return toast('익명 이름을 적어 주세요', 'err'); myName = n.slice(0, 10); md.innerHTML = ''; enter(v); };
+    $('#nk').onkeydown = e => { if (e.key === 'Enter') $('#n-go').click(); };
+  }
+
+  function drawParty(v) {
+    tx.innerHTML = `<button class="bk" data-back>← 방 목록</button>
+      <div class="pty ${esc(v.svc)}"><div><span class="wm">${SVC[v.svc] || 'TELEPARTY'}</span><h2>${esc(v.title)}</h2><p>방장 ${esc(v.nick)} · 각자 자기 계정으로 같이 봐요</p>
+        <a class="b pr" href="${esc(v.src)}" target="_blank" rel="noopener noreferrer">텔레파티 참여하기 ↗</a><small>PC 크롬이나 엣지에 텔레파티 확장이 있어야 해요</small></div></div>
+      <div class="info"><div class="meta"><p>${ago(v.created_at)}${v.who ? ` <span class="adm">· ${esc(v.who)}</span>` : ''}</p></div>${v.can ? '<div class="act" style="padding-top:0"><button class="b gh" id="r-x">방 닫기</button></div>' : ''}</div>`;
+    if (v.can) $('#r-x').onclick = () => closeRoom(v.id);
+  }
+
+  function ended(msg) {
+    leave(); md.innerHTML = '';
+    tx.innerHTML = `<button class="bk" data-back>← 방 목록</button><div class="pty end"><div><h2>${esc(msg)}</h2><p>다른 방을 둘러보거나 새 방을 열어 보세요</p><button class="b pr" data-back>방 목록으로</button></div></div>`;
+  }
+
+  function drawInfo() {
+    if (!R) return;
+    const s = R.st, vt = player && player.getVideoData ? (player.getVideoData() || {}).title : '';
+    $('#r-info').innerHTML = `<div class="meta"><span class="live${s.playing ? '' : ' off'}"><i></i>${s.playing ? 'ON AIR' : 'PAUSED'}</span><h1>${esc(R.title)}</h1>
+      <p>방장 <u>${esc(R.nick)}</u>${vt ? ' · ' + esc(vt) : ''}<span id="r-t"></span>${R.who ? ` <span class="adm">· ${esc(R.who)}</span>` : ''}</p></div>
+      <div class="act">${R.can ? '<button class="b" id="r-l">링크 바꾸기</button><button class="b gh" id="r-x">방 닫기</button>' : '<button class="b" id="r-m">소리 끄기</button>'}</div>`;
+    if (R.can) { $('#r-l').onclick = linkModal; $('#r-x').onclick = () => closeRoom(R.id); }
+    else $('#r-m').onclick = () => { if (!player || !player.isMuted) return; player.isMuted() ? player.unMute() : player.mute(); muteLabel(); };
+    drawTime(); muteLabel();
+  }
+  function drawTime() {
+    const el = $('#r-t'); if (!el || !R) return; const s = R.st;
+    el.textContent = s.dur > 0 ? ` · ${fmtT(player && player.getCurrentTime ? player.getCurrentTime() : target(s))} / ${fmtT(s.dur)}` : '';
+  }
+  function muteLabel() { const b = $('#r-m'); if (b && player && player.isMuted) b.textContent = player.isMuted() ? '소리 켜기' : '소리 끄기'; }
+  function drawPeople() {
+    const el = $('#r-ppl'); if (!el) return;
+    const P = people.slice().sort((a, b) => (b.h - a.h) || (b.me - a.me));
+    el.innerHTML = `<span>같이 보는 중 ${P.length}</span>${P.map(p => `<i class="${p.me ? 'me' : ''}">${esc(String(p.n || '?').slice(0, 10))}${p.h ? '<em>방장</em>' : ''}${p.me ? '<em>나</em>' : ''}</i>`).join('')}`;
+  }
+
+  function enter(v) {
+    R = { id: v.id, title: v.title, nick: v.nick, who: v.who, can: !!v.can, mine: !!v.mine, st: { src: v.src, playing: v.playing, pos: +v.pos || 0, dur: +v.dur || 0, at: v.at } };
+    tx.innerHTML = `<button class="bk" data-back>← 방 목록</button>
+      <div class="scr"><div id="yt"></div>${R.can ? '' : '<div class="shield"></div>'}<div class="tap" id="tap"><div><b>▶ 같이 보기</b><small>${R.can ? '누르면 지금 장면부터 이어서 틀어요' : '누르면 방장 화면에 맞춰져요'}</small></div></div></div>
+      <div class="info" id="r-info"></div><div class="vw" id="r-ppl"></div>`;
+    drawInfo(); drawPeople();
+    $('#tap').onclick = () => { started = true; $('#tap').remove(); connect(); if (player && player.playVideo) { try { player.unMute(); } catch (e) {} apply(R.st, true); } };
+    const id = v.id;
+    ytApi().then(() => {
+      if (!R || R.id !== id) return;
+      player = new YT.Player('yt', {
+        host: 'https://www.youtube-nocookie.com', videoId: R.st.src,
+        playerVars: { controls: R.can ? 1 : 0, disablekb: R.can ? 0 : 1, playsinline: 1, rel: 0, modestbranding: 1, fs: 1, start: Math.floor(target(R.st)) },
+        events: { onReady: () => { if (started) apply(R.st, true); drawInfo(); }, onStateChange: e => onPlayer(e.data) },
+      });
+    }).catch(() => toast('유튜브를 불러오지 못했어요', 'err'));
+    // 실시간 연결은 '같이 보기'를 누른 뒤에만 · 탭을 3분 넘게 안 보면 끊고, 돌아오면 1번만 다시 받아요
+    connect = () => { if (sub || !R || R.id !== id) return; sub = Store.theaterSub(id, { n: myName, h: R.mine }, st => {
+      if (!R || R.id !== id) return;
+      if (st.closed) return ended('상영이 끝났어요');
+      if (R.st.at && Date.parse(st.at) <= Date.parse(R.st.at)) return;   // 내가 보낸 것 · 이미 받은 것
+      R.st = { src: st.src, playing: st.playing, pos: +st.pos || 0, dur: +st.dur || 0, at: st.at };
+      apply(R.st); drawInfo();
+    }, P => { people = P; drawPeople(); }, () => refresh(id)); };
+    // 화면 안에서만 도는 확인 (서버에 요청 없음): 보는 사람은 어긋나면 맞추고 · 방장은 건너뛰기를 알아채요
+    tick = setInterval(() => {
+      if (!R || !player || !player.getCurrentTime || !started) return;
+      const s = R.st, cur = player.getCurrentTime(), live = !(s.dur > 0);
+      if (R.can) { if (Date.now() > applying) send(); }   // 보낼 때 바뀐 게 없으면 안 보내요 (영상 길이 · 멈춤 · 건너뛰기)
+      else if (Date.now() > applying) { const ps = player.getPlayerState(); if ((!live && Math.abs(cur - target(s)) > 3) || (s.playing && (ps === 2 || ps === 5 || ps === -1)) || (!s.playing && ps === 1)) apply(s); }
+      if (!document.hidden) drawTime();
+    }, 2000);
+  }
+
+  let connect = () => {}, napT = null, napped = false;
+  async function refresh(id) {
+    try { const w = await Store.theaterView(id); if (!R || R.id !== id) return; if (w.gone || w.closed) return ended('상영이 끝났어요'); skew = Date.parse(w.now) - Date.now(); R.st = { src: w.src, playing: w.playing, pos: +w.pos || 0, dur: +w.dur || 0, at: w.at }; apply(R.st); drawInfo(); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if (sub && !napT) napT = setTimeout(() => { napT = null; if (document.hidden && sub) { sub.stop(); sub = null; napped = true; } }, 180000); return; }
+    if (napT) { clearTimeout(napT); napT = null; }
+    if (napped && R) { napped = false; const id = R.id; refresh(id).then(() => { if (R && R.id === id) connect(); }); }
+  });
+
+  function apply(s, force) {
+    if (!player || !player.getCurrentTime || !started) return;
+    applying = Date.now() + 1500;
+    const vd = player.getVideoData ? (player.getVideoData() || {}).video_id : '';
+    if (vd && vd !== s.src) { s.playing ? player.loadVideoById(s.src, target(s)) : player.cueVideoById(s.src, target(s)); return; }
+    const live = !(s.dur > 0), t = target(s);
+    if (!live && (force || Math.abs(player.getCurrentTime() - t) > 2)) player.seekTo(t, true);
+    s.playing ? player.playVideo() : player.pauseVideo();
+  }
+
+  function onPlayer(ps) {
+    if (!R) return;
+    if (ps === 1 || ps === 0) drawInfo();
+    if (!R.can || !started || Date.now() < applying) return;
+    if (ps === 1 || ps === 2 || ps === 0) send();   // 보낼 때 바뀐 게 없으면 안 보내요
+  }
+  const isLive = () => { try { return !!(player.getVideoData() || {}).isLive; } catch (e) { return false; } };
+
+  // 방장 신호: 1초에 한 번까지 · 몰리면 보낼 때의 마지막 상태 하나만 보내요
+  function send() {
+    if (sendT || !R) return;
+    sendT = setTimeout(doSend, Math.max(250, 1000 - (Date.now() - lastSent)));
+  }
+  async function doSend() {
+    sendT = null; if (!R || !player || !player.getPlayerState) return;
+    if (sending) { sendT = setTimeout(doSend, 500); return; }
+    const ps = player.getPlayerState(); if (ps !== 0 && ps !== 1 && ps !== 2) return;   // 불러오는 중 · 버퍼링 중엔 안 보내요
+    const dur = isLive() ? 0 : (player.getDuration() || 0), end = ps === 0;
+    const st = { playing: !end && (ps === 1 || ps === 3), pos: end ? dur : player.getCurrentTime(), dur };
+    const s = R.st; if (!(s.dur > 0) === !(dur > 0) && st.playing === s.playing && (!(dur > 0) || Math.abs(st.pos - target(s)) < 2.5)) return;   // 바뀐 게 없으면 안 보내요
+    sending = true; lastSent = Date.now(); const id = R.id;
+    try { const r = await Store.theaterSet(id, st); if (R && R.id === id) { skew = Date.parse(r.now) - Date.now(); R.st = { src: r.src, playing: r.playing, pos: +r.pos || 0, dur: +r.dur || 0, at: r.at }; drawInfo(); } }
+    catch (e) { if (/천천히/.test(e.message)) { sending = false; return send(); } toast(e.message, 'err'); }
+    sending = false;
+  }
+
+  function linkModal() {
+    md.innerHTML = `<div class="md"><div class="mc"><span class="eb">Change</span><h3>링크 바꾸기</h3><p>모두의 화면이 새 영상으로 바뀌어요</p>
+      <input class="in" id="c-l" placeholder="유튜브 링크" autocomplete="off"><span class="hint" id="c-h"></span>
+      <div class="ft"><button class="b" data-x>취소</button><button class="b pr" id="c-go">바꾸기</button></div></div></div>`;
+    $('#c-l').oninput = () => { const y = ytId($('#c-l').value), h = $('#c-h'); h.className = 'hint ' + (y ? 'ok' : 'no'); h.textContent = y ? '유튜브 영상이에요' : '유튜브 링크만 넣을 수 있어요'; };
+    $('#c-go').onclick = async e => {
+      const y = ytId($('#c-l').value); if (!y) return toast('유튜브 링크를 넣어 주세요', 'err');
+      e.target.disabled = true;
+      try { const r = await Store.theaterSet(R.id, { src: y, playing: true, pos: 0, dur: 0 }); skew = Date.parse(r.now) - Date.now(); R.st = { src: r.src, playing: true, pos: 0, dur: 0, at: r.at }; md.innerHTML = ''; apply(R.st, true); drawInfo(); }
+      catch (err) { toast(err.message, 'err'); e.target.disabled = false; }
+    };
+    setTimeout(() => $('#c-l').focus(), 50);
+  }
+
+  async function closeRoom(id) {
+    if (!confirm('방을 닫을까요? 같이 보던 사람들 화면도 끝나요.')) return;
+    try { await Store.theaterClose(id); toast('방을 닫았어요'); go(null); } catch (e) { toast(e.message, 'err'); }
+  }
+
+  // 유튜브 플레이어 스크립트는 방에 들어갈 때 한 번만 (유튜브 서버에서 받아요)
+  let ytP = null;
+  function ytApi() {
+    if (window.YT && YT.Player) return Promise.resolve();
+    return ytP || (ytP = new Promise((ok, no) => { window.onYouTubeIframeAPIReady = ok; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = () => { ytP = null; no(); }; document.head.appendChild(s); }));
+  }
+
+  /* ───────── 길 ───────── */
+  function go(id) { history.pushState(null, '', id ? '?r=' + encodeURIComponent(id) : location.pathname); route(); }
+  function route() { const id = new URLSearchParams(location.search).get('r'); id ? showRoom(id) : showList(); }
+  addEventListener('popstate', route);
+  addEventListener('pagehide', leave);
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('#dice')) { $('#nk').value = rname(); return; }
+    if (t.closest('[data-back]')) { md.innerHTML = ''; go(null); return; }
+    if (t.closest('[data-x]')) { md.innerHTML = ''; return; }
+    if (t.closest('#mk')) return makeModal();
+    const tb = t.closest('[data-tab]'); if (tb) { tab = tb.dataset.tab; drawList(); return; }
+    const rm = t.closest('[data-room]'); if (rm) go(rm.dataset.room);
+  });
+  route();
+});
+</script>
+</body>
+</html>

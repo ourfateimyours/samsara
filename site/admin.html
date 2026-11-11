@@ -546,6 +546,7 @@ App.ready.then(async user => {
     pane.innerHTML = `<div class="adm-grid">
       ${card('lesson', '📚 후계자 수업', '켜면 회원이 메인의 \'후계자 수업\'에 들어갈 수 있어요. 끄면 메인에 창만 보이고, 누르면 사리가 지금은 참여할 수 없다고 알려 줘요. 관리자는 꺼져 있어도 들어가서 미리 해 볼 수 있어요.')}
       ${card('match', '♟ 대국', '켜면 회원이 대국 방을 열고 들어갈 수 있어요. 끄면 메인에 창만 보이고 들어갈 수 없어요. 관리자는 꺼져 있어도 들어가요.')}
+      ${card('theater', '▶ 상영관', '켜면 메인에 상영관 버튼이 생기고 회원이 방을 열고 같이 볼 수 있어요. 끄면 버튼이 숨고 열려 있던 방은 모두 닫혀요. 관리자는 꺼져 있어도 들어가요.')}
     </div>
     <section class="adm-card" style="margin-top:18px"><header><b>👁 회원 화면으로 보기</b>${sw('as-member', (() => { try { return localStorage.getItem('naru:asMember') === '1'; } catch (e) { return false; } })())}</header>
       <p class="hint-text">켜면 관리자도 수업 · 대국이 닫혀 있을 때 일반 회원처럼 막혀요 (메인 창 '쉬는 중' · 사리 안내). 이 브라우저에서만 바뀌고, 켜져 있는 동안 화면 아래에 '회원 화면으로 보는 중 · 끄기'가 떠요.</p></section>
@@ -580,8 +581,8 @@ App.ready.then(async user => {
         toast(`${name} 을(를) 내려받았어요`);
       };
     }).catch(e => { $('#sb').innerHTML = `<p class="dim">불러오지 못했어요 · ${esc(e.message || e)}</p>`; });
-    ['lesson', 'match'].forEach(k => $('#' + k + '-on').onchange = async e => {
-      const on = e.target.checked, nm = k === 'lesson' ? '후계자 수업' : '대국';
+    ['lesson', 'match', 'theater'].forEach(k => $('#' + k + '-on').onchange = async e => {
+      const on = e.target.checked, nm = { lesson: '후계자 수업', match: '대국', theater: '상영관' }[k];
       try { await Store.saveSettings({ [k + '_on']: on }); $('#' + k + '-state').textContent = on ? '열림' : '닫힘'; toast(on ? `${nm}을 열었어요` : `${nm}을 닫았어요`); }
       catch (ex) { toast(ex.message, 'err'); e.target.checked = !on; }
     });

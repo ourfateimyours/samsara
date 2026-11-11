@@ -50,7 +50,8 @@
   <nav class="lb-side" aria-label="바로가기">
     <a class="rb" href="attendance.html" id="sb-att"><span class="ci" data-emb="attend"></span><b>출석</b></a>
     <button type="button" class="rb" data-music><span class="ci" data-emb="music"></span><b>음악</b></button>
-    <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci"><svg class="emb" viewBox="0 0 64 64" aria-hidden="true"><g class="ic"><rect x="12" y="38" width="8" height="14" rx="1.4" fill="#fff" opacity=".6"/><rect x="25" y="31" width="8" height="21" rx="1.4" fill="#fff" opacity=".75"/><rect x="38" y="24" width="8" height="28" rx="1.4" fill="#fff"/><path d="M10 30L23 19L32 25L50 10" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 9H51V19" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 55H56" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></g></svg></span><b>주식</b></a>
+    <a class="rb" href="theater.html" id="sb-theater" hidden><span class="ci" data-emb="theater"></span><b>상영관</b></a>
+    <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci" data-emb="stock"></span><b>주식</b></a>
   </nav>
 
   <!-- 왼쪽 버튼 옆: 후계자 수업 · 대국 (홀로그램 유리 두 장 · 폰에선 미니 게임 아래로 옮겨져요) -->
@@ -139,7 +140,7 @@ $$('[data-emb]').forEach(el => {
   const heir = $('#heir'), lobbyEl = heir.parentNode, hud = $('#hud');
   const placeHeir = () => { if (!mq.matches) { heir.style.left = (side.offsetLeft + side.offsetWidth + 24) + 'px'; heir.style.top = (side.offsetTop + 4) + 'px'; } else heir.style.left = heir.style.top = ''; };
   const apply = () => { if (mq.matches) { sideBtns.forEach(b => dock.appendChild(b)); hud.appendChild(heir); } else { sideBtns.forEach(b => side.appendChild(b)); lobbyEl.appendChild(heir); } placeHeir(); };
-  addEventListener('resize', placeHeir); setTimeout(placeHeir, 600);
+  addEventListener('resize', placeHeir); setTimeout(placeHeir, 600); if (window.ResizeObserver) new ResizeObserver(placeHeir).observe(side);   // 순위 카드가 뜨면 아이콘이 두 줄이 돼서 다시 맞춰요
   apply(); mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
 })();
 /* 별똥별 — 사진 속 방향(오른쪽 위 → 왼쪽 아래, 약 32°)으로 가끔 떨어져요 */
@@ -239,7 +240,8 @@ App.ready.then(async user => {
 
   let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.charCards(), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
-  if (s && s.stock_on) $('#sb-stock').hidden = false;   // 빼빼로 증권이 열려 있을 때만
+  if (s && s.stock_on) $('#sb-stock').hidden = false;
+  if ((s && s.theater_on) || user.grade === 'admin') $('#sb-theater').hidden = false;   // 상영관이 열려 있을 때만 (관리자는 늘)   // 빼빼로 증권이 열려 있을 때만
   const pub = all.filter(c => c.published_at);   // 게시된 캐릭터 (수정본을 심사받는 중이어도 게시된 상태)
   const mine = all.filter(c => c.owner_id === user.id);
 
