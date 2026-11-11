@@ -85,7 +85,6 @@ body.th-page::after { content: ""; display: block; position: fixed; top: 12%; le
 .scr .tap div { text-align: center; }
 .scr .tap b { display: inline-flex; align-items: center; gap: 10px; font: 700 15px var(--sans); color: #151824; background: #fff; border-radius: 999px; padding: 14px 26px; box-shadow: 0 12px 30px -12px rgba(0,0,0,.4); }
 .scr .tap small { display: block; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,.85); }
-.scr .shield { position: absolute; inset: 0; z-index: 1; }   /* 보는 사람은 영상을 눌러 멈추지 못하게 */
 .info { display: flex; align-items: flex-start; gap: 16px; padding: 20px 2px 18px; border-bottom: 1px solid var(--ln); }
 .info .meta { flex: 1; min-width: 0; }
 .info .live { display: inline-flex; align-items: center; gap: 6px; font: 700 11px var(--sans); letter-spacing: .12em; color: var(--live); }
@@ -229,7 +228,7 @@ App.ready.then(async user => {
   }
 
   /* ───────── 방 ───────── */
-  let R = null, sub = null, player = null, tick = null, started = false, applying = 0, people = [], myName = '', skew = 0, sending = false, lastSent = 0, sendT = null;
+  let R = null, sub = null, player = null, tick = null, started = false, applying = 0, people = [], myName = '', skew = 0, sending = false, lastSent = 0, sendT = null, myPause = false;
   const srvNow = () => Date.now() + skew;
   const target = s => { if (!s.playing) return s.pos; let t = s.pos + (srvNow() - Date.parse(s.at)) / 1000; if (s.dur > 0) t = Math.min(t, s.dur); return t; };
   function leave() {
@@ -238,7 +237,7 @@ App.ready.then(async user => {
     if (sendT) { clearTimeout(sendT); sendT = null; }
     if (napT) { clearTimeout(napT); napT = null; } napped = false; connect = () => {};
     if (player) { try { player.destroy(); } catch (e) {} player = null; }
-    R = null; started = false; people = [];
+    R = null; started = false; people = []; myPause = false;
   }
 
   async function showRoom(id) {
@@ -277,9 +276,8 @@ App.ready.then(async user => {
     const s = R.st, vt = player && player.getVideoData ? (player.getVideoData() || {}).title : '';
     $('#r-info').innerHTML = `<div class="meta"><span class="live${s.playing ? '' : ' off'}"><i></i>${s.playing ? 'ON AIR' : 'PAUSED'}</span><h1>${esc(R.title)}</h1>
       <p>방장 <u>${esc(R.nick)}</u>${vt ? ' · ' + esc(vt) : ''}<span id="r-t"></span>${R.who ? ` <span class="adm">· ${esc(R.who)}</span>` : ''}</p></div>
-      <div class="act">${R.can ? '<button class="b" id="r-l">링크 바꾸기</button><button class="b gh" id="r-x">방 닫기</button>' : '<button class="b" id="r-m">소리 끄기</button>'}</div>`;
+      <div class="act">${R.can ? '<button class="b" id="r-l">링크 바꾸기</button><button class="b gh" id="r-x">방 닫기</button>' : ''}</div>`;
     if (R.can) { $('#r-l').onclick = linkModal; $('#r-x').onclick = () => closeRoom(R.id); }
-    else $('#r-m').onclick = () => { if (!player || !player.isMuted) return; player.isMuted() ? player.unMute() : player.mute(); muteLabel(); };
     drawTime(); muteLabel();
   }
   function drawTime() {
@@ -296,7 +294,7 @@ App.ready.then(async user => {
   function enter(v) {
     R = { id: v.id, title: v.title, nick: v.nick, who: v.who, can: !!v.can, mine: !!v.mine, st: { src: v.src, playing: v.playing, pos: +v.pos || 0, dur: +v.dur || 0, at: v.at } };
     tx.innerHTML = `<button class="bk" data-back>← 방 목록</button>
-      <div class="scr"><div id="yt"></div>${R.can ? '' : '<div class="shield"></div>'}<div class="tap" id="tap"><div><b>▶ 같이 보기</b><small>${R.can ? '누르면 지금 장면부터 이어서 틀어요' : '누르면 방장 화면에 맞춰져요'}</small></div></div></div>
+      <div class="scr"><div id="yt"></div><div class="tap" id="tap"><div><b>▶ 같이 보기</b><small>${R.can ? '누르면 지금 장면부터 이어서 틀어요' : '누르면 방장 화면에 맞춰져요'}</small></div></div></div>
       <div class="info" id="r-info"></div><div class="vw" id="r-ppl"></div>`;
     drawInfo(); drawPeople();
     $('#tap').onclick = () => { started = true; $('#tap').remove(); connect(); if (player && player.playVideo) { try { player.unMute(); } catch (e) {} apply(R.st, true); } };
@@ -305,7 +303,7 @@ App.ready.then(async user => {
       if (!R || R.id !== id) return;
       player = new YT.Player('yt', {
         host: 'https://www.youtube-nocookie.com', videoId: R.st.src,
-        playerVars: { controls: R.can ? 1 : 0, disablekb: R.can ? 0 : 1, playsinline: 1, rel: 0, modestbranding: 1, fs: 1, start: Math.floor(target(R.st)) },
+        playerVars: { controls: 1, playsinline: 1, rel: 0, modestbranding: 1, fs: 1, start: Math.floor(target(R.st)) },
         events: { onReady: () => { if (started) apply(R.st, true); drawInfo(); }, onStateChange: e => onPlayer(e.data) },
       });
     }).catch(() => toast('유튜브를 불러오지 못했어요', 'err'));
@@ -315,6 +313,7 @@ App.ready.then(async user => {
       if (st.closed) return ended('상영이 끝났어요');
       if (R.st.at && Date.parse(st.at) <= Date.parse(R.st.at)) return;   // 내가 보낸 것 · 이미 받은 것
       R.st = { src: st.src, playing: st.playing, pos: +st.pos || 0, dur: +st.dur || 0, at: st.at };
+      if (myPause) { if (!st.playing) myPause = false; else if (player && player.getVideoData && (player.getVideoData() || {}).video_id === st.src) { drawInfo(); return; } else myPause = false; }   // 내가 멈춰 둔 동안엔 그대로 (영상이 바뀌면 따라가요)
       apply(R.st); drawInfo();
     }, P => { people = P; drawPeople(); }, () => refresh(id)); };
     // 화면 안에서만 도는 확인 (서버에 요청 없음): 보는 사람은 어긋나면 맞추고 · 방장은 건너뛰기를 알아채요
@@ -322,7 +321,7 @@ App.ready.then(async user => {
       if (!R || !player || !player.getCurrentTime || !started) return;
       const s = R.st, cur = player.getCurrentTime(), live = !(s.dur > 0);
       if (R.can) { if (Date.now() > applying) send(); }   // 보낼 때 바뀐 게 없으면 안 보내요 (영상 길이 · 멈춤 · 건너뛰기)
-      else if (Date.now() > applying) { const ps = player.getPlayerState(); if ((!live && Math.abs(cur - target(s)) > 3) || (s.playing && (ps === 2 || ps === 5 || ps === -1)) || (!s.playing && ps === 1)) apply(s); }
+      else if (Date.now() > applying && !myPause) { const ps = player.getPlayerState(); if ((!live && Math.abs(cur - target(s)) > 3) || (s.playing && (ps === 5 || ps === -1)) || (!s.playing && ps === 1)) apply(s); }
       if (!document.hidden) drawTime();
     }, 2000);
   }
@@ -350,7 +349,12 @@ App.ready.then(async user => {
   function onPlayer(ps) {
     if (!R) return;
     if (ps === 1 || ps === 0) drawInfo();
-    if (!R.can || !started || Date.now() < applying) return;
+    if (!started || Date.now() < applying) return;
+    if (!R.can) {   // 보는 사람: 직접 멈추면 내 화면만 멈춰요 · 다시 틀면 방장 장면으로 맞춰요
+      if (ps === 2 && R.st.playing) myPause = true;
+      else if (ps === 1 && myPause) { myPause = false; apply(R.st, true); }
+      return;
+    }
     if (ps === 1 || ps === 2 || ps === 0) send();   // 보낼 때 바뀐 게 없으면 안 보내요
   }
   const isLive = () => { try { return !!(player.getVideoData() || {}).isLive; } catch (e) { return false; } };
