@@ -609,6 +609,55 @@ App.ready.then(async user => {
     });
   }
 
+  /* 삼사라 증권: 열기 · 닫기 · 다음 시간 종목 체크 · 보상 */
+  async function stockTab() {
+    const pane = curPane;
+    pane.innerHTML = '<section class="adm-card"><p class="dim">불러오는 중…</p></section>';
+    let s, chars = [];
+    try { [s, chars] = await Promise.all([Store.stockAdmin(), Store.charNames()]); }
+    catch (e) { pane.innerHTML = `<section class="adm-card"><p class="dim">불러오지 못했어요 · ${esc(e.message || e)}<br>삼사라-증권.sql 을 먼저 실행했는지 확인해 주세요.</p></section>`; return; }
+    const cname = id => ((chars.find(c => c.id === id) || {}).data || {}).name || '?';
+    const tm = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+    const mid = new Date(); mid.setHours(24, 0, 0, 0);
+    const local = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+    const rank = `<ul class="adm-list">${(s.rank || []).map((r, i) => `<li><b>${i + 1}</b><span>${esc(r.nick)}</span><span>${esc(r.name)}</span><span>${Number(r.worth).toLocaleString()}</span><span style="color:${r.r >= 0 ? '#ff8a9d' : '#7fb8ff'}">${r.r > 0 ? '+' : ''}${r.r}%</span></li>`).join('') || '<li class="dim">아직 거래한 사람이 없어요.</li>'}</ul>`;
+    const next = new Set(s.next || []);
+    pane.innerHTML = s.on ? `
+      <section class="adm-card"><header><b>삼사라 증권 · 열림</b><span class="label">참여 ${s.players}명 · 마감 ${tm(s.ends)}</span></header>
+        <p class="hint-text">지금 종목 (다음 교체 ${tm(s.round_end)}): ${(s.live || []).map(id => esc(cname(id))).join(' · ')}</p>
+        <div class="modal-foot" style="margin-top:0"><button class="btn danger" id="sk-close">지금 장 닫기</button></div>
+        <p class="hint-text">닫으면 모두가 갖고 있던 주식이 지금 가격으로 한꺼번에 팔려요. 마감 시각이 지나도 다음 요청 때 저절로 닫혀요.</p></section>
+      <section class="adm-card" style="margin-top:16px"><header><b>다음 시간에 나올 캐릭터</b><span class="label" id="sk-n">${next.size} / 10</span></header>
+        <p class="hint-text">체크한 캐릭터가 다음 정각에 먼저 나와요. 10명이 안 되면 나머지는 랜덤으로 채워요. 정각에 쓰이고 나면 체크는 비워져요.</p>
+        <input id="sk-q" placeholder="이름 찾기" style="width:100%;margin-bottom:8px">
+        <div id="sk-list" style="display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow:auto">${chars.map(c => `<label class="chip" data-nm="${esc(c.data.name)}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid rgba(255,255,255,.15);border-radius:99px;cursor:pointer"><input type="checkbox" value="${esc(c.id)}" ${next.has(c.id) ? 'checked' : ''}>${esc(c.data.name || '?')}</label>`).join('')}</div>
+        <div class="modal-foot"><button class="btn" id="sk-pick">체크한 캐릭터 저장</button></div></section>
+      <section class="adm-card" style="margin-top:16px"><header><b>지금 수익률 순위</b><span class="label">상위 10명</span></header>${rank}</section>`
+    : `
+      <section class="adm-card"><header><b>삼사라 증권 · 닫힘</b>${s.closed_at ? `<span class="label">${tm(s.closed_at)} 마감</span>` : ''}</header>
+        <p class="hint-text">열면 이벤트 돈 · 주식이 모두 새로 시작해요. 매시 정각에 종목 10개가 바뀌고, 마감 시각이 되면 저절로 닫히면서 갖고 있던 주식이 그 가격으로 팔려요.</p>
+        <div class="row2"><label class="field"><span>마감 시각</span><input type="datetime-local" id="sk-ends" value="${local(mid)}"></label>
+          <label class="field"><span>처음 이벤트 돈</span><input type="number" id="sk-cash" value="100000" min="1000" step="1000"></label></div>
+        <div class="modal-foot"><button class="btn" id="sk-open">장 열기</button></div></section>
+      ${s.closed_at ? `<section class="adm-card" style="margin-top:16px"><header><b>최종 수익률 상위 10명</b><span class="label">${s.rewarded ? '보상 줬어요' : '아직 보상 안 줬어요'}</span></header>${rank}
+        ${s.rewarded ? '' : '<div class="modal-foot"><button class="btn" id="sk-reward">10명 투자 캐릭터에게 재력 +2 주기</button></div>'}</section>` : ''}`;
+    const run = async (b, fn, msg) => { b.disabled = true; try { await fn(); toast(msg); stockTab(); } catch (e) { toast(e.message, 'err'); b.disabled = false; } };
+    if ($('#sk-open')) $('#sk-open').onclick = e => {
+      const ends = new Date($('#sk-ends').value), cash = Math.floor(+$('#sk-cash').value || 100000);
+      if (isNaN(ends)) return toast('마감 시각을 골라 주세요.', 'err');
+      if (!confirm(`삼사라 증권을 열까요?\n마감 ${tm(ends)} · 처음 돈 ${cash.toLocaleString()}${s.closed_at ? '\n지난 기록은 모두 지워져요.' : ''}`)) return;
+      run(e.target, () => Store.stockOpen(ends.toISOString(), cash), '장을 열었어요');
+    };
+    if ($('#sk-close')) $('#sk-close').onclick = e => { if (confirm('지금 장을 닫을까요? 모두의 주식이 지금 가격으로 팔려요.')) run(e.target, () => Store.stockClose(), '장을 닫았어요'); };
+    if ($('#sk-reward')) $('#sk-reward').onclick = e => { if (confirm('상위 10명의 투자 캐릭터에게 재력 +2 를 줄까요? 한 번만 줄 수 있어요.')) run(e.target, () => Store.stockReward(), '재력 +2 를 줬어요'); };
+    if ($('#sk-pick')) {
+      const ids = () => $$('#sk-list input:checked').map(x => x.value);
+      $('#sk-list').onchange = e => { if (ids().length > 10) { e.target.checked = false; toast('10명까지 고를 수 있어요.', 'err'); } $('#sk-n').textContent = ids().length + ' / 10'; };
+      $('#sk-q').oninput = e => { const q = e.target.value.trim(); $$('#sk-list label').forEach(l => l.hidden = !!q && !l.dataset.nm.includes(q)); };
+      $('#sk-pick').onclick = e => run(e.target, () => Store.stockPickNext(ids()), '다음 시간 캐릭터를 저장했어요');
+    }
+  }
+
   const HOUSES = ['본가', '경파', '염가', '염업'];
   async function lessonQ(subj) {
     const pane = curPane;
@@ -707,7 +756,7 @@ App.ready.then(async user => {
   }
 
   const TABS = { review, join, site, period, members: () => membersTab(), coin: coinTab, shop: shopTab, banner: bannerTab, rptA, rptB,
-    play: playTab, lq_today: lessonToday, lq_soc: () => lessonQ('soc'), lq_mor: () => lessonQ('mor'), lq_art: () => lessonQ('art') };
+    play: playTab, lq_today: lessonToday, lq_soc: () => lessonQ('soc'), lq_mor: () => lessonQ('mor'), lq_art: () => lessonQ('art'), stock: stockTab };
   joinBadge();
   /* 큰 메뉴 4개 → 안에 작은 탭 */
   const GROUPS = {
@@ -715,7 +764,7 @@ App.ready.then(async user => {
     member: [['members', '회원 · 지갑'], ['join', '가입 신청'], ['rptB', '홈페이지 디자인'], ['rptA', '회원 기록']],
     coin: [['coin', '지급']],
     shop: [['shop', '물건 · 구매 · 선물 기록']],
-    play: [['play', '열기 · 닫기 · 스탯'], ['lq_today', '오늘 수업 기록'], ['lq_soc', '사회 문자'], ['lq_mor', '도덕심 부탁'], ['lq_art', '미술 스토리']],
+    play: [['play', '열기 · 닫기 · 스탯'], ['lq_today', '오늘 수업 기록'], ['lq_soc', '사회 문자'], ['lq_mor', '도덕심 부탁'], ['lq_art', '미술 스토리'], ['stock', '삼사라 증권']],
     site: [['site', '설정 · BGM'], ['banner', '메인 배너']]
   };
   const openTab = t => {

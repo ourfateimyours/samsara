@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>삼사라 증권 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+body.stock-page {
+  --up: #ff5f85; --dn: #3f95e0; --tx: #3d4a58; --sub: #8a97a6; --ac: #8fb4cc; --ln: rgba(150,175,195,.22);
+  background: #fff;
+}
+body.stock-page::before, body.stock-page::after { display: none; }
+html:has(body.stock-page) { background: #fbfdff; }
+.sx { max-width: 760px; margin: 0 auto; padding: 86px 16px 130px; font-family: var(--sans); color: var(--tx); font-variant-numeric: tabular-nums; letter-spacing: -.015em; }
+.mono { font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.up { color: var(--up); } .dn { color: var(--dn); } .fl { color: var(--sub); }
+.gl { background: transparent; border: 1px solid #e9eef3; border-radius: 18px; }
+.eb { display: block; font: 600 10.5px var(--sans); letter-spacing: .22em; color: var(--ac); text-transform: uppercase; }
+.ttl { font: italic 900 15px var(--sans); letter-spacing: .02em; background: linear-gradient(100deg, #7cc4e4, #9fd9b4 55%, #e6cf7a); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 4px; }
+.ttl.pk { background: linear-gradient(100deg, #ff8fb1, #ffb37a 55%, #e6cf7a); -webkit-background-clip: text; background-clip: text; }
+.spk { color: #b7d4e6; font-size: 11px; letter-spacing: .1em; margin-left: 4px; }
+
+/* 머리 */
+.skh { position: relative; overflow: hidden; padding: 20px 20px 18px; margin-bottom: 14px; }
+.skh h1 { margin: 6px 0 2px; font: 700 28px var(--sans); color: #3a4654; letter-spacing: -.01em; }
+.skh p { margin: 0; font-size: 13px; color: var(--sub); }
+.clk { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.clk div { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.85); border: 1px solid rgba(150,175,195,.28); border-radius: 999px; padding: 6px 12px 6px 10px; }
+.clk i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); box-shadow: 0 0 0 3px rgba(255,95,133,.18); animation: blink 1.6s infinite; }
+.clk div + div i { background: var(--ac); box-shadow: 0 0 0 3px rgba(143,180,204,.2); }
+.clk span { font-size: 12px; color: var(--sub); } .clk b { font: 700 14px var(--sans); color: var(--tx); }
+@keyframes blink { 50% { opacity: .3; } }
+
+/* 소식 */
+.nws { padding: 14px 14px 10px; margin-bottom: 14px; }
+.nws-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.nws-hd .lv { font: 700 10px var(--sans); color: var(--up); border: 1px solid rgba(255,95,133,.4); border-radius: 999px; padding: 1px 7px; letter-spacing: .1em; }
+.nws-hd small { margin-left: auto; font-size: 11px; color: var(--sub); }
+.sign { position: relative; overflow: hidden; height: 46px; border-radius: 12px; background: #111117; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 8px 18px -12px rgba(20,16,40,.5); }
+.sign::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle, transparent 62%, rgba(17,17,23,.22) 64%) 0 0 / 3px 3px; }
+.sign::after { content: ""; position: absolute; inset: 0 0 55% 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,.05), transparent); }
+.sign-st { position: absolute; inset: 0; pointer-events: none; z-index: 1; animation: twk 2.4s ease-in-out infinite alternate;
+  background: radial-gradient(1.2px 1.2px at 8% 25%, #fff, transparent), radial-gradient(1px 1px at 22% 78%, #fff, transparent), radial-gradient(1.4px 1.4px at 37% 18%, #ffe9a8, transparent), radial-gradient(1px 1px at 51% 70%, #fff, transparent), radial-gradient(1.3px 1.3px at 66% 30%, #ffd6e4, transparent), radial-gradient(1px 1px at 79% 82%, #fff, transparent), radial-gradient(1.4px 1.4px at 92% 22%, #cdeaff, transparent); }
+.sign-st + .sign-st { animation-delay: 1.2s; transform: translateX(4%) scaleY(-1); }
+@keyframes twk { from { opacity: .25; } to { opacity: 1; } }
+.sign.flash { animation: sfl 1.4s ease-out; } @keyframes sfl { 0%, 40% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 0 0 4px rgba(255,180,215,.7), 0 0 26px rgba(255,150,200,.8); } }
+.sign-fx { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 3; font: italic 900 11px var(--sans); letter-spacing: .06em; color: #fff; padding: 5px 10px; border-radius: 999px; background: linear-gradient(100deg, #ff7fa8, #b48cff); box-shadow: 0 0 8px rgba(255,140,190,.4), 0 0 0 1px rgba(255,255,255,.6) inset, 0 0 0 5px #111117; white-space: nowrap; }
+.sign-in { position: absolute; top: 0; left: 0; z-index: 1; display: flex; gap: 22px; padding-right: 22px; height: 46px; align-items: center; white-space: nowrap; font: 700 13.5px var(--sans); color: #fff; text-shadow: 0 0 5px rgba(255,255,255,.3); animation: tape 50s linear infinite; }
+.sign-in .g { color: #ff9dbd; text-shadow: 0 0 5px rgba(255,90,150,.45); } .sign-in .b { color: #8dcfff; text-shadow: 0 0 5px rgba(80,170,255,.45); }
+.sign-in .s { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,.4); font-size: 12px; }
+@keyframes tape { to { transform: translateX(-50%); } }
+.feed { list-style: none; margin: 10px 0 0; padding: 0; }
+.feed li { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px dashed var(--ln); }
+.feed li:first-child { border-top: 0; }
+.feed img, .feed video { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(70,100,130,.18); flex: none; }
+.feed .tx { flex: 1; min-width: 0; }
+.feed .tx b { font: 600 14px var(--sans); color: #3a4654; margin-right: 5px; }
+.feed .tx p { margin: 1px 0 0; font-size: 13px; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tag { display: inline-block; font: 700 10.5px var(--sans); border-radius: 999px; padding: 1px 8px; vertical-align: 2px; margin-right: 5px; }
+.tag.g { color: #fff; background: linear-gradient(100deg, #ff7fa2, #ffa48a); }
+.tag.b { color: #fff; background: linear-gradient(100deg, #5aa7ec, #7cc4e4); }
+.feed em { flex: none; font-style: normal; text-align: right; font-size: 11px; color: var(--sub); line-height: 1.35; }
+.feed li.new { animation: pop 1.2s ease-out; }
+@keyframes pop { from { background: rgba(255,214,226,.6); } }
+.feed li.more { border: 0; padding: 0; }
+.feed-more { display: block; width: 100%; margin-top: 4px; padding: 6px; border: 0; background: none; color: var(--sub); font-size: 12px; cursor: pointer; }
+
+/* 요약 */
+.led { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.led > div { padding: 12px 12px 11px; min-width: 0; }
+.led small { display: block; font-size: 11px; color: var(--sub); margin: 1px 0 8px; }
+.led .lw { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.led .lw img, .led .lw video { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(70,100,130,.18); flex: none; }
+.led .lw b { display: block; font: 600 14px var(--sans); color: #3a4654; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.led .lw span { display: block; font: 700 13px var(--sans); margin-top: 1px; }
+.led .flash { animation: pop 1s ease-out; }
+@media (max-width: 560px) { .led { gap: 6px; } .led > div { padding: 10px 9px; } .led small { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .led .lw img, .led .lw video { display: none; } .led .lw b { font-size: 14px; } .led .lw span { font-size: 12px; } }
+
+/* 종목 */
+.brd { padding: 14px 10px 6px; margin-bottom: 14px; }
+.brd-hd { display: flex; align-items: baseline; gap: 8px; padding: 0 6px 6px; }
+.brd-hd b { font-size: 15px; font-weight: 700; color: #3a4654; }
+.brd-hd small { margin-left: auto; font-size: 11px; color: var(--sub); }
+.row { display: grid; grid-template-columns: 24px 44px minmax(0, 1fr) 84px 92px; align-items: center; gap: 10px; padding: 10px 6px; border-top: 1px dashed var(--ln); border-radius: 12px; cursor: pointer; transition: background .15s; }
+.brd .row:first-of-type { border-top-color: transparent; padding-right: 4px; }
+.row:hover { background: rgba(255,255,255,.75); }
+.row .rk { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11.5px var(--sans); color: var(--sub); }
+.row .rk.r1 { color: #fff; background: linear-gradient(135deg, #ffd56b, #f2a93b); box-shadow: 0 2px 6px rgba(242,169,59,.4); }
+.row .rk.r2 { color: #fff; background: linear-gradient(135deg, #cfdbe6, #9fb3c5); }
+.row .rk.r3 { color: #fff; background: linear-gradient(135deg, #f1c3a4, #d99470); }
+.row .av { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(70,100,130,.2); box-sizing: border-box; }
+.row .nm { min-width: 0; }
+.row .nm b { display: block; font: 600 16px var(--sans); color: #3a4654; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .nm span { display: block; font-size: 11.5px; color: var(--sub); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .nm span i { font-style: normal; color: var(--tx); font-weight: 600; }
+.row .nm .mine { color: #e0607f; font-weight: 700; }
+.row .mini { width: 84px; height: 34px; display: block; }
+.row .px { text-align: right; }
+.row .px b { display: block; font: 700 15.5px var(--sans); }
+.row .px span { display: inline-block; font: 700 11.5px var(--sans); margin-top: 3px; padding: 1px 7px; border-radius: 999px; }
+.row .px span.up { color: #fff; background: linear-gradient(100deg, #ff7fa2, #ff9a8a); }
+.row .px span.dn { color: #fff; background: linear-gradient(100deg, #4b9ce2, #7cc4e4); }
+.row .px span.fl { background: rgba(150,175,195,.16); }
+.row.hit-up { animation: hu 1s ease-out; } .row.hit-dn { animation: hd 1s ease-out; }
+@keyframes hu { from { background: rgba(255,200,215,.7); } } @keyframes hd { from { background: rgba(190,222,250,.8); } }
+.row.off { opacity: .72; }
+@media (max-width: 480px) { .row { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 8px; } .row .mini { display: none; } .row .av { width: 40px; height: 40px; }
+  .skh h1 { font-size: 26px; } .eb { font-size: 9.5px; letter-spacing: .16em; }
+  .nws-hd { flex-wrap: wrap; } .nws-hd small { flex-basis: 100%; margin: 2px 0 0; } }
+.ch-line { fill: none; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ch-base { stroke: #b9c7d3; stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.ch-grid { stroke: rgba(150,175,195,.18); stroke-width: 1; }
+.ch-lab { font: 500 10px var(--sans); fill: var(--sub); }
+
+/* 지갑 */
+.wal { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+.wal-in { font-variant-numeric: tabular-nums; pointer-events: auto; background: rgba(255,255,255,.96) !important; backdrop-filter: blur(10px); box-shadow: 0 6px 24px -10px rgba(70,100,130,.3); max-width: 740px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 16px; color: var(--tx); }
+.wal small { display: block; font-size: 11px; color: var(--sub); }
+.wal b { font: 700 16px var(--sans); }
+.wal .sp { flex: 1; }
+.wal .me img, .wal .me video { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(70,100,130,.2); display: block; }
+
+/* 사고팔기 */
+.tr-back { position: fixed; inset: 0; background: rgba(40,60,80,.32); backdrop-filter: blur(2px); display: none; align-items: flex-end; justify-content: center; z-index: 60; }
+.tr-back.on { display: flex; }
+.tr { font-variant-numeric: tabular-nums; letter-spacing: -.015em; background: #fff !important; width: min(480px, 100%); border-radius: 24px 24px 0 0 !important; padding: 18px 20px calc(18px + env(safe-area-inset-bottom)); color: var(--tx); font-family: var(--sans); }
+.tr-grab { width: 40px; height: 4px; border-radius: 4px; background: rgba(150,175,195,.45); margin: -6px auto 12px; }
+.tr-hd { display: flex; align-items: center; gap: 10px; }
+.tr-hd img, .tr-hd video { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(70,100,130,.2); }
+.tr-hd b { display: block; font: 600 18px var(--sans); color: #3a4654; } .tr-hd span { display: block; font-size: 12px; color: var(--sub); margin-top: 1px; }
+.tr-px { margin: 12px 0 0; }
+.tr-px b { font: 800 30px var(--sans); letter-spacing: -.02em; color: #3a4654; }
+.tr-px span { display: block; font: 700 13.5px var(--sans); margin-top: 2px; }
+.tr-px span small { font: 400 12px var(--sans); color: var(--sub); margin-left: 4px; }
+.tr-big { width: 100%; height: auto; display: block; margin: 8px 0 8px; }
+.tr-nw { display: flex; align-items: center; gap: 6px; font-size: 12.5px; background: rgba(255,255,255,.8); border: 1px dashed rgba(150,175,195,.4); border-radius: 12px; padding: 7px 10px; margin-bottom: 10px; }
+.tr-nw em { margin-left: auto; font-style: normal; font-size: 11px; color: var(--sub); flex: none; }
+.tr-info { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; font-size: 11px; color: var(--sub); margin-bottom: 12px; }
+.tr-info div { background: rgba(255,255,255,.8); border: 1px solid rgba(150,175,195,.2); border-radius: 12px; padding: 7px 9px; }
+.tr-info b { display: block; color: var(--tx); font: 700 13.5px var(--sans); margin-top: 2px; }
+.tr-info b.up { color: var(--up); } .tr-info b.dn { color: var(--dn); }
+.qty { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.qty button { width: 42px; height: 42px; border-radius: 14px; border: 1px solid rgba(150,175,195,.3); background: rgba(255,255,255,.9); color: var(--tx); font-size: 18px; cursor: pointer; }
+.qty .n { flex: 1; text-align: center; font: 700 24px var(--sans); color: #3a4654; }
+.qty .q { width: auto; padding: 0 12px; font-size: 13px; font-weight: 700; }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acts button { height: 52px; border-radius: 16px; border: 0; font: 800 16px var(--sans); color: #fff; cursor: pointer; letter-spacing: .02em; }
+.acts .b { background: linear-gradient(100deg, #ff6f95, #ff9a8a); box-shadow: 0 8px 18px -8px rgba(255,95,133,.7); }
+.acts .s { background: linear-gradient(100deg, #3f95e0, #6cbde4); box-shadow: 0 8px 18px -8px rgba(63,149,224,.7); }
+.acts button:disabled { opacity: .3; cursor: default; box-shadow: none; }
+
+/* 처음 · 닫힘 */
+.pick, .shut { margin: 20px auto 0; max-width: 440px; text-align: center; color: var(--tx); font-size: 14px; line-height: 1.7; padding: 24px 20px; }
+.pick h1, .shut h1 { font: 700 26px var(--sans); color: #3a4654; margin: 6px 0 4px; }
+.pick ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.pick button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 16px; border: 1px solid rgba(150,175,195,.3); background: rgba(255,255,255,.85); color: #3a4654; font: 600 16px var(--sans); cursor: pointer; text-align: left; transition: transform .12s; }
+.pick button:hover { transform: translateY(-1px); border-color: #ffb3c8; }
+.pick button img, .pick button video { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+.fin { margin-top: 14px; text-align: left; list-style: none; padding: 0; }
+.fin li { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-top: 1px dashed var(--ln); }
+.fin li b { flex: 1; font: 600 15px var(--sans); color: #3a4654; } .fin li em { font-style: normal; color: var(--sub); width: 22px; font: 700 13px var(--sans); }
+.fin img, .fin video { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+
+/* 대량 매수 전광판 (화면 가운데 · 흰 바탕 · 왼쪽 영상 플레이어 + 오른쪽 안내판) */
+.bf { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(28,26,44,.42); backdrop-filter: blur(5px); cursor: pointer; }
+.bf.on { display: flex; animation: bfIn .35s ease-out; } .bf.out { animation: bfOut .5s ease-in forwards; }
+@keyframes bfIn { from { opacity: 0; } } @keyframes bfOut { to { opacity: 0; } }
+.bf-card { position: relative; width: min(740px, 100%); aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; background: #fff; color: #23202f; font-family: var(--sans); letter-spacing: -.015em; border-radius: 8px; box-shadow: 0 30px 80px -24px rgba(20,16,50,.6); animation: bfPop .5s cubic-bezier(.2,1.25,.4,1); }
+@keyframes bfPop { from { transform: translateY(14px) scale(.95); opacity: 0; } }
+/* 왼쪽 영상 */
+.bv { position: absolute; left: 2.6cqw; top: 2.6cqw; width: 69cqw; height: 45.5cqw; border: 1px solid #e4e1ec; border-radius: 1.3cqw; overflow: hidden; background: #fff; }
+.bv-face { position: absolute; right: 0; top: 0; bottom: 0; width: 44cqw; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 22%, #000 48%); mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 22%, #000 48%); }
+.bv-face > * { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; display: block; animation: kb 7s ease-out forwards; }
+@keyframes kb { from { transform: scale(1.12); } to { transform: scale(1.02); } }
+.bv-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 13cqw; background: linear-gradient(0deg, #fff 30%, rgba(255,255,255,0)); pointer-events: none; }
+.bv-ic { position: absolute; left: 3cqw; top: 2.8cqw; display: flex; gap: 1.2cqw; align-items: center; color: #23202f; font-size: 2.1cqw; }
+.bv-ic i { width: 2.5cqw; height: 2.5cqw; border: .28cqw solid #23202f; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 1.2cqw; }
+.bv-big { position: absolute; left: 3cqw; top: 6.4cqw; font: 900 10.4cqw/1 var(--sans); letter-spacing: -.05em; color: #23202f; }
+.bv-big small { font-size: 3.8cqw; letter-spacing: -.02em; margin-left: .5cqw; }
+.bv-ann { position: absolute; left: 3cqw; top: 17.8cqw; width: 23cqw; padding-top: .9cqw; border-top: .25cqw solid #23202f; font: 800 1.9cqw var(--sans); letter-spacing: -.01em; }
+.bv-nm { position: absolute; left: 3cqw; top: 23.4cqw; max-width: 30cqw; font: 800 6cqw/1.1 var(--sans); letter-spacing: -.035em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bv-sub { position: absolute; left: 3.1cqw; top: 31cqw; font: 600 1.75cqw var(--sans); letter-spacing: -.015em; color: #5c5670; }
+.bv-tag { display: inline-block; margin-left: 1cqw; vertical-align: .15em; font: 800 1.35cqw var(--sans); letter-spacing: .02em; color: #fff; background: linear-gradient(100deg, #ff6f9c, #b48cff); padding: .45cqw 1.2cqw; border-radius: 999px; }
+.bv-srch { position: absolute; right: 2.8cqw; top: 31cqw; display: flex; align-items: center; gap: 1.4cqw; padding: .9cqw 2.8cqw .9cqw 1.8cqw; border: 1px solid rgba(35,32,47,.85); border-radius: 999px; background: rgba(255,255,255,.88); backdrop-filter: blur(6px); font: 700 1.75cqw var(--sans); letter-spacing: -.015em; white-space: nowrap; max-width: 30cqw; overflow: hidden; }
+.bv-srch svg { width: 1.9cqw; height: 1.9cqw; flex: none; color: #23202f; }
+.bv-plus { position: absolute; left: 31cqw; top: 33.6cqw; font: 800 2cqw var(--sans); letter-spacing: .4em; color: #23202f; }
+.bv-bar { position: absolute; left: 3cqw; right: 3cqw; top: 38.8cqw; height: .42cqw; background: #e3e0ea; }
+.bv-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #ff3d63; animation: bar 6s linear forwards; }
+@keyframes bar { to { width: 100%; } }
+.bv-ctl { position: absolute; left: 3cqw; right: 3cqw; top: 40.8cqw; display: flex; align-items: center; gap: 2.6cqw; font: 600 1.5cqw var(--sans); font-variant-numeric: tabular-nums; color: #23202f; }
+.bv-ctl svg { width: 2.1cqw; height: 2.1cqw; flex: none; color: #23202f; fill: currentColor; }
+.bv-ctl .sp { flex: 1; }
+.bv-ft { position: absolute; left: 3cqw; top: 50.4cqw; display: flex; gap: 2cqw; align-items: center; font: 500 1.15cqw var(--sans); color: #6b6880; }
+.bv-ft b { font-weight: 700; color: #23202f; padding-left: 2cqw; border-left: 1px solid #d9d6e2; }
+/* 오른쪽 안내판 */
+.bp { position: absolute; left: 74cqw; right: 2.6cqw; top: 2.6cqw; bottom: 2.6cqw; text-align: center; color: #4f4568; }
+.bp-cr { display: flex; align-items: center; gap: 1.4cqw; justify-content: center; font-size: 2.6cqw; color: #6b5d8f; margin-top: .4cqw; }
+.bp-cr::before, .bp-cr::after { content: ""; flex: 1; height: 1px; background: #6b5d8f; }
+.bp-hp { margin: 1.8cqw 0 0; font: 600 1.7cqw var(--sans); color: #4a4066; }
+.bp-nm { margin: .5cqw 0 0; font: 800 4.8cqw/1.15 var(--sans); color: #4f4568; letter-spacing: -.035em; word-break: keep-all; }
+.bp-sb { margin: .8cqw 0 0; font: 700 1.65cqw/1.5 var(--sans); color: #4a4066; }
+.bp-dm { margin: 1cqw 0 0; font-size: 1.4cqw; letter-spacing: .3em; color: #6b5d8f; }
+.bp-ms { margin: 1cqw 0 0; font: 800 2.2cqw/1.45 var(--sans); color: #4f4568; letter-spacing: -.025em; word-break: keep-all; }
+.bp-px { margin: 1.4cqw 0 0; font: 700 1.6cqw var(--sans); font-variant-numeric: tabular-nums; color: #4a4066; }
+.bp-bx { margin: 1.6cqw 0 0; border: 1px solid #d9d6e2; padding: 1.2cqw 1cqw; font: 600 1.3cqw/1.6 var(--sans); color: #4a4066; text-align: left; }
+.bp-bx b { display: block; font-size: 1.4cqw; color: #23202f; margin-bottom: .4cqw; }
+.bp-fp { position: absolute; left: 0; right: 0; bottom: 0; text-align: left; font: 500 1.05cqw/1.6 var(--sans); color: #77738a; }
+.bf-star { position: absolute; z-index: 4; pointer-events: none; transform: translate(-50%, -50%) scale(0); filter: drop-shadow(0 0 .5cqw currentColor); animation: spk 2.4s ease-in-out infinite; }
+@keyframes spk { 0%, 100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; } 45% { transform: translate(-50%, -50%) scale(1) rotate(45deg); opacity: 1; } 60% { transform: translate(-50%, -50%) scale(.85) rotate(60deg); opacity: .9; } }/* 두 번째 디자인: 무대 생중계 (가운데 두상 + 조명 + 아래 LED 자막) */
+.bs { position: absolute; inset: 0; overflow: hidden; color: #fff; text-shadow: 0 .2cqw .8cqw rgba(0,0,0,.35); background: #15131d; }
+.bs-rays { position: absolute; left: 50%; top: 40%; width: 120cqw; height: 120cqw; margin: -60cqw 0 0 -60cqw; border-radius: 50%; background: repeating-conic-gradient(rgba(255,255,255,.16) 0 4deg, transparent 4deg 14deg); -webkit-mask-image: radial-gradient(closest-side, #000 10%, transparent 75%); mask-image: radial-gradient(closest-side, #000 10%, transparent 75%); animation: spinR 30s linear infinite; }
+@keyframes spinR { to { transform: rotate(360deg); } }
+.bs-spot { position: absolute; left: 50%; top: -6cqw; width: 46cqw; height: 62cqw; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 80%); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); filter: blur(3cqw); top: -10cqw; animation: spot 3s ease-in-out infinite alternate; }
+@keyframes spot { from { opacity: .55; } to { opacity: 1; } }
+.bs-face { position: absolute; right: 0; top: 0; bottom: 6.4cqw; width: 58cqw; -webkit-mask-image: linear-gradient(270deg, #000 62%, rgba(0,0,0,.6) 80%, transparent 100%); mask-image: linear-gradient(270deg, #000 62%, rgba(0,0,0,.6) 80%, transparent 100%); }
+.bs-face > * { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; display: block; }
+@keyframes kb { from { transform: scale(1.12); } to { transform: scale(1.02); } }
+.bs-top { text-shadow: 0 0 .8cqw rgba(0,0,0,.6); position: absolute; z-index: 2; left: 3.4cqw; right: 3.4cqw; top: 3cqw; display: flex; align-items: center; gap: 1.6cqw; font: 700 1.4cqw var(--sans); letter-spacing: -.01em; }
+.bs-live { display: flex; align-items: center; gap: .7cqw; padding: .45cqw 1.2cqw; border-radius: .6cqw; background: #ff3d63; font-weight: 800; letter-spacing: .04em; }
+.bs-live i { width: .9cqw; height: .9cqw; border-radius: 50%; background: #fff; animation: blink 1.2s infinite; }
+.bs-top span { opacity: .8; } .bs-top .sp { flex: 1; }
+.bs-l { position: absolute; z-index: 1; left: 4cqw; top: 14cqw; width: 34cqw; }
+.bs-cap { font: 700 1.3cqw var(--sans); letter-spacing: .28em; }
+.bs-nm { margin: 1cqw 0 0; font: 800 7.4cqw/1.02 var(--sans); letter-spacing: -.045em; word-break: keep-all; }
+.bs-sb { margin: 1.4cqw 0 0; font: 600 1.8cqw var(--sans); letter-spacing: -.015em; }
+.bs-ln { width: 6cqw; height: .3cqw; margin: 2cqw 0; background: #fff; box-shadow: 0 .2cqw .8cqw rgba(0,0,0,.35); }
+.bs-ms { font: 700 2.1cqw/1.45 var(--sans); letter-spacing: -.02em; color: #fff; }
+.bs-r { position: absolute; z-index: 1; right: 4cqw; top: 15cqw; text-align: right; text-shadow: 0 .2cqw .8cqw rgba(0,0,0,.35); }
+.bs-r small { display: block; font: 600 1.3cqw var(--sans); letter-spacing: .2em; opacity: .65; }
+.bs-r b { display: block; margin-top: .6cqw; font: 800 5.6cqw/1 var(--sans); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.bs-chg { display: inline-block; margin-top: 1.2cqw; padding: .45cqw 1.3cqw; border-radius: 999px; font: 800 1.6cqw var(--sans); background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.55); }
+.bs-bb { display: block; margin-top: 3cqw; font: 800 3.2cqw var(--sans); letter-spacing: -.02em; color: #fff; text-shadow: 0 .2cqw .8cqw rgba(0,0,0,.35); }
+.bs-day { display: block; margin-top: .4cqw; font: 700 1.3cqw var(--sans); letter-spacing: .14em; opacity: .7; }
+.bs-tk { position: absolute; left: 0; right: 0; bottom: 0; height: 6.4cqw; background: #08080c; border-top: 1px solid rgba(255,255,255,.12); overflow: hidden; }
+
+.bs-tk-in { position: absolute; top: 0; left: 0; height: 100%; display: flex; align-items: center; gap: 3cqw; padding-right: 3cqw; white-space: nowrap; font: 700 2cqw var(--sans); letter-spacing: -.01em; animation: tape 9s linear infinite; }
+.bs-tk-in .s { color: #fff; font-size: 1.5cqw; } .bs-tk-in .p { color: #fff; }
+.bf-card:has(.bs) .bf-star { color: #fff !important; }.bf-heart { position: absolute; bottom: 4cqw; z-index: 4; pointer-events: none; font-style: normal; opacity: 0; filter: drop-shadow(0 0 .5cqw currentColor); animation: rise linear infinite; }
+@keyframes rise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: .95; } 100% { transform: translateY(-50cqw) translateX(3cqw) scale(1.1); opacity: 0; } }/* 휴대폰 (카드 폭 560px 아래): 작은 글씨는 빼고 중요한 것만 크게 */
+.bv-ms { display: none; }
+@container (max-width: 560px) {
+  .bv { width: 94.8cqw; height: 51cqw; }
+  .bp, .bv-ft, .bv-srch, .bv-plus, .bv-ctl .sp ~ svg { display: none; }
+  .bv-face { width: 52cqw; }
+  .bv-ic { top: 3cqw; font-size: 3cqw; } .bv-ic i { width: 3.4cqw; height: 3.4cqw; font-size: 1.8cqw; }
+  .bv-big { top: 6.4cqw; font-size: 11.5cqw; } .bv-big small { font-size: 4.6cqw; }
+  .bv-ann { top: 18.8cqw; width: 32cqw; font-size: 2.7cqw; }
+  .bv-nm { top: 23cqw; font-size: 8cqw; max-width: 44cqw; }
+  .bv-sub { top: 32cqw; font-size: 3cqw; line-height: 1.2; } .bv-tag { font-size: 2.3cqw; }
+  .bv-ms { display: block; position: absolute; left: 3.1cqw; top: 36.6cqw; line-height: 1.2; font: 800 3.1cqw var(--sans); letter-spacing: -.02em; color: #e2447a; }
+  .bv-bar { top: 43.4cqw; height: .7cqw; }
+  .bv-ctl { top: 45.6cqw; font-size: 2.6cqw; gap: 3.4cqw; } .bv-ctl svg { width: 3cqw; height: 3cqw; }
+  .bs-top { font-size: 2.4cqw; } .bs-live i { width: 1.4cqw; height: 1.4cqw; }
+  .bs-l { top: 12cqw; width: 46cqw; } .bs-cap { font-size: 2.2cqw; } .bs-nm { font-size: 9.5cqw; } .bs-sb { font-size: 3cqw; } .bs-ln { margin: 2.4cqw 0; } .bs-ms { font-size: 3.3cqw; }
+  .bs-r { top: 12cqw; } .bs-r small { font-size: 2.2cqw; } .bs-r b { font-size: 7.5cqw; } .bs-chg { font-size: 2.6cqw; } .bs-bb { font-size: 4.6cqw; } .bs-day { font-size: 2.1cqw; }
+  .bs-tk { height: 8.4cqw; } .bs-tk-in { font-size: 3cqw; } .bs-tk-in .s { font-size: 2.2cqw; } .bs-face { bottom: 8.4cqw; }
+}</style>
+</head>
+<body data-page="stock" class="stock-page" data-nofooter>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5f85" stop-opacity=".25"/><stop offset="1" stop-color="#ff5f85" stop-opacity="0"/></linearGradient>
+  <linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f95e0" stop-opacity=".22"/><stop offset="1" stop-color="#3f95e0" stop-opacity="0"/></linearGradient>
+</defs></svg>
+<div class="sx" id="sx"><p class="shut">불러오는 중…</p></div>
+<div class="wal" id="wal" hidden></div>
+<div class="bf" id="bf"></div>
+<div class="tr-back" id="trb"><div class="tr gl" id="tr"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) return;
+  const BASE = 1000, SLOTS = 30;
+  const fmt = n => Math.round(n).toLocaleString('ko-KR');
+  const pct = (a, b) => (a / b - 1) * 100;
+  const cls = v => v > .05 ? 'up' : v < -.05 ? 'dn' : 'fl';
+  const sign = v => (v > 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+  const arrow = v => v > .05 ? '▲' : v < -.05 ? '▼' : '';
+  const head = (u, c = '') => u ? headHTML(u, c) : `<img class="${c}" alt="">`;
+  const ago = t => { const m = Math.floor((Date.now() - Date.parse(t)) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : Math.floor(m / 60) + '시간 전'; };
+
+  // 장중 차트: 시작가 1,000 점선 기준 · 최근 30번 (거래가 적으면 앞은 1,000 그대로)
+  const series = h => { h = (h || []).slice(-SLOTS); return Array(SLOTS + 1 - h.length).fill(BASE).concat(h); };
+  const scale = (pts, ht, top, bot) => {
+    let lo = Math.min(BASE, ...pts), hi = Math.max(BASE, ...pts);
+    const min = BASE * .04; if (hi - lo < min) { const m = (hi + lo) / 2; lo = m - min / 2; hi = m + min / 2; }
+    const pad = (hi - lo) * .1; lo -= pad; hi += pad;
+    return v => top + (1 - (v - lo) / (hi - lo)) * (ht - top - bot);
+  };
+  const paths = (pts, w, y, bottom) => {
+    const n = pts.length - 1, X = i => i / n * w;
+    const line = pts.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+    return { line, area: `${line}L${w},${bottom}L0,${bottom}Z`, lx: w, ly: y(pts[n]) };
+  };
+  const mini = (h, up) => {
+    const w = 84, ht = 34, pts = series(h), y = scale(pts, ht, 3, 3), p = paths(pts, w, y, ht), c = up ? 'up' : 'dn';
+    return `<svg class="mini" viewBox="0 0 ${w} ${ht}" preserveAspectRatio="none"><line class="ch-base" x1="0" x2="${w}" y1="${y(BASE).toFixed(1)}" y2="${y(BASE).toFixed(1)}"/>
+      <path d="${p.area}" fill="url(#g${up ? 'u' : 'd'})"/><path class="ch-line" d="${p.line}" stroke="var(--${c})"/></svg>`;
+  };
+  const big = (h, up) => {
+    const w = 440, ht = 160, pts = series(h), y = scale(pts, ht, 12, 18), p = paths(pts, w - 12, y, ht - 18), c = up ? 'up' : 'dn', yb = y(BASE);
+    const grid = [0, 1, 2, 3].map(i => { const yy = 12 + i * (ht - 30) / 3; return `<line class="ch-grid" x1="0" x2="${w}" y1="${yy}" y2="${yy}"/>`; }).join('');
+    return `<svg class="tr-big" viewBox="0 0 ${w} ${ht}">${grid}
+      <line class="ch-base" x1="0" x2="${w}" y1="${yb.toFixed(1)}" y2="${yb.toFixed(1)}"/>
+      <path d="${p.area}" fill="url(#g${up ? 'u' : 'd'})"/><path class="ch-line" d="${p.line}" stroke="var(--${c})" style="stroke-width:2.2"/>
+      <circle cx="${p.lx}" cy="${p.ly.toFixed(1)}" r="8" fill="var(--${c})" opacity=".18"/><circle cx="${p.lx}" cy="${p.ly.toFixed(1)}" r="4" fill="#fff" stroke="var(--${c})" stroke-width="2.2"/>
+      <text class="ch-lab" x="2" y="${ht - 4}">최근 30번 · 점선은 시작가 ${fmt(BASE)}</text></svg>`;
+  };
+
+  const sx = $('#sx'), wal = $('#wal'), trb = $('#trb');
+  let st = null, openId = null, qty = 1, lastLed = '', hits = {}, sub = null, cdT = null, refetching = false, moreNews = false, seenNews = '';
+
+  // 대량 매수: 그 종목 아이돌 전광판이 화면 가운데에 6초 동안 (누가 샀는지는 안 나와요)
+  const bf = $('#bf'); let lastBig = null, bfT = null;
+  const ICON = {
+    pause: '<svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>',
+    next: '<svg viewBox="0 0 24 24"><path d="M5 4l11 8-11 8z"/><rect x="17" y="4" width="3" height="16" rx="1"/></svg>',
+    vol: '<svg viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15 8a5 5 0 010 8M17.5 5.5a8.5 8.5 0 010 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    cc: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="13" width="6" height="2" fill="currentColor"/><rect x="13" y="13" width="6" height="2" fill="currentColor"/></svg>',
+    set: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    full: '<svg viewBox="0 0 24 24"><path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>',
+    find: '<svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' };
+  const showBig = b => {
+    if (!b || bf.classList.contains('on')) return;
+    const s = live().find(x => x.id === b.id) || {}, p = s.p || 0, r = p ? pct(p, BASE) : 0, rnd = (a, z) => a + Math.random() * (z - a);
+    const SPK = ['#ffb3cf', '#c9b8ff', '#a8d8ff', '#ffd98a', '#ffc2e0'];
+    // 반짝이: 카드를 4 × 3 칸으로 나눠 칸마다 하나씩 (한쪽에 몰리지 않게) + 몇 개 더
+    const cells = []; for (let r2 = 0; r2 < 3; r2++) for (let c2 = 0; c2 < 4; c2++) cells.push([c2 * 25 + rnd(3, 22), r2 * 33 + rnd(4, 28)]);
+    const fx = 'fx' in b ? b.fx : [...String(b.at || '')].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 2 === 1;   // 두 디자인 중 하나 (화려한 쪽 fx)
+    for (let k = 0; k < 6; k++) cells.push([rnd(4, 96), rnd(5, 92)]);
+    const hearts = Array.from({ length: fx ? 12 : 0 }, () => `<i class="bf-heart" style="left:${rnd(4, 96)}%;font-size:${rnd(1.6, 3.2)}cqw;animation-duration:${rnd(3.4, 5.4)}s;animation-delay:-${rnd(0, 5)}s;color:${['#ff9dbd', '#ffc4d8', '#fff', '#ff7aa6'][Math.floor(Math.random() * 4)]}">♥</i>`).join('');
+
+    const stars = cells.map(([x, y]) => { const s = rnd(1.4, 3.4), c = SPK[Math.floor(Math.random() * SPK.length)];
+      return `<svg class="bf-star" viewBox="0 0 24 24" style="left:${x}%;top:${y}%;width:${s}cqw;height:${s}cqw;color:${c};animation-duration:${rnd(1.8, 3.2)}s;animation-delay:-${rnd(0, 3)}s"><path d="M12 0C13 7 17 11 24 12C17 13 13 17 12 24C11 17 7 13 0 12C7 11 11 7 12 0Z" fill="currentColor"/></svg>`; }).join('');
+    const ribs = Array.from({ length: 9 }, () => `<i class="bf-rib" style="left:${rnd(3, 72)}%;background:${['#e8c36a', '#d9b25a', '#f2d78f'][Math.floor(Math.random() * 3)]};animation-duration:${rnd(3, 4.6)}s;animation-delay:${rnd(0, 1.4)}s"></i>`).join('');
+    const tk = `<span class="s">✦</span><span>대량 매수</span><span class="s">✦</span><span>${esc(b.n)} <span class="p">${p ? fmt(p) : ''} ${p ? sign(r) : ''}</span></span><span class="s">✦</span><span>서문의 아이돌이자 큰 별</span><span class="s">✦</span><span>빼빼로데이를 축하해 사랑해!</span>`;
+    bf.innerHTML = fx ? `<div class="bf-card"><div class="bs">
+        <div class="bs-face">${head(b.h)}</div>
+        <div class="bs-top"><span class="bs-live"><i></i>LIVE</span><span>삼사라 증권 三娑罗證券</span><span class="sp"></span><span>SEOMUN STAGE</span></div>
+        <div class="bs-l"><div class="bs-cap">SEOMUN IDOL</div><p class="bs-nm">${esc(b.n)}</p><p class="bs-sb">서문의 아이돌이자 큰 별</p><div class="bs-ln"></div><p class="bs-ms">빼빼로데이를 축하해<br>사랑해!</p></div>
+        <div class="bs-r"><small>NOW</small><b>${p ? fmt(p) : '-'}</b>${p ? `<span class="bs-chg ${r < 0 ? 'dn' : ''}">${sign(r)}</span>` : ''}<span class="bs-bb">BIG BUY</span><span class="bs-day">11.11 HAPPY PEPERO DAY</span></div>
+        <div class="bs-tk"><div class="bs-tk-in">${tk}${tk}${tk}${tk}</div></div>
+      </div>${hearts}</div>` : `<div class="bf-card">
+      <div class="bv">
+        <div class="bv-face">${head(b.h)}</div><div class="bv-fade"></div>
+        <span class="bv-ic"><i>◎</i>♛</span>
+        <b class="bv-big">11.11<small>th</small></b><span class="bv-ann">HAPPY PEPERO DAY</span>
+        <b class="bv-nm">${esc(b.n)}</b><span class="bv-sub">서문의 아이돌이자 큰 별<span class="bv-tag">BIG BUY</span></span><span class="bv-ms">빼빼로데이를 축하해 사랑해!</span>
+        <span class="bv-plus">+++</span>
+        <div class="bv-srch">${ICON.find}삼사라 증권 &nbsp;${esc(b.n)}</div>
+        <div class="bv-bar"><i></i></div>
+        <div class="bv-ctl">${ICON.pause}${ICON.next}${ICON.vol}<span>11:11 / 11:11</span><span class="sp"></span>${ICON.cc}${ICON.set}${ICON.full}</div>
+      </div>
+      <div class="bv-ft"><span>삼사라 증권</span><b>三娑罗證券</b></div>
+      <div class="bp">
+        <div class="bp-cr">♛</div>
+        <p class="bp-hp">Happy Pepero Day</p>
+        <p class="bp-nm">${esc(b.n)}</p>
+        <p class="bp-sb">서문의 아이돌이자 큰 별</p>
+        <p class="bp-dm">◆◆◆</p>
+        <p class="bp-ms">빼빼로데이를 축하해<br>사랑해!</p>
+        <p class="bp-px">현재가 <b>${p ? fmt(p) : '-'}</b>${p ? ` <span class="${cls(r)}">${sign(r)}</span>` : ''}</p>
+        <div class="bp-bx"><b>삼사라 증권 대량 매수</b>방금 이 종목에 큰 매수가 들어왔어요</div>
+        <p class="bp-fp">· 누가 샀는지는 공개되지 않아요<br>· 화면을 누르면 닫혀요</p>
+      </div>${stars}</div>`;
+    bf.classList.remove('out'); bf.classList.add('on');
+    clearTimeout(bfT); bfT = setTimeout(hideBig, 6500);
+  };
+  const hideBig = () => { if (!bf.classList.contains('on')) return; bf.classList.add('out'); setTimeout(() => { bf.classList.remove('on', 'out'); bf.innerHTML = ''; }, 480); };
+  bf.addEventListener('click', () => { clearTimeout(bfT); hideBig(); });
+  const checkBig = () => { const b = board().big; if (b && b.at !== lastBig) { const first = lastBig === null; lastBig = b.at; if (!first) showBig(b); } else if (lastBig === null) lastBig = (b && b.at) || ''; };
+
+  let skew = 0, lastFetch = 0;   // skew: 서버 시계 - 내 시계 (내 시계가 틀려도 정각에 한 번만 받게)
+  const now = () => Date.now() + skew;
+  const load = async () => { lastFetch = Date.now(); try { st = await Store.stockView(); if (st && st.now) skew = Date.parse(st.now) - Date.now(); } catch (e) { sx.innerHTML = `<p class="shut gl">${esc(e.message || e)}</p>`; return; } draw(); checkBig(); };
+  const board = () => (st && st.board) || {};
+  const live = () => board().live || [];
+  const news = () => board().news || [];
+  const stockOf = id => live().find(s => s.id === id) || ((st.me && st.me.hold) || []).map(h => ({ id: h.id, n: h.n, h: h.h, c: h.c, p: h.p, hist: [], off: true })).find(s => s.id === id);
+  const priceOf = id => { const s = live().find(x => x.id === id); return s ? s.p : (((st.me && st.me.hold) || []).find(h => h.id === id) || {}).p || 0; };
+  const soon = n => news().length && n.at === news()[0].at;   // 방금 들어온 소식 (반짝이기만)
+
+  const draw = () => {
+    const b = board();
+    if (!b.on) { wal.hidden = true; return drawShut(b); }
+    if (!st.me) { wal.hidden = true; return drawPick(); }
+    sx.innerHTML = `
+      <header class="skh gl"><span class="eb">Samsara Securities ✦ 三娑罗證券</span><h1>삼사라 증권</h1><p>마음에 드는 캐릭터에게 투자해 보세요</p>
+        <div class="clk"><div><i></i><span>다음 소식</span><b id="cdn">--:--</b></div><div><i></i><span>종목 교체</span><b id="cdr">--:--</b></div></div></header>
+      <section class="nws gl"><div class="nws-hd"><b class="ttl pk">NEWS</b><span class="spk">✦✦✦</span><span class="lv">LIVE</span><small>10분마다 새 소식이 들어와요</small></div>
+        <div class="sign"><i class="sign-st"></i><i class="sign-st"></i><div class="sign-in" id="sign"></div><span class="sign-fx">★ NEWS FLASH</span></div></section>
+      <div class="led" id="led"></div>
+      <section class="brd gl"><div class="brd-hd"><b class="ttl">STOCKS</b><span class="spk">✦✦✦</span><b>이번 시간 종목</b><small>현재가 · 시작가 대비</small></div><div id="lst"></div></section>
+      <div id="mine"></div>`;
+    drawLive(); cd();
+  };
+  const drawNews = () => {
+    const N = news();
+    const line = N.map(n => `<span class="s">✦</span><span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`).join('') || '<span>곧 첫 소식이 들어와요</span>';
+    $('#sign').innerHTML = line + line;
+    { const el = $('#sign'); el.style.animationDuration = Math.max(8, el.scrollWidth / 2 / 110) + 's'; }   // 글이 길어도 같은 빠르기 (1초에 110px)
+    const key = N[0] ? N[0].at : '', fresh = seenNews && key !== seenNews; seenNews = key;
+    if (fresh) { const s = $('.sign'); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); }   // 새 소식이 오면 전광판이 반짝
+  };
+  const drawLive = () => {
+    if (!$('#lst')) return draw();
+    const b = board();
+    drawNews();
+    const L = live(), hot = [...L].sort((a, z) => z.p - a.p)[0], bw = (x, en, lab) => `<div class="gl"><span class="ttl">${en}</span><small>${lab}</small><div class="lw">${x ? `${head(x.h)}<div><b>${esc(x.n)}</b><span class="${cls(x.r)}">${sign(x.r)}</span></div>` : '<div><b class="fl">-</b></div>'}</div></div>`;
+    const hr = hot ? pct(hot.p, BASE) : 0;
+    $('#led').innerHTML = `<div class="gl"><span class="ttl pk">TOP</span><small>지금 1등 종목</small><div class="lw">${hot ? `${head(hot.h)}<div><b>${esc(hot.n)}</b><span class="${cls(hr)}">${fmt(hot.p)}</span></div>` : ''}</div></div>${bw(b.best, 'BEST', '최고 수익률')}${bw(b.worst, 'WORST', '최저 수익률')}`;
+    const key = [hot && hot.id, b.best && b.best.n, b.worst && b.worst.n].join('|');
+    if (lastLed && key !== lastLed) $$('#led > div').forEach(d => d.classList.add('flash'));
+    lastLed = key;
+    const row = (s, i, off) => { const ch = pct(s.p, BASE), th = s.top, mine = ((st.me.hold || []).find(h => h.id === s.id) || {}).q;
+      const my = mine ? ` · <strong class="mine">내 주식 ${mine}주</strong>` : '';
+      return `<div class="row ${off ? 'off' : ''} ${hits[s.id] ? 'hit-' + hits[s.id] : ''}" data-id="${esc(s.id)}">
+        <span class="rk ${!off && i < 3 ? 'r' + (i + 1) : ''}">${off ? '·' : i + 1}</span>${head(s.h, 'av')}
+        <div class="nm"><b>${esc(s.n)}</b><span>${off ? `종목에서 빠졌어요${my} · 팔 수만 있어요` : th ? `최대 주주 <i>${esc(th.n)}</i> ${th.q}주${my}` : `아직 주주 없음${my}`}</span></div>
+        ${off ? '<span></span>' : mini(s.hist, ch >= 0)}
+        <div class="px"><b class="${cls(ch)}">${fmt(s.p)}</b><span class="${cls(ch)}">${sign(ch)}</span></div></div>`; };
+    $('#lst').innerHTML = [...L].sort((a, z) => z.p - a.p).map((s, i) => row(s, i)).join('');
+    const offs = (st.me.hold || []).filter(h => !L.some(s => s.id === h.id));
+    $('#mine').innerHTML = offs.length ? `<section class="brd gl"><div class="brd-hd"><b class="ttl">MY</b><span class="spk">✦</span><b>지난 시간 종목</b><small>내가 가진 주식 · 팔기만 돼요</small></div>${offs.map(h => row({ id: h.id, n: h.n, h: h.h, c: h.c, p: h.p }, 0, true)).join('')}</section>` : '';
+    hits = {}; drawWallet(); drawTrade();
+  };
+  const drawWallet = () => {
+    const me = st.me, ev = (me.hold || []).reduce((a, h) => a + h.q * priceOf(h.id), 0), r = pct(me.cash + ev, board().start || 100000);
+    wal.hidden = false;
+    wal.innerHTML = `<div class="wal-in gl"><div class="me">${head(me.head)}</div><div><small>남은 돈</small><b>${fmt(me.cash)}</b></div><div><small>주식 평가</small><b>${fmt(ev)}</b></div><div class="sp"></div>
+      <div style="text-align:right"><small>${esc(me.name)} 수익률</small><b class="${cls(r)}">${sign(r)}</b></div></div>`;
+  };
+  const drawTrade = () => {
+    if (!openId || !st.me) return;
+    const s = stockOf(openId); if (!s) { closeTrade(); return; }
+    const isLive = live().some(x => x.id === s.id), ch = pct(s.p, BASE), mine = ((st.me.hold || []).find(h => h.id === s.id) || {}).q || 0;
+    const maxBuy = isLive ? Math.min(50, Math.floor(st.me.cash / s.p)) : 0, pts = series(s.hist);
+    const nw = news().find(n => n.id === s.id);
+    qty = Math.max(1, Math.min(qty, 50));
+    $('#tr').innerHTML = `<div class="tr-grab"></div>
+      <div class="tr-hd">${head(s.h)}<div><b>${esc(s.n)}</b><span>${!isLive ? '이번 시간 종목이 아니에요 · 팔 수만 있어요' : s.top ? `최대 주주 ${esc(s.top.n)} ${s.top.q}주` : '아직 주주 없음'}</span></div></div>
+      <div class="tr-px"><b>${fmt(s.p)}</b><span class="${cls(ch)}">${arrow(ch)} ${fmt(Math.abs(s.p - BASE))} (${sign(ch)})<small>시작가 대비</small></span></div>
+      ${isLive ? big(s.hist, ch >= 0) : '<div style="height:12px"></div>'}
+      <div class="tr-info">${isLive ? `<div>최고<b class="up">${fmt(Math.max(...pts))}</b></div><div>최저<b class="dn">${fmt(Math.min(...pts))}</b></div>` : ''}<div>내 주식<b>${mine}주</b></div><div>살 수 있음<b>${maxBuy}주</b></div></div>
+      <div class="qty"><button data-q="-1" aria-label="하나 빼기">−</button><div class="n">${qty}</div><button data-q="1" aria-label="하나 더">+</button><button class="q" data-q="10">+10</button></div>
+      <div class="acts"><button class="b" ${maxBuy < qty ? 'disabled' : ''}>${qty}주 사기</button><button class="s" ${mine < qty ? 'disabled' : ''}>${qty}주 팔기</button></div>`;
+  };
+  const closeTrade = () => { openId = null; trb.classList.remove('on'); };
+  const drawPick = async () => {
+    let mine = [];
+    try { mine = (await Store.myCharacters()).filter(c => c.published_at); } catch (e) {}
+    sx.innerHTML = `<div class="pick gl"><span class="eb">Samsara Securities ✦ 三娑罗證券</span><h1>삼사라 증권</h1>
+      <p>투자할 내 캐릭터를 골라 주세요<br><small style="color:var(--sub)">이벤트 동안 바꿀 수 없어요 · 이벤트 돈 ${fmt(board().start || 100000)}원으로 시작해요 · 끝나면 수익률 상위 10명 캐릭터에게 재력 +2</small></p>
+      <ul>${mine.map(c => `<li><button data-join="${esc(c.id)}">${head(c.data.head || '')}${esc(c.data.name || '?')}</button></li>`).join('') || '<li class="fl">게시된 내 캐릭터가 있어야 참여할 수 있어요.</li>'}</ul></div>`;
+  };
+  const drawShut = b => {
+    const rk = b.rank || [];
+    sx.innerHTML = `<div class="shut gl"><span class="eb">Samsara Securities ✦ 三娑罗證券</span><h1>삼사라 증권</h1>
+      ${rk.length ? `<p>장이 마감됐어요 · 최종 수익률 순위</p><ul class="fin">${rk.map((x, i) => `<li><em>${i + 1}</em>${head(x.h)}<b>${esc(x.n)}</b><span class="mono ${cls(x.r)}">${sign(x.r)}</span></li>`).join('')}</ul>` : '<p>지금은 장이 닫혀 있어요.</p>'}</div>`;
+  };
+
+  // 소식 · 종목 교체 · 마감 시각: 사람마다 1 ~ 15초 흩어서 기다렸다가 아직 아무도 안 바꿨으면 그때 한 번만 받아요
+  const nextAt = () => { const b = board(); return Math.min(Date.parse(b.news_at) || Infinity, Date.parse(b.round_end) || Infinity, Date.parse(b.ends) || Infinity); };
+  const mmss = t => { const left = Math.max(0, Math.floor((t - now()) / 1000)); return String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'); };
+  const cd = () => {
+    clearInterval(cdT);
+    const tick = () => {
+      const b = board(); if (!b.on || !$('#cdn')) return;
+      $('#cdn').textContent = mmss(Date.parse(b.news_at)); $('#cdr').textContent = mmss(Date.parse(b.round_end));
+      // 화면이 숨겨져 있으면 안 받아요 (돌아오면 그때 한 번) · 방금 받았으면 20초는 쉬어요
+      if (now() >= nextAt() && !refetching && !document.hidden && Date.now() - lastFetch > 20000) { refetching = true; setTimeout(async () => { if (now() >= nextAt() && !document.hidden) await load(); refetching = false; }, 1000 + Math.random() * 14000); }
+    };
+    tick(); cdT = setInterval(tick, 1000);
+  };
+
+  sx.addEventListener('click', async e => {
+    const j = e.target.closest('[data-join]');
+    if (j) { j.disabled = true; try { st = await Store.stockJoin(j.dataset.join); draw(); } catch (ex) { toast(ex.message, 'err'); j.disabled = false; } return; }
+    const r = e.target.closest('.row'); if (!r || !st.me) return;
+    openId = r.dataset.id; qty = 1; drawTrade(); trb.classList.add('on');
+  });
+  let busy = false;
+  trb.addEventListener('click', async e => {
+    if (e.target === trb) return closeTrade();
+    const b = e.target.closest('button'); if (!b || busy) return;
+    if (b.dataset.q) { qty += +b.dataset.q; drawTrade(); return; }
+    const q = b.classList.contains('b') ? qty : b.classList.contains('s') ? -qty : 0; if (!q) return;
+    busy = true; b.disabled = true;
+    try { st = await Store.stockTrade(openId, q); checkBig(); hits = { [openId]: q > 0 ? 'up' : 'dn' }; drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
+    catch (ex) { toast(ex.message, 'err'); drawTrade(); }
+    busy = false;
+  });
+
+  await load();
+  // 미리보기: stock.html?preview=big (깔끔) · ?preview=big2 (화려) → 지금 1등 종목으로 아이돌 전광판을 띄워 둬요 (누를 때까지)
+  if (/[?&]preview=big/.test(location.search) && live().length) { const top = [...live()].sort((a, z) => z.p - a.p)[0]; showBig({ id: top.id, n: top.n, h: top.h, fx: /preview=big2/.test(location.search) }); clearTimeout(bfT); }
+  // 전광판 한 줄만 실시간으로 와요 (누가 샀는지는 안 보내요 · 값이 바뀐 종목만 반짝)
+  const onBoard = nb => {
+    if (!st) return;
+    const prev = board(), was = prev.on;
+    (nb.live || []).forEach(s => { const o = (prev.live || []).find(x => x.id === s.id); if (o && o.p !== s.p) hits[s.id] = s.p > o.p ? 'up' : 'dn'; });
+    st.board = nb; checkBig();
+    if (!nb.on || was !== nb.on || !st.me) { if (!nb.on && was) load(); else draw(); return; }
+    // 종목이 바뀌었거나 소식이 반영됐으면 내 주식 값도 새로 받아요
+    if ((prev.live || []).map(s => s.id).join() !== (nb.live || []).map(s => s.id).join()) { load(); return; }
+    const newsMoved = ((nb.news || [])[0] || {}).at !== ((prev.news || [])[0] || {}).at;
+    if (newsMoved && (st.me.hold || []).some(h => !(nb.live || []).some(s => s.id === h.id))) { load(); return; }   // 지난 종목에 소식이 반영됐을 수도 있어요
+    drawLive();
+  };
+  sub = Store.stockSub(onBoard);
+  // 탭을 1분 넘게 안 보고 있으면 실시간 연결을 끊고 · 돌아오면 다시 연결 + 한 번만 새로 받아요
+  let hideT = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { clearTimeout(hideT); hideT = setTimeout(() => { if (sub) { sub.stop(); sub = null; } }, 60000); }
+    else { clearTimeout(hideT); if (!sub) { sub = Store.stockSub(onBoard); load(); } }
+  });
+  addEventListener('pagehide', () => { if (sub) { sub.stop(); sub = null; } });
+  addEventListener('pageshow', e => { if (e.persisted) location.reload(); });   // 뒤로 가기로 돌아오면 새로 (실시간 연결이 끊겨 있어서)
+});
+</script>
+</body>
+</html>
