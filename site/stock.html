@@ -406,8 +406,9 @@ App.ready.then(async user => {
     drawLive(); cd();
   };
   const drawNews = () => {
-    const ids = live().map(s => s.id), N = news().filter(n => ids.includes(n.id));   // 이번 시간 종목 소식만 (빠진 종목 소식은 안 보여요)
-    const line = N.map(n => `<span class="s">✦</span><span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`).join('') || '<span>곧 첫 소식이 들어와요</span>';
+    // 지금 소식만: 가장 최근에 들어온 소식(10분마다 2개) 중 이번 시간 종목 것만 · 지난 소식은 안 보여요
+    const ids = live().map(s => s.id), mine = news().filter(n => ids.includes(n.id)), last = (mine[0] || {}).at, N = mine.filter(n => n.at === last);
+    const line = N.map(n => `<span class="s">✦</span><span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`).join('') || '<span>곧 새 소식이 들어와요</span>';
     $('#sign').innerHTML = line + line;
     { const el = $('#sign'); el.style.animationDuration = Math.max(8, el.scrollWidth / 2 / 110) + 's'; }   // 글이 길어도 같은 빠르기 (1초에 110px)
     const key = N[0] ? N[0].at : '', fresh = seenNews && key !== seenNews; seenNews = key;
