@@ -640,7 +640,7 @@ App.ready.then(async user => {
           <label class="field"><span>처음 이벤트 돈</span><input type="number" id="sk-cash" value="100000" min="1000" step="1000"></label></div>
         <div class="modal-foot"><button class="btn" id="sk-open">장 열기</button></div></section>
       ${s.closed_at ? `<section class="adm-card" style="margin-top:16px"><header><b>최종 수익률 상위 10명</b><span class="label">${s.rewarded ? '보상 줬어요' : '아직 보상 안 줬어요'}</span></header>${rank}
-        ${s.rewarded ? '' : '<div class="modal-foot"><button class="btn" id="sk-reward">10명 투자 캐릭터에게 재력 +2 주기</button></div>'}</section>` : ''}`;
+        ${s.rewarded ? '' : '<div class="modal-foot"><button class="btn" id="sk-reward">10명 투자 캐릭터에게 재력 +1 주기</button></div>'}</section>` : ''}`;
     const run = async (b, fn, msg) => { b.disabled = true; try { await fn(); toast(msg); stockTab(); } catch (e) { toast(e.message, 'err'); b.disabled = false; } };
     if ($('#sk-open')) $('#sk-open').onclick = e => {
       const ends = new Date($('#sk-ends').value), cash = Math.floor(+$('#sk-cash').value || 100000);
@@ -649,7 +649,7 @@ App.ready.then(async user => {
       run(e.target, () => Store.stockOpen(ends.toISOString(), cash), '장을 열었어요');
     };
     if ($('#sk-close')) $('#sk-close').onclick = e => { if (confirm('지금 장을 닫을까요? 모두의 주식이 지금 가격으로 팔려요.')) run(e.target, () => Store.stockClose(), '장을 닫았어요'); };
-    if ($('#sk-reward')) $('#sk-reward').onclick = e => { if (confirm('상위 10명의 투자 캐릭터에게 재력 +2 를 줄까요? 한 번만 줄 수 있어요.')) run(e.target, () => Store.stockReward(), '재력 +2 를 줬어요'); };
+    if ($('#sk-reward')) $('#sk-reward').onclick = e => { if (confirm('상위 10명의 투자 캐릭터에게 재력 +1 를 줄까요? 한 번만 줄 수 있어요.')) run(e.target, () => Store.stockReward(), '재력 +1 를 줬어요'); };
     if ($('#sk-pick')) {
       const ids = () => $$('#sk-list input:checked').map(x => x.value);
       $('#sk-list').onchange = e => { if (ids().length > 10) { e.target.checked = false; toast('10명까지 고를 수 있어요.', 'err'); } $('#sk-n').textContent = ids().length + ' / 10'; };
