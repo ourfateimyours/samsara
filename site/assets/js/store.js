@@ -90,7 +90,7 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false, stock_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+    lesson_on: false, match_on: false, stock_on: false, theater_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
@@ -276,6 +276,20 @@
         ch.on('broadcast', { event: 'p' }, () => cb()).subscribe(st => { if (st === 'SUBSCRIBED') ping(); });
         const t = setInterval(() => { if (!document.hidden) cb(); }, 20000);   // 신호를 놓쳤을 때를 대비해서 20초마다 한 번
         return { ping, stop() { clearInterval(t); sb.removeChannel(ch); } };
+      },
+      // 상영관: 목록은 열 때 한 번 · 방 안에서는 재생 상태가 바뀔 때만 신호 · 같이 보는 사람은 들어오고 나갈 때만
+      async theaterRooms() { return ok(await sb.rpc('theater_rooms')) || []; },
+      async theaterOpen(me, title, kind, svc, src, nick) { return ok(await sb.rpc('theater_open', { p_title: title, p_kind: kind, p_svc: svc || '', p_src: src, p_nick: nick })); },
+      async theaterView(me, id) { return ok(await sb.rpc('theater_view', { p_id: id })); },
+      async theaterSet(me, id, st) { return ok(await sb.rpc('theater_set', { p_id: id, p_playing: !!st.playing, p_pos: st.pos || 0, p_dur: st.dur || 0, p_src: st.src || null })); },
+      async theaterClose(me, id) { ok(await sb.rpc('theater_close', { p_id: id })); },
+      theaterSub(id, me, onState, onPeople, onBack) {
+        const key = Math.random().toString(36).slice(2, 10); let seen = false;
+        const ch = sb.channel('th:' + id, { config: { presence: { key } } });
+        ch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'theater_state', filter: 'id=eq.' + id }, p => { if (p && p.new) onState(p.new); })
+          .on('presence', { event: 'sync' }, () => { const st = ch.presenceState(); onPeople(Object.keys(st).map(k => Object.assign({ me: k === key }, (st[k] || [])[0] || {}))); })
+          .subscribe(s => { if (s !== 'SUBSCRIBED') return; ch.track({ n: me.n, h: !!me.h }); if (seen && onBack) onBack(); seen = true; });   // 다시 이어졌으면 놓친 게 있을 수 있어서 한 번만 다시 받아요
+        return { stop() { sb.removeChannel(ch); } };
       },
       async cheersToday() { return ok(await sb.rpc('cheers_today')) || []; },
       async adminGiftBox(me, nick, charId) { return ok(await sb.rpc('admin_gift_box', { p_char: charId })); },
@@ -548,6 +562,13 @@
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
     async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
     async adminGiftBox(charId) { await this.requireAdmin(); const u = await this.user(); return B.adminGiftBox(u.id, u.nickname, charId); },
+    // 상영관
+    async theaterRooms() { const u = await this.user(); if (!u) return []; return B.theaterRooms(u.id); },
+    async theaterOpen(title, kind, svc, src, nick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterOpen(u.id, title, kind, svc, src, nick); },
+    async theaterView(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterView(u.id, id); },
+    async theaterSet(id, st) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterSet(u.id, id, st); },
+    async theaterClose(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterClose(u.id, id); },
+    theaterSub(id, me, onState, onPeople, onBack) { return B.theaterSub(id, me, onState, onPeople, onBack); },
     POUCH_DAY, MATCH,
     async matchStatus() { const u = await this.user(); if (!u) return { canPlay: false }; const p = await this.playOpen('match'); if (!p.open) return { canPlay: false, closed: true }; return B.matchStatus(u.id); },
     async matchRooms() { const u = await this.user(); if (!u) return []; return B.matchRooms(u.id); },
