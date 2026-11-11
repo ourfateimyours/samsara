@@ -196,7 +196,7 @@ App.ready.then(async user => {
       <div class="th${r.kind === 'yt' ? '' : ' tp'}">${r.kind === 'yt' ? `<div style="background-image:url(https://i.ytimg.com/vi/${encodeURIComponent(r.thumb)}/${i === 0 ? 'hq' : 'mq'}default.jpg)"></div>` : `<div class="wm ${esc(r.svc)}">${SVC[r.svc] || 'TELEPARTY'}</div>`}
         <span class="lv"><i></i>${r.kind === 'yt' ? 'ON AIR' : '텔레파티'}</span>${r.mine ? '<span class="mn">내 방</span>' : ''}</div>
       <div class="bd"><b>${esc(r.title)}</b><span><u>${esc(r.nick)}</u> · ${ago(r.created_at)}${r.who ? ` <span class="adm">· ${esc(r.who)}</span>` : ''}</span></div></div>`;
-    tx.innerHTML = `<div class="lh"><div><span class="eb">Samsara Theater</span><h1>상영관</h1><p>링크 하나로 같이 보고 같이 들어요</p></div><button class="b pr" id="mk">방 만들기</button></div>
+    tx.innerHTML = `<div class="lh"><div><span class="eb">Samsara Theater</span><h1>상영관</h1><p>링크 하나로 같이 보고 같이 들어요 · 방은 3개까지</p></div>${rooms.length >= 3 ? '<button class="b" disabled title="방이 닫히면 만들 수 있어요">방 3개 가득</button>' : '<button class="b pr" id="mk">방 만들기</button>'}</div>
       <div class="tabs">${[['all', '전체'], ['yt', '유튜브'], ['party', '텔레파티']].map(([k, t]) => `<span data-tab="${k}" class="${tab === k ? 'on' : ''}">${t}<em>${n[k]}</em></span>`).join('')}</div>
       ${L.length ? `<div class="rooms">${L.map(card).join('')}</div>` : `<div class="empty"><b>지금 열린 방이 없어요</b><span>유튜브 링크로 첫 방을 열어 보세요</span></div>`}`;
   }
