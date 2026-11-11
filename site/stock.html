@@ -34,7 +34,7 @@ html:has(body.stock-page) { background: #fbfdff; }
 .clk { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .clk div { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.85); border: 1px solid rgba(150,175,195,.28); border-radius: 999px; padding: 6px 12px 6px 10px; }
 .clk i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); box-shadow: 0 0 0 3px rgba(255,95,133,.18); animation: blink 1.6s infinite; }
-.clk div + div i { background: var(--ac); box-shadow: 0 0 0 3px rgba(143,180,204,.2); }
+.clk div + div i { background: var(--ac); box-shadow: 0 0 0 3px rgba(143,180,204,.2); } .clk div:first-child i { background: #b48cff; box-shadow: 0 0 0 3px rgba(180,140,255,.2); }
 .clk span { font-size: 12px; color: var(--sub); } .clk b { font: 700 14px var(--sans); color: var(--tx); }
 @keyframes blink { 50% { opacity: .3; } }
 
@@ -383,7 +383,7 @@ App.ready.then(async user => {
 
   let skew = 0, lastFetch = 0;   // skew: 서버 시계 - 내 시계 (내 시계가 틀려도 정각에 한 번만 받게)
   const now = () => Date.now() + skew;
-  const load = async () => { lastFetch = Date.now(); try { st = await Store.stockView(); if (st && st.now) skew = Date.parse(st.now) - Date.now(); } catch (e) { sx.innerHTML = `<p class="shut gl">${esc(e.message || e)}</p>`; return; } draw(); checkBig(); };
+  const load = async () => { lastFetch = Date.now(); const before = {}; ((st && st.board && st.board.live) || []).forEach(s => { before[s.id] = s.p; }); try { st = await Store.stockView(); if (st && st.now) skew = Date.parse(st.now) - Date.now(); ((st.board && st.board.live) || []).forEach(s => { if (before[s.id] && before[s.id] !== s.p) hits[s.id] = s.p > before[s.id] ? 'up' : 'dn'; }); } catch (e) { sx.innerHTML = `<p class="shut gl">${esc(e.message || e)}</p>`; return; } draw(); checkBig(); };
   const board = () => (st && st.board) || {};
   const live = () => board().live || [];
   const news = () => board().news || [];
@@ -397,7 +397,7 @@ App.ready.then(async user => {
     if (!st.me) { wal.hidden = true; return drawPick(); }
     sx.innerHTML = `
       <header class="skh gl"><span class="eb">Samsara Securities ✦ 三娑罗證券</span><h1>삼사라 증권</h1><p>마음에 드는 캐릭터에게 투자해 보세요</p>
-        <div class="clk"><div><i></i><span>다음 소식</span><b id="cdn">--:--</b></div><div><i></i><span>종목 교체</span><b id="cdr">--:--</b></div></div></header>
+        <div class="clk"><div><i></i><span>시세 반영</span><b id="cdu">--:--</b></div><div><i></i><span>다음 소식</span><b id="cdn">--:--</b></div><div><i></i><span>종목 교체</span><b id="cdr">--:--</b></div></div></header>
       <section class="nws gl"><div class="nws-hd"><b class="ttl pk">NEWS</b><span class="spk">✦✦✦</span><span class="lv">LIVE</span><small>10분마다 새 소식이 들어와요</small></div>
         <div class="sign"><i class="sign-st"></i><i class="sign-st"></i><div class="sign-in" id="sign"></div><span class="sign-fx">★ NEWS FLASH</span></div></section>
       <div class="led" id="led"></div>
@@ -445,7 +445,7 @@ App.ready.then(async user => {
     if (!openId || !st.me) return;
     const s = stockOf(openId); if (!s) { closeTrade(); return; }
     const isLive = live().some(x => x.id === s.id), ch = pct(s.p, BASE), mine = ((st.me.hold || []).find(h => h.id === s.id) || {}).q || 0;
-    const maxBuy = isLive ? Math.min(50, Math.floor(st.me.cash / s.p)) : 0, pts = series(s.hist);
+    const maxBuy = isLive && s.p > 0 ? Math.min(50, Math.floor(st.me.cash / s.p)) : 0, pts = series(s.hist);
     const nw = news().find(n => n.id === s.id);
     qty = Math.max(1, Math.min(qty, 50));
     $('#tr').innerHTML = `<div class="tr-grab"></div>
@@ -471,13 +471,13 @@ App.ready.then(async user => {
   };
 
   // 소식 · 종목 교체 · 마감 시각: 사람마다 1 ~ 15초 흩어서 기다렸다가 아직 아무도 안 바꿨으면 그때 한 번만 받아요
-  const nextAt = () => { const b = board(); return Math.min(Date.parse(b.news_at) || Infinity, Date.parse(b.round_end) || Infinity, Date.parse(b.ends) || Infinity); };
+  const nextAt = () => { const b = board(); return Math.min(Date.parse(b.upd_at) || Infinity, Date.parse(b.news_at) || Infinity, Date.parse(b.round_end) || Infinity, Date.parse(b.ends) || Infinity); };
   const mmss = t => { const left = Math.max(0, Math.floor((t - now()) / 1000)); return String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'); };
   const cd = () => {
     clearInterval(cdT);
     const tick = () => {
       const b = board(); if (!b.on || !$('#cdn')) return;
-      $('#cdn').textContent = mmss(Date.parse(b.news_at)); $('#cdr').textContent = mmss(Date.parse(b.round_end));
+      $('#cdn').textContent = mmss(Date.parse(b.news_at)); if ($('#cdu')) $('#cdu').textContent = mmss(Date.parse(b.upd_at)); $('#cdr').textContent = mmss(Date.parse(b.round_end));
       // 화면이 숨겨져 있으면 안 받아요 (돌아오면 그때 한 번) · 방금 받았으면 20초는 쉬어요
       if (now() >= nextAt() && !refetching && !document.hidden && Date.now() - lastFetch > 20000) { refetching = true; setTimeout(async () => { if (now() >= nextAt() && !document.hidden) await load(); refetching = false; }, 1000 + Math.random() * 14000); }
     };
@@ -497,8 +497,8 @@ App.ready.then(async user => {
     if (b.dataset.q) { qty += +b.dataset.q; drawTrade(); return; }
     const q = b.classList.contains('b') ? qty : b.classList.contains('s') ? -qty : 0; if (!q) return;
     busy = true; b.disabled = true;
-    try { st = await Store.stockTrade(openId, q); checkBig(); hits = { [openId]: q > 0 ? 'up' : 'dn' }; drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
-    catch (ex) { toast(ex.message, 'err'); drawTrade(); }
+    try { st = await Store.stockTrade(openId, q); checkBig(); drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
+    catch (ex) { toast(ex.message, 'err'); if (/마감/.test(ex.message)) { closeTrade(); load(); } else drawTrade(); }
     busy = false;
   });
 
@@ -518,14 +518,9 @@ App.ready.then(async user => {
     if (newsMoved && (st.me.hold || []).some(h => !(nb.live || []).some(s => s.id === h.id))) { load(); return; }   // 지난 종목에 소식이 반영됐을 수도 있어요
     drawLive();
   };
-  sub = Store.stockSub(onBoard);
-  // 탭을 1분 넘게 안 보고 있으면 실시간 연결을 끊고 · 돌아오면 다시 연결 + 한 번만 새로 받아요
-  let hideT = null;
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { clearTimeout(hideT); hideT = setTimeout(() => { if (sub) { sub.stop(); sub = null; } }, 60000); }
-    else { clearTimeout(hideT); if (!sub) { sub = Store.stockSub(onBoard); load(); } }
-  });
-  addEventListener('pagehide', () => { if (sub) { sub.stop(); sub = null; } });
+  // 실시간 연결은 안 해요 (트래픽) · 10분마다 소식이 들어올 때 한 번씩 새로 받아요 · 내가 거래하면 그때도 새로
+  // 숨겨 둔 탭은 안 받다가 돌아왔을 때 10분 넘게 지났으면 한 번만
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastFetch > 600000) load(); });
   addEventListener('pageshow', e => { if (e.persisted) location.reload(); });   // 뒤로 가기로 돌아오면 새로 (실시간 연결이 끊겨 있어서)
 });
 </script>
