@@ -51,7 +51,6 @@
     <a class="rb" href="attendance.html" id="sb-att"><span class="ci" data-emb="attend"></span><b>출석</b></a>
     <button type="button" class="rb" data-music><span class="ci" data-emb="music"></span><b>음악</b></button>
     <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci"><svg class="emb" viewBox="0 0 64 64" aria-hidden="true"><g class="ic"><rect x="12" y="38" width="8" height="14" rx="1.4" fill="#fff" opacity=".6"/><rect x="25" y="31" width="8" height="21" rx="1.4" fill="#fff" opacity=".75"/><rect x="38" y="24" width="8" height="28" rx="1.4" fill="#fff"/><path d="M10 30L23 19L32 25L50 10" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 9H51V19" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 55H56" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></g></svg></span><b>주식</b></a>
-    <a class="rb" href="admin.html" id="sb-admin" hidden><span class="ci" data-emb="admin"></span><b>관리</b></a>
   </nav>
 
   <!-- 왼쪽 버튼 옆: 후계자 수업 · 대국 (홀로그램 유리 두 장 · 폰에선 미니 게임 아래로 옮겨져요) -->
@@ -237,7 +236,6 @@ App.ready.then(async user => {
   const now = new Date(), today = Store.kstDay();
   $('#today').innerHTML = `${now.getFullYear()}.${pad2(now.getMonth() + 1)}.${pad2(now.getDate())} <span>${['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][now.getDay()]}</span>`;
   $('#nick').textContent = user.nickname;
-  if (user.grade === 'admin' || user.grade === 'staff') $('#sb-admin').hidden = false;
 
   let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.charCards(), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
