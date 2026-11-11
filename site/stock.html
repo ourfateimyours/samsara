@@ -406,7 +406,7 @@ App.ready.then(async user => {
     drawLive(); cd();
   };
   const drawNews = () => {
-    const N = news();
+    const ids = live().map(s => s.id), N = news().filter(n => ids.includes(n.id));   // 이번 시간 종목 소식만 (빠진 종목 소식은 안 보여요)
     const line = N.map(n => `<span class="s">✦</span><span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`).join('') || '<span>곧 첫 소식이 들어와요</span>';
     $('#sign').innerHTML = line + line;
     { const el = $('#sign'); el.style.animationDuration = Math.max(8, el.scrollWidth / 2 / 110) + 's'; }   // 글이 길어도 같은 빠르기 (1초에 110px)
@@ -419,7 +419,7 @@ App.ready.then(async user => {
     drawNews();
     const L = live(), hot = [...L].sort((a, z) => z.p - a.p)[0], bw = (x, en, lab) => `<div class="gl"><span class="ttl">${en}</span><small>${lab}</small><div class="lw">${x ? `${head(x.h)}<div><b>${esc(x.n)}</b><span class="${cls(x.r)}">${sign(x.r)}</span></div>` : '<div><b class="fl">-</b></div>'}</div></div>`;
     const hr = hot ? pct(hot.p, BASE) : 0;
-    $('#led').innerHTML = `<div class="gl"><span class="ttl pk">TOP</span><small>지금 1등 종목</small><div class="lw">${hot ? `${head(hot.h)}<div><b>${esc(hot.n)}</b><span class="${cls(hr)}">${fmt(hot.p)}</span></div>` : ''}</div></div>${bw(b.best, 'BEST', '최고 수익률')}${bw(b.worst, 'WORST', '최저 수익률')}`;
+    $('#led').innerHTML = `<div class="gl"><span class="ttl pk">TOP</span><small>지금 1등 종목</small><div class="lw">${hot ? `${head(hot.h)}<div><b>${esc(hot.n)}</b><span class="${cls(hr)}">${fmt(hot.p)}</span></div>` : ''}</div></div>${bw(b.best, 'BEST', '최고 수익률 투자자')}${bw(b.worst, 'WORST', '최저 수익률 투자자')}`;
     const key = [hot && hot.id, b.best && b.best.n, b.worst && b.worst.n].join('|');
     if (lastLed && key !== lastLed) $$('#led > div').forEach(d => d.classList.add('flash'));
     lastLed = key;
