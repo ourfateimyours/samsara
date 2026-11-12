@@ -179,6 +179,7 @@ html:has(body.stock-page) { background: #fbfdff; }
 .acts .b { background: linear-gradient(100deg, #ff6f95, #ff9a8a); box-shadow: 0 8px 18px -8px rgba(255,95,133,.7); }
 .acts .s { background: linear-gradient(100deg, #3f95e0, #6cbde4); box-shadow: 0 8px 18px -8px rgba(63,149,224,.7); }
 .acts button:disabled { opacity: .3; cursor: default; box-shadow: none; }
+.acts button small { display: block; margin-top: 2px; font: 600 10.5px var(--sans); opacity: .85; letter-spacing: 0; }
 
 /* 처음 · 닫힘 */
 .pick, .shut { margin: 20px auto 0; max-width: 440px; text-align: center; color: var(--tx); font-size: 14px; line-height: 1.7; padding: 24px 20px; }
@@ -493,8 +494,9 @@ App.ready.then(async user => {
       ${isLive ? big(s.hist, ch >= 0) : '<div style="height:12px"></div>'}
       <div class="tr-info">${isLive ? `<div>최고<b class="up">${fmt(Math.max(...pts))}</b></div><div>최저<b class="dn">${fmt(Math.min(...pts))}</b></div>` : ''}<div>내 주식<b>${mine}주</b></div><div>살 수 있음<b>${maxBuy}주</b></div></div>
       ${s.sc ? '' : `<div class="qty"><button data-q="-1" aria-label="하나 빼기">−</button><div class="n">${qty}</div><button data-q="1" aria-label="하나 더">+</button><button class="q" data-q="10">+10</button></div>`}
-      ${s.sc ? '<div class="sc-lock">사이드카 발동 · 다음 시세 반영까지 거래가 멈췄어요</div>' : `<div class="acts"><button class="b" ${maxBuy < qty ? 'disabled' : ''}>${qty}주 사기</button><button class="s" ${mine < qty ? 'disabled' : ''}>${qty}주 팔기</button></div>`}`;
+      ${s.sc ? '<div class="sc-lock">사이드카 발동 · 다음 시세 반영까지 거래가 멈췄어요</div>' : `<div class="acts"><button class="b" ${maxBuy < qty ? 'disabled' : ''}>${qty}주 사기</button><button class="s" ${mine < qty ? 'disabled' : ''}>${qty}주 팔기<small>수수료 ${fmt(feeOf(s.p * qty))}원</small></button></div>`}`;
   };
+  const feeOf = amt => Math.floor(amt * (amt >= 200000 ? .03 : amt >= 100000 ? .035 : amt >= 50000 ? .04 : amt >= 10000 ? .045 : .05));   // 팔 때 수수료 (보여 주기용 · 실제 계산은 서버)
   const closeTrade = () => { openId = null; trb.classList.remove('on'); };
   const drawPick = async () => {
     let mine = [];
@@ -536,7 +538,7 @@ App.ready.then(async user => {
     if (b.dataset.q) { qty += +b.dataset.q; drawTrade(); return; }
     const q = b.classList.contains('b') ? qty : b.classList.contains('s') ? -qty : 0; if (!q) return;
     busy = true; b.disabled = true;
-    try { const had = st.me && st.me.hold; st = await Store.stockTrade(openId, q); crashNote(had); checkBig(); drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
+    try { const had = st.me && st.me.hold, fee = q < 0 ? feeOf((stockOf(openId) || {}).p * qty || 0) : 0; st = await Store.stockTrade(openId, q); crashNote(had); checkBig(); drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요 · 수수료 ${fmt(fee)}원`); }
     catch (ex) { toast(ex.message, 'err'); if (/마감/.test(ex.message)) { closeTrade(); load(); } else if (/사이드카|상장폐지/.test(ex.message)) load(); else drawTrade(); }   // 다른 사람 때문에 막혔으면 그때 한 번만 새로 받아요
     busy = false;
   });
