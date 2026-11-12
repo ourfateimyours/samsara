@@ -111,6 +111,9 @@ html:has(body.stock-page) { background: #fbfdff; }
 .row.hit-up { animation: hu 1s ease-out; } .row.hit-dn { animation: hd 1s ease-out; }
 @keyframes hu { from { background: rgba(255,200,215,.7); } } @keyframes hd { from { background: rgba(190,222,250,.8); } }
 .row.off { opacity: .72; }
+/* 폭등: 다음 시세 반영까지 금색 딱지 */
+.bmb { font-style: normal; display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; vertical-align: 2px; font: 800 9.5px/1 var(--sans); color: #a8740f; background: linear-gradient(100deg, #fff6d6, #ffe7a8); border: 1px solid rgba(230,170,40,.45); padding: 3px 7px 3px 6px; border-radius: 999px; box-shadow: 0 0 8px rgba(255,200,60,.35); }
+.bmb::before { content: "▲"; font-size: 8px; color: #f2a93b; animation: blink 1.2s infinite; }
 /* 사이드카: 다음 시세 반영까지 거래 멈춤 */
 .scb { font-style: normal; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; vertical-align: 2px; font: 700 9.5px/1 var(--sans); letter-spacing: 0; color: #e0476d; background: linear-gradient(100deg, #fff3f6, #ffe8ef); border: 1px solid rgba(255,95,133,.32); padding: 3px 7px 3px 5px; border-radius: 999px; }
 .scb::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #ff5f85; box-shadow: 0 0 0 2px rgba(255,95,133,.18); animation: blink 1.4s infinite; }
@@ -431,7 +434,7 @@ App.ready.then(async user => {
   const drawNews = () => {
     // 지금 소식만: 가장 최근에 들어온 소식(10분마다 2개) 중 이번 시간 종목 것만 · 지난 소식은 안 보여요
     const ids = live().map(s => s.id), mine = news().filter(n => ids.includes(n.id)), last = (mine[0] || {}).at, N = mine.filter(n => n.at === last);
-    const line = N.map(n => `<span class="s">✦</span>${n.x ? `<span class="${n.x === '청산' ? 'q' : 'k'}">${n.x === '청산' ? '⚠ 청산' : '✖ 파산'} ${esc(n.n)} ${esc(n.t)}</span>` : `<span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`}`).join('') || '<span>곧 새 소식이 들어와요</span>';
+    const line = N.map(n => `<span class="s">✦</span>${n.x ?`<span class="${n.x === '청산' ? 'q' : 'k'}">${n.x === '청산' ? '⚠ 청산' : '✖ 파산'} ${esc(n.n)} ${esc(n.t)}</span>` : `<span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`}`).join('') || '<span>곧 새 소식이 들어와요</span>';
     $('#sign').innerHTML = line + line;
     { const el = $('#sign'); el.style.animationDuration = Math.max(8, el.scrollWidth / 2 / 110) + 's'; }   // 글이 길어도 같은 빠르기 (1초에 110px)
     const key = N[0] ? N[0].at : '', fresh = seenNews && key !== seenNews; seenNews = key;
@@ -455,7 +458,7 @@ App.ready.then(async user => {
           <div class="px"><span class="x0">${fmt(was)}</span><span class="xb ${bk ? 'bk' : 'lq'}">${bk ? '파산' : '청산'}</span></div></div>`; }
       return `<div class="row ${off ? 'off' : ''} ${s.sc ? 'sc' : ''} ${hits[s.id] ? 'hit-' + hits[s.id] : ''}" data-id="${esc(s.id)}">
         <span class="rk ${!off && i < 3 ? 'r' + (i + 1) : ''}">${off ? '·' : i + 1}</span>${head(s.h, 'av')}
-        <div class="nm"><b>${esc(s.n)}${s.sc ? '<i class="scb">사이드카</i>' : ''}</b><span>${s.sc ? `다음 시세 반영까지 거래가 멈췄어요${my}` : off ? `종목에서 빠졌어요${my} · 팔 수만 있어요` : th ? `최대 주주 <i>${esc(th.n)}</i> ${th.q}주${my}` : `아직 주주 없음${my}`}</span></div>
+        <div class="nm"><b>${esc(s.n)}${s.bm ? '<i class="bmb">폭등</i>' : ''}${s.sc ? '<i class="scb">사이드카</i>' : ''}</b><span>${s.sc ? `다음 시세 반영까지 거래가 멈췄어요${my}` : off ? `종목에서 빠졌어요${my} · 팔 수만 있어요` : th ? `최대 주주 <i>${esc(th.n)}</i> ${th.q}주${my}` : `아직 주주 없음${my}`}</span></div>
         ${off ? '<span></span>' : mini(s.hist, ch >= 0)}
         <div class="px"><b class="${cls(ch)}">${fmt(s.p)}</b><span class="${cls(ch)}">${sign(ch)}</span></div></div>`; };
     $('#lst').innerHTML = [...L].sort((a, z) => (!!a.x - !!z.x) || z.p - a.p).map((s, i) => row(s, i)).join('');   // 상장폐지 종목은 맨 아래
