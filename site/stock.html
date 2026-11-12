@@ -111,6 +111,27 @@ html:has(body.stock-page) { background: #fbfdff; }
 .row.hit-up { animation: hu 1s ease-out; } .row.hit-dn { animation: hd 1s ease-out; }
 @keyframes hu { from { background: rgba(255,200,215,.7); } } @keyframes hd { from { background: rgba(190,222,250,.8); } }
 .row.off { opacity: .72; }
+/* 사이드카: 다음 시세 반영까지 거래 멈춤 */
+.scb { font-style: normal; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; vertical-align: 2px; font: 700 9.5px/1 var(--sans); letter-spacing: 0; color: #e0476d; background: linear-gradient(100deg, #fff3f6, #ffe8ef); border: 1px solid rgba(255,95,133,.32); padding: 3px 7px 3px 5px; border-radius: 999px; }
+.scb::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #ff5f85; box-shadow: 0 0 0 2px rgba(255,95,133,.18); animation: blink 1.4s infinite; }
+.row.sc { background: linear-gradient(90deg, rgba(255,95,133,.06), transparent 60%); }
+.sc-lock { height: 52px; border-radius: 16px; display: grid; place-items: center; font: 700 14px var(--sans); color: #e0476d; background: rgba(255,95,133,.08); border: 1px dashed rgba(255,95,133,.45); }
+/* 상장폐지: 파산은 완전 흑백 휴지조각 · 청산은 바랜 세피아 */
+.row.x-bk { cursor: default; background: repeating-linear-gradient(-45deg, rgba(0,0,0,.025) 0 6px, transparent 6px 12px); }
+.row.x-bk > *:not(.px) { filter: grayscale(1); opacity: .55; }
+.row.x-bk .nm b { text-decoration: line-through; text-decoration-color: rgba(40,40,40,.5); }
+.row.x-lq { cursor: default; background: linear-gradient(90deg, rgba(214,180,120,.12), transparent 70%); }
+.row.x-lq > *:not(.px) { filter: sepia(.75) saturate(.8); opacity: .75; }
+.row.x-bk:hover, .row.x-lq:hover { background-color: transparent; }
+.xb { display: inline-block; font: 800 11px var(--sans); letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; }
+.xb.bk { color: #fff; background: #26272b; }
+.xb.lq { color: #8a5a1c; background: #f5e6c8; border: 1px dashed #c9a46a; }
+.row .px .x0 { display: block; font: 700 15.5px var(--sans); color: #9aa0a6; text-decoration: line-through; margin-bottom: 3px; }
+.sign-in .k { color: #e9e9ec; text-shadow: none; } .sign-in .q { color: #ffd08a; text-shadow: 0 0 5px rgba(255,170,60,.45); }
+.tr.x-bk .tr-hd, .tr.x-bk .tr-px { filter: grayscale(1); opacity: .6; } .tr.x-lq .tr-hd, .tr.x-lq .tr-px { filter: sepia(.75); opacity: .8; }
+.tr .tr-px span.xb { display: inline-block; width: max-content; margin: 6px 0 0; padding: 3px 10px; font: 800 12px var(--sans); }
+.tr-x { margin: 14px 0 4px; padding: 14px; border-radius: 14px; font-size: 13px; line-height: 1.6; text-align: center; }
+.tr-x.bk { background: #f1f1f2; color: #444; } .tr-x.lq { background: #fbf3e4; color: #8a5a1c; }
 @media (max-width: 480px) { .row { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 8px; } .row .mini { display: none; } .row .av { width: 40px; height: 40px; }
   .skh h1 { font-size: 26px; } .eb { font-size: 9.5px; letter-spacing: .16em; }
   .nws-hd { flex-wrap: wrap; } .nws-hd small { flex-basis: 100%; margin: 2px 0 0; } }
@@ -383,7 +404,9 @@ App.ready.then(async user => {
 
   let skew = 0, lastFetch = 0;   // skew: 서버 시계 - 내 시계 (내 시계가 틀려도 정각에 한 번만 받게)
   const now = () => Date.now() + skew;
-  const load = async () => { lastFetch = Date.now(); const before = {}; ((st && st.board && st.board.live) || []).forEach(s => { before[s.id] = s.p; }); try { st = await Store.stockView(); if (st && st.now) skew = Date.parse(st.now) - Date.now(); ((st.board && st.board.live) || []).forEach(s => { if (before[s.id] && before[s.id] !== s.p) hits[s.id] = s.p > before[s.id] ? 'up' : 'dn'; }); } catch (e) { sx.innerHTML = `<p class="shut gl">${esc(e.message || e)}</p>`; return; } draw(); checkBig(); };
+  // 내가 갖고 있던 종목이 상장폐지됐으면 한 번 알려 줘요 (화면 안에서만)
+  const crashNote = had => { (had || []).forEach(h => { if ((st.me && st.me.hold || []).some(x => x.id === h.id)) return; const s = live().find(x => x.id === h.id); if (s && s.x) toast(s.x === '청산' ? `${h.n} 청산 · ${h.q}주를 30%에 정산받았어요` : `${h.n} 파산 · ${h.q}주가 휴지조각이 됐어요`, 'err'); }); };
+  const load = async () => { lastFetch = Date.now(); const had = st && st.me && st.me.hold; const before = {}; ((st && st.board && st.board.live) || []).forEach(s => { before[s.id] = s.p; }); try { st = await Store.stockView(); crashNote(had); if (st && st.now) skew = Date.parse(st.now) - Date.now(); ((st.board && st.board.live) || []).forEach(s => { if (before[s.id] && before[s.id] !== s.p) hits[s.id] = s.p > before[s.id] ? 'up' : 'dn'; }); } catch (e) { sx.innerHTML = `<p class="shut gl">${esc(e.message || e)}</p>`; return; } draw(); checkBig(); };
   const board = () => (st && st.board) || {};
   const live = () => board().live || [];
   const news = () => board().news || [];
@@ -408,7 +431,7 @@ App.ready.then(async user => {
   const drawNews = () => {
     // 지금 소식만: 가장 최근에 들어온 소식(10분마다 2개) 중 이번 시간 종목 것만 · 지난 소식은 안 보여요
     const ids = live().map(s => s.id), mine = news().filter(n => ids.includes(n.id)), last = (mine[0] || {}).at, N = mine.filter(n => n.at === last);
-    const line = N.map(n => `<span class="s">✦</span><span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`).join('') || '<span>곧 새 소식이 들어와요</span>';
+    const line = N.map(n => `<span class="s">✦</span>${n.x ? `<span class="${n.x === '청산' ? 'q' : 'k'}">${n.x === '청산' ? '⚠ 청산' : '✖ 파산'} ${esc(n.n)} ${esc(n.t)}</span>` : `<span class="${n.g ? 'g' : 'b'}">${n.g ? '▲ 호재' : '▼ 악재'} ${esc(n.n)} ${esc(n.t)}</span>`}`).join('') || '<span>곧 새 소식이 들어와요</span>';
     $('#sign').innerHTML = line + line;
     { const el = $('#sign'); el.style.animationDuration = Math.max(8, el.scrollWidth / 2 / 110) + 's'; }   // 글이 길어도 같은 빠르기 (1초에 110px)
     const key = N[0] ? N[0].at : '', fresh = seenNews && key !== seenNews; seenNews = key;
@@ -418,7 +441,7 @@ App.ready.then(async user => {
     if (!$('#lst')) return draw();
     const b = board();
     drawNews();
-    const L = live(), hot = [...L].sort((a, z) => z.p - a.p)[0], bw = (x, en, lab) => `<div class="gl"><span class="ttl">${en}</span><small>${lab}</small><div class="lw">${x ? `${head(x.h)}<div><b>${esc(x.n)}</b><span class="${cls(x.r)}">${sign(x.r)}</span></div>` : '<div><b class="fl">-</b></div>'}</div></div>`;
+    const L = live(), hot = L.filter(s => !s.x).sort((a, z) => z.p - a.p)[0], bw = (x, en, lab) => `<div class="gl"><span class="ttl">${en}</span><small>${lab}</small><div class="lw">${x ? `${head(x.h)}<div><b>${esc(x.n)}</b><span class="${cls(x.r)}">${sign(x.r)}</span></div>` : '<div><b class="fl">-</b></div>'}</div></div>`;
     const hr = hot ? pct(hot.p, BASE) : 0;
     $('#led').innerHTML = `<div class="gl"><span class="ttl pk">TOP</span><small>지금 1등 종목</small><div class="lw">${hot ? `${head(hot.h)}<div><b>${esc(hot.n)}</b><span class="${cls(hr)}">${fmt(hot.p)}</span></div>` : ''}</div></div>${bw(b.best, 'BEST', '최고 수익률 투자자')}${bw(b.worst, 'WORST', '최저 수익률 투자자')}`;
     const key = [hot && hot.id, b.best && b.best.n, b.worst && b.worst.n].join('|');
@@ -426,12 +449,16 @@ App.ready.then(async user => {
     lastLed = key;
     const row = (s, i, off) => { const ch = pct(s.p, BASE), th = s.top, mine = ((st.me.hold || []).find(h => h.id === s.id) || {}).q;
       const my = mine ? ` · <strong class="mine">내 주식 ${mine}주</strong>` : '';
-      return `<div class="row ${off ? 'off' : ''} ${hits[s.id] ? 'hit-' + hits[s.id] : ''}" data-id="${esc(s.id)}">
+      if (s.x) { const bk = s.x !== '청산', was = (s.hist || []).slice(-2)[0] || 0;   // 상장폐지: 파산은 흑백 · 청산은 세피아
+        return `<div class="row ${bk ? 'x-bk' : 'x-lq'}" data-id="${esc(s.id)}"><span class="rk">·</span>${head(s.h, 'av')}
+          <div class="nm"><b>${esc(s.n)}</b><span>${bk ? '상장폐지 · 주식이 휴지조각이 됐어요' : '상장폐지 · 갖고 있던 사람은 30%를 돌려받았어요'}</span></div><span></span>
+          <div class="px"><span class="x0">${fmt(was)}</span><span class="xb ${bk ? 'bk' : 'lq'}">${bk ? '파산' : '청산'}</span></div></div>`; }
+      return `<div class="row ${off ? 'off' : ''} ${s.sc ? 'sc' : ''} ${hits[s.id] ? 'hit-' + hits[s.id] : ''}" data-id="${esc(s.id)}">
         <span class="rk ${!off && i < 3 ? 'r' + (i + 1) : ''}">${off ? '·' : i + 1}</span>${head(s.h, 'av')}
-        <div class="nm"><b>${esc(s.n)}</b><span>${off ? `종목에서 빠졌어요${my} · 팔 수만 있어요` : th ? `최대 주주 <i>${esc(th.n)}</i> ${th.q}주${my}` : `아직 주주 없음${my}`}</span></div>
+        <div class="nm"><b>${esc(s.n)}${s.sc ? '<i class="scb">사이드카</i>' : ''}</b><span>${s.sc ? `다음 시세 반영까지 거래가 멈췄어요${my}` : off ? `종목에서 빠졌어요${my} · 팔 수만 있어요` : th ? `최대 주주 <i>${esc(th.n)}</i> ${th.q}주${my}` : `아직 주주 없음${my}`}</span></div>
         ${off ? '<span></span>' : mini(s.hist, ch >= 0)}
         <div class="px"><b class="${cls(ch)}">${fmt(s.p)}</b><span class="${cls(ch)}">${sign(ch)}</span></div></div>`; };
-    $('#lst').innerHTML = [...L].sort((a, z) => z.p - a.p).map((s, i) => row(s, i)).join('');
+    $('#lst').innerHTML = [...L].sort((a, z) => (!!a.x - !!z.x) || z.p - a.p).map((s, i) => row(s, i)).join('');   // 상장폐지 종목은 맨 아래
     const offs = (st.me.hold || []).filter(h => !L.some(s => s.id === h.id));
     $('#mine').innerHTML = offs.length ? `<section class="brd gl"><div class="brd-hd"><b class="ttl">MY</b><span class="spk">✦</span><b>지난 시간 종목</b><small>내가 가진 주식 · 팔기만 돼요</small></div>${offs.map(h => row({ id: h.id, n: h.n, h: h.h, c: h.c, p: h.p }, 0, true)).join('')}</section>` : '';
     hits = {}; drawWallet(); drawTrade();
@@ -449,20 +476,28 @@ App.ready.then(async user => {
     const maxBuy = isLive && s.p > 0 ? Math.min(50, Math.floor(st.me.cash / s.p)) : 0, pts = series(s.hist);
     const nw = news().find(n => n.id === s.id);
     qty = Math.max(1, Math.min(qty, 50));
+    $('#tr').classList.toggle('x-bk', !!s.x && s.x !== '청산'); $('#tr').classList.toggle('x-lq', s.x === '청산');
+    if (s.x) {   // 상장폐지된 종목: 사고팔 수 없어요
+      const bk = s.x !== '청산';
+      $('#tr').innerHTML = `<div class="tr-grab"></div><div class="tr-hd">${head(s.h)}<div><b>${esc(s.n)}</b><span>상장폐지</span></div></div>
+        <div class="tr-px"><b>0</b><span class="xb ${bk ? 'bk' : 'lq'}">${bk ? '파산' : '청산'}</span></div>
+        <div style="height:14px"></div>`;
+      return;
+    }
     $('#tr').innerHTML = `<div class="tr-grab"></div>
       <div class="tr-hd">${head(s.h)}<div><b>${esc(s.n)}</b><span>${!isLive ? '이번 시간 종목이 아니에요 · 팔 수만 있어요' : s.top ? `최대 주주 ${esc(s.top.n)} ${s.top.q}주` : '아직 주주 없음'}</span></div></div>
       <div class="tr-px"><b>${fmt(s.p)}</b><span class="${cls(ch)}">${arrow(ch)} ${fmt(Math.abs(s.p - BASE))} (${sign(ch)})<small>시작가 대비</small></span></div>
       ${isLive ? big(s.hist, ch >= 0) : '<div style="height:12px"></div>'}
       <div class="tr-info">${isLive ? `<div>최고<b class="up">${fmt(Math.max(...pts))}</b></div><div>최저<b class="dn">${fmt(Math.min(...pts))}</b></div>` : ''}<div>내 주식<b>${mine}주</b></div><div>살 수 있음<b>${maxBuy}주</b></div></div>
-      <div class="qty"><button data-q="-1" aria-label="하나 빼기">−</button><div class="n">${qty}</div><button data-q="1" aria-label="하나 더">+</button><button class="q" data-q="10">+10</button></div>
-      <div class="acts"><button class="b" ${maxBuy < qty ? 'disabled' : ''}>${qty}주 사기</button><button class="s" ${mine < qty ? 'disabled' : ''}>${qty}주 팔기</button></div>`;
+      ${s.sc ? '' : `<div class="qty"><button data-q="-1" aria-label="하나 빼기">−</button><div class="n">${qty}</div><button data-q="1" aria-label="하나 더">+</button><button class="q" data-q="10">+10</button></div>`}
+      ${s.sc ? '<div class="sc-lock">사이드카 발동 · 다음 시세 반영까지 거래가 멈췄어요</div>' : `<div class="acts"><button class="b" ${maxBuy < qty ? 'disabled' : ''}>${qty}주 사기</button><button class="s" ${mine < qty ? 'disabled' : ''}>${qty}주 팔기</button></div>`}`;
   };
   const closeTrade = () => { openId = null; trb.classList.remove('on'); };
   const drawPick = async () => {
     let mine = [];
     try { mine = (await Store.myCharacters()).filter(c => c.published_at); } catch (e) {}
     sx.innerHTML = `<div class="pick gl"><span class="eb">Samsara Securities ✦ 三娑罗證券</span><h1>삼사라 증권</h1>
-      <p>투자할 내 캐릭터를 골라 주세요<br><small style="color:var(--sub)">이벤트 동안 바꿀 수 없어요 · 이벤트 돈 ${fmt(board().start || 100000)}원으로 시작해요 · 끝나면 수익률 상위 10명 캐릭터에게 재력 +2</small></p>
+      <p>투자할 내 캐릭터를 골라 주세요<br><small style="color:var(--sub)">이벤트 동안 바꿀 수 없어요 · 이벤트 돈 ${fmt(board().start || 100000)}원으로 시작해요 · 끝나면 수익률 상위 10명 캐릭터에게 재력 +1</small></p>
       <ul>${mine.map(c => `<li><button data-join="${esc(c.id)}">${head(c.data.head || '')}${esc(c.data.name || '?')}</button></li>`).join('') || '<li class="fl">게시된 내 캐릭터가 있어야 참여할 수 있어요.</li>'}</ul></div>`;
   };
   const drawShut = b => {
@@ -498,8 +533,8 @@ App.ready.then(async user => {
     if (b.dataset.q) { qty += +b.dataset.q; drawTrade(); return; }
     const q = b.classList.contains('b') ? qty : b.classList.contains('s') ? -qty : 0; if (!q) return;
     busy = true; b.disabled = true;
-    try { st = await Store.stockTrade(openId, q); checkBig(); drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
-    catch (ex) { toast(ex.message, 'err'); if (/마감/.test(ex.message)) { closeTrade(); load(); } else drawTrade(); }
+    try { const had = st.me && st.me.hold; st = await Store.stockTrade(openId, q); crashNote(had); checkBig(); drawLive(); toast(q > 0 ? `${qty}주 샀어요` : `${qty}주 팔았어요`); }
+    catch (ex) { toast(ex.message, 'err'); if (/마감/.test(ex.message)) { closeTrade(); load(); } else if (/사이드카|상장폐지/.test(ex.message)) load(); else drawTrade(); }   // 다른 사람 때문에 막혔으면 그때 한 번만 새로 받아요
     busy = false;
   });
 
