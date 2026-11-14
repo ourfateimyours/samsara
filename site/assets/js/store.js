@@ -280,7 +280,7 @@
       // 타로: 카드 · 방향 · 점수는 서버가 정해요 (열 때 1번 · 뽑을 때 1번)
       async tarotToday() { return ok(await sb.rpc('tarot_today')); },
       async tarotRead(me, kind, spread) { return ok(await sb.rpc('tarot_read', { p_kind: kind, p_spread: spread })); },
-      // 삼사라 패: 수 검사 · 손패는 서버만 · 누가 둘 때만 같은 방 사람에게 신호 (주기적으로 묻지 않아요)
+      // 사리큐브: 수 검사 · 손패는 서버만 · 누가 둘 때만 같은 방 사람에게 신호 (주기적으로 묻지 않아요)
       async tileStatus() { return ok(await sb.rpc('tile_status')); },
       async tileRooms() { return ok(await sb.rpc('tile_rooms')) || []; },
       async tileOpen(me, stat, n, msg) { return ok(await sb.rpc('tile_open', { p_stat: stat, p_n: n, p_msg: msg || '' })); },
@@ -600,7 +600,7 @@
     // 타로
     async tarotToday() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tarotToday(u.id); },
     async tarotRead(kind, spread) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.tarotRead(u.id, kind, spread); },
-    // 삼사라 패
+    // 사리큐브
     async tileStatus() { const u = await this.user(); if (!u) return { canPlay: false }; return B.tileStatus(u.id); },
     async tileRooms() { const u = await this.user(); if (!u) return []; return B.tileRooms(u.id); },
     async tileOpen(stat, n, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileOpen(u.id, stat, n, msg); },
