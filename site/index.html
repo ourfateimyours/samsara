@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400&family=Song+Myung&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet" href="assets/css/lobby.css?v=1112">
+<link rel="stylesheet" href="assets/css/lobby.css?v=1114">
 <link rel="stylesheet" href="assets/css/banner.css">
 </head>
 <body data-page="home" class="home-only lobby-page" data-nofooter>
@@ -124,7 +124,7 @@
 <script src="assets/js/store.js"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/char-editor.js"></script>
-<script src="assets/js/emblems.js?v=1112"></script><script src="assets/js/holocard.js"></script><script>
+<script src="assets/js/emblems.js?v=1114"></script><script src="assets/js/holocard.js"></script><script>
 /* 버튼 아이콘 (assets/js/emblems.js) · 뒤의 팔괘 · 반짝이 */
 $$('[data-emb]').forEach(el => {
   if (window.EMBLEM) el.insertAdjacentHTML('beforeend', EMBLEM[el.dataset.emb] || '');
@@ -511,6 +511,7 @@ Store.matchStatus().then(s => {
   const custom = (Array.isArray(s.lobby_banners) ? s.lobby_banners : []).filter(b => b && (b.title || b.text));
   const slideHTML = [
     ...custom.map(b => lobbyBanner(b)),
+    `<a class="slide tarot-sl" href="tarot.html"><span class="tag">TAROT</span><span class="when">한 장 150 靈錢</span><b>사리의 타로</b><p>사리에게 물어보고 오늘의 연애운 · 재물운을 펼쳐 봐요</p><i class="tsl" aria-hidden="true"><i></i><i></i></i></a>`,
     b1 ? `<a class="slide" href="${b1.href}"><span class="tag">${b1.tag}</span><span class="when">${esc(b1.when)}</span><b>${esc(b1.t)}</b><p>${esc(b1.p)}</p></a>` : '',
     checked
       ? `<a class="slide" href="attendance.html"><span class="tag">ATTEND</span><span class="when">출석 완료</span><b>오늘의 도장을 찍었어요</b><p>내일 또 와서 연속 출석을 이어 가세요</p></a>`
