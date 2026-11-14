@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>삼사라 패 — 三娑罗</title>
+<title>사리큐브 — 三娑罗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@300;400;600&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -97,7 +97,7 @@
 <main class="mt-wrap tp">
   <a class="back" href="match.html">← 대국</a>
   <section class="mt-view" id="v-lobby">
-    <div class="mt-head"><div><h1>삼사라 패</h1><p class="sub">숫자 타일을 맞춰서 먼저 손패를 다 털면 이겨요 · 2 ~ 3명</p></div><span class="mt-today" id="st"><span class="mt-orb"></span><b>불러오는 중…</b></span></div>
+    <div class="mt-head"><div><h1>사리큐브</h1><p class="sub">숫자 타일을 맞춰서 먼저 손패를 다 털면 이겨요 · 2 ~ 3명</p></div><span class="mt-today" id="st"><span class="mt-orb"></span><b>불러오는 중…</b></span></div>
     <div class="lobby"><div class="rooms" id="rooms"></div>
       <aside class="gl open">
         <div class="tabhd"><span class="tab"><i></i>방 열기</span><span class="ln"><i></i><i></i><i></i></span></div>
@@ -176,7 +176,7 @@ App.ready.then(async user => {
     betBody(betKind, $('#o-body'), $('#o-left'), wal);
     $('#st').innerHTML = `<span class="mt-orb"></span><b>${!status.hasChar ? '게시된 캐릭터가 필요해요' : status.canPlay ? '지금 한 판 할 수 있어요' : '이틀 안에 이미 대국했어요'}</b><em>모든 대국 합쳐 이틀에 1판</em>`;
     const rooms = await Store.tileRooms().catch(() => []);
-    $('#rooms').innerHTML = (rooms.length ? rooms.map(r => `<article class="gl room"><div class="tabhd"><span class="tab"><i></i>삼사라 패 · ${r.players.length} / 3</span><span class="ln"></span></div>
+    $('#rooms').innerHTML = (rooms.length ? rooms.map(r => `<article class="gl room"><div class="tabhd"><span class="tab"><i></i>사리큐브 · ${r.players.length} / 3</span><span class="ln"></span></div>
         <div><b>${esc(r.players[0].name)}의 방</b><small class="rm-sub">${ago(r.created_at)} 열림</small>
           <div class="bet">${r.players.map(p => `<span class="chip">${esc(p.name)} · ${betTxt(p)}</span>`).join(' ')}</div></div>
         <button type="button" class="mt-btn w" data-join="${esc(r.id)}" data-who="${esc(r.players.map(p => p.name + ' · ' + betTxt(p)).join('\n'))}" ${status.canPlay && r.players.length < 3 ? '' : 'disabled'}>들어가기</button></article>`).join('')
@@ -259,7 +259,7 @@ App.ready.then(async user => {
       if (v.status !== 'wait') { toast('방이 닫혔어요.'); return lobby(); }
       V = v;
       const seats = [0, 1, 2].map(i => { const p = v.players[i]; return p ? `<div class="gl tpc seat"><span class="av" style="${avStyle(p.head)}"></span><div><b>${esc(p.name)}${p.me ? ' · 나' : ''}${i === 0 ? ' · 방장' : ''}</b><small>${betTxt(p)} 걸었어요</small></div></div>` : '<div class="tpc seat empty">빈 자리</div>'; }).join('');
-      $('#v-wait').innerHTML = `<div class="gl twait"><div class="tabhd"><span class="tab"><i></i>삼사라 패 · 기다리는 중</span><span class="ln"></span></div>
+      $('#v-wait').innerHTML = `<div class="gl twait"><div class="tabhd"><span class="tab"><i></i>사리큐브 · 기다리는 중</span><span class="ln"></span></div>
         <div class="seats">${seats}</div>
         <p class="sub">${v.host ? (v.players.length >= 2 ? '시작을 누르면 바로 판이 열려요 · 3명이 차면 저절로 시작해요' : '한 명 이상 더 들어오면 시작할 수 있어요') : '방장이 시작하면 판이 열려요'}</p>
         <div class="tacts">${DEMO && v.host && v.players.length < 3 ? '<button type="button" class="mt-btn" data-bot>연습 상대 부르기</button>' : ''}<button type="button" class="mt-btn" data-leave>${v.host ? '방 닫기' : '나가기'}</button>${v.host ? `<button type="button" class="mt-btn w" data-start ${v.players.length >= 2 ? '' : 'disabled'}>시작</button>` : ''}</div></div>`;
@@ -468,7 +468,7 @@ App.ready.then(async user => {
     const v = V, win = v.players.find(p => p.win), me = v.players[v.me] || {};
     const gains = win ? v.players.filter(p => !p.win) : [];
     show('v-res');
-    $('#v-res').innerHTML = `<div class="gl twait res-t"><div class="tabhd"><span class="tab"><i></i>삼사라 패 · 결과</span><span class="ln"></span></div>
+    $('#v-res').innerHTML = `<div class="gl twait res-t"><div class="tabhd"><span class="tab"><i></i>사리큐브 · 결과</span><span class="ln"></span></div>
       <h2>${!win ? '비겼어요' : me.win ? '이겼어요' : `${esc(win.name)}이 이겼어요`}</h2><p>${esc(v.why || '')}</p>
       <div class="res-l">${v.players.map(p => `<div class="gl tpc"><span class="av" style="${avStyle(p.head)}"></span><div><b>${esc(p.name)}${p.me ? ' · 나' : ''}</b><small>남은 점수 ${p.pts == null ? '-' : p.pts}</small></div>
         <span class="chg ${!win ? '' : p.win ? 'up' : 'dn'}">${!win ? (p.stat === 'coin' ? '영전 돌려받음' : '그대로') : p.win ? gains.map(g => g.stat === 'msg' ? '상대 메시지 공개' : `+ ${betTxt(g)}`).join(' · ') || '-' : p.stat === 'msg' ? '내 메시지가 공개돼요' : `− ${betTxt(p)}`}</span></div>`).join('')}</div>

@@ -24,7 +24,7 @@
       <aside class="gl open" id="open">
         <div class="tabhd"><span class="tab"><i></i>방 열기</span><span class="ln"><i></i><i></i><i></i></span></div>
         <label class="lb">게임</label>
-        <div class="seg" id="o-game"><button type="button" class="on" data-g="gomoku">오목</button><button type="button" data-g="chess">체스</button><button type="button" data-g="tiles">삼사라 패</button><button type="button" data-g="bell">할래말래</button></div>
+        <div class="seg" id="o-game"><button type="button" class="on" data-g="gomoku">오목</button><button type="button" data-g="chess">체스</button><button type="button" data-g="tiles">사리큐브</button><button type="button" data-g="bell">할래말래</button></div>
         <label class="lb">베팅 · 내가 걸 것 (상대는 들어올 때 따로 골라요)</label>
         <div class="seg" id="o-bet"><button type="button" data-b="stat">⚔ 술력</button><button type="button" data-b="msg">✉ 메시지</button><button type="button" class="on" data-b="coin">💰 영전</button></div>
         <div id="o-body"></div>
@@ -111,7 +111,7 @@ App.ready.then(async user => {
     if (betKind === 'msg') { body.innerHTML = `<label class="lb">내 개인 메시지 · 지면 상대에게 공개돼요</label><textarea id="o-msg" maxlength="300" placeholder="대국마다 새로 써요"></textarea><p class="hint">지면 내 메시지가 상대에게 공개돼요 · 비기면 공개 안 해요</p>`; left.textContent = ''; }
     const r = $('#o-r'); if (r) r.oninput = () => $('#o-v').textContent = (+r.value).toLocaleString();
   }
-  $('#o-game').onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return; if (b.dataset.g === 'tiles') { location.href = 'tiles.html'; return; } if (b.dataset.g === 'bell') { location.href = 'bell.html'; return; } game = b.dataset.g; $$('#o-game button').forEach(x => x.classList.toggle('on', x === b)); };   // 삼사라 패는 따로 (2 ~ 3명)
+  $('#o-game').onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return; if (b.dataset.g === 'tiles') { location.href = 'tiles.html'; return; } if (b.dataset.g === 'bell') { location.href = 'bell.html'; return; } game = b.dataset.g; $$('#o-game button').forEach(x => x.classList.toggle('on', x === b)); };   // 사리큐브는 따로 (2 ~ 3명)
   $('#o-bet').onclick = async e => { const b = e.target.closest('[data-b]'); if (!b) return; betKind = b.dataset.b; $$('#o-bet button').forEach(x => x.classList.toggle('on', x === b)); betUI(await Store.wallet().catch(() => null)); };
   $('#o-go').onclick = async () => {
     const amount = $('#o-r') ? +$('#o-r').value : 0, msg = $('#o-msg') ? $('#o-msg').value : '';
