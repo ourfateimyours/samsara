@@ -1054,3 +1054,16 @@ html[data-dn="day"]::view-transition-old(root) { animation-name: dnToLight; }
 /* 랭킹은 원래 자리 · 낮은 화면에서만 아이콘과 안 겹치게 조금 내려요 */
 @media (min-width: 761px) and (max-height: 820px) { .lb-holo { bottom: 52px; } }
 @media (min-width: 761px) and (max-height: 740px) { .lb-holo { bottom: 20px; } }
+
+/* 게시판 타로 칸: 오른쪽에 금빛 카드 두 장 */
+.lb-car .slide.tarot-sl { position: relative; padding-right: 92px; }
+.tarot-sl .tsl { position: absolute; right: 18px; top: 50%; width: 62px; height: 78px; translate: 0 -50%; pointer-events: none; }
+.tarot-sl .tsl i { position: absolute; top: 4px; width: 40px; height: 62px; border-radius: 6px;
+  background: radial-gradient(circle at 50% 50%, rgba(233, 207, 138, .4) 0 7px, transparent 8px), repeating-linear-gradient(45deg, rgba(233, 207, 138, .1) 0 4px, transparent 4px 8px), linear-gradient(160deg, #4a3880, #1f1940);
+  border: 1.5px solid rgba(233, 207, 138, .85); box-shadow: inset 0 0 0 3px #1f1940, inset 0 0 0 4px rgba(233, 207, 138, .4), 0 6px 14px -6px rgba(0, 0, 0, .7); }
+.tarot-sl .tsl i:first-child { left: 0; transform: rotate(-12deg); opacity: .8; }
+.tarot-sl .tsl i:last-child { right: 0; transform: rotate(8deg); box-shadow: inset 0 0 0 3px #1f1940, inset 0 0 0 4px rgba(233, 207, 138, .4), 0 0 14px rgba(190, 160, 255, .55), 0 6px 14px -6px rgba(0, 0, 0, .7); animation: tslGlow 3s ease-in-out infinite; }
+.tarot-sl .tsl i:last-child::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; translate: -50% -50%; background: #f3dc9a; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); filter: drop-shadow(0 0 3px #ffe7a8); }
+.tarot-sl:hover .tsl i:last-child { transform: rotate(0) translateY(-4px); transition: transform .3s; }
+@keyframes tslGlow { 50% { box-shadow: inset 0 0 0 3px #1f1940, inset 0 0 0 4px rgba(233, 207, 138, .6), 0 0 22px rgba(233, 207, 138, .6), 0 6px 14px -6px rgba(0, 0, 0, .7); } }
+@media (prefers-reduced-motion: reduce) { .tarot-sl .tsl i:last-child { animation: none; } }
