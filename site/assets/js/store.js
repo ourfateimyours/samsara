@@ -277,6 +277,24 @@
         const t = setInterval(() => { if (!document.hidden) cb(); }, 20000);   // 신호를 놓쳤을 때를 대비해서 20초마다 한 번
         return { ping, stop() { clearInterval(t); sb.removeChannel(ch); } };
       },
+      // 타로: 카드 · 방향 · 점수는 서버가 정해요 (열 때 1번 · 뽑을 때 1번)
+      async tarotToday() { return ok(await sb.rpc('tarot_today')); },
+      async tarotRead(me, kind, spread) { return ok(await sb.rpc('tarot_read', { p_kind: kind, p_spread: spread })); },
+      // 삼사라 패: 수 검사 · 손패는 서버만 · 누가 둘 때만 같은 방 사람에게 신호 (주기적으로 묻지 않아요)
+      async tileStatus() { return ok(await sb.rpc('tile_status')); },
+      async tileRooms() { return ok(await sb.rpc('tile_rooms')) || []; },
+      async tileOpen(me, stat, n) { return ok(await sb.rpc('tile_open', { p_stat: stat, p_n: n })); },
+      async tileJoin(me, id, stat, n) { return ok(await sb.rpc('tile_join', { p_id: id, p_stat: stat, p_n: n })); },
+      async tileStart(me, id) { return ok(await sb.rpc('tile_start', { p_id: id })); },
+      async tileLeave(me, id) { ok(await sb.rpc('tile_leave', { p_id: id })); },
+      async tileView(me, id) { return ok(await sb.rpc('tile_view', { p_id: id })); },
+      async tileMove(me, id, act, tbl) { return ok(await sb.rpc('tile_move', { p_id: id, p_act: act, p_tbl: tbl || null })); },
+      tileSub(id, cb) {
+        const ch = sb.channel('t:' + id, { config: { broadcast: { self: false } } });
+        const ping = () => ch.send({ type: 'broadcast', event: 'p', payload: {} }).catch(() => {});
+        ch.on('broadcast', { event: 'p' }, () => cb()).subscribe();
+        return { ping, stop() { sb.removeChannel(ch); } };
+      },
       // 상영관: 목록은 열 때 한 번 · 방 안에서는 재생 상태가 바뀔 때만 신호 · 같이 보는 사람은 들어오고 나갈 때만
       async theaterRooms() { return ok(await sb.rpc('theater_rooms')) || []; },
       async theaterOpen(me, title, kind, svc, src, nick) { return ok(await sb.rpc('theater_open', { p_title: title, p_kind: kind, p_svc: svc || '', p_src: src, p_nick: nick })); },
@@ -562,6 +580,19 @@
     async myGifts() { const u = await this.user(); if (!u) return []; return B.myGifts(u.id); },
     async openGift(id, pick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.openGift(u.id, id, pick); },
     async adminGiftBox(charId) { await this.requireAdmin(); const u = await this.user(); return B.adminGiftBox(u.id, u.nickname, charId); },
+    // 타로
+    async tarotToday() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tarotToday(u.id); },
+    async tarotRead(kind, spread) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.tarotRead(u.id, kind, spread); },
+    // 삼사라 패
+    async tileStatus() { const u = await this.user(); if (!u) return { canPlay: false }; return B.tileStatus(u.id); },
+    async tileRooms() { const u = await this.user(); if (!u) return []; return B.tileRooms(u.id); },
+    async tileOpen(stat, n) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileOpen(u.id, stat, n); },
+    async tileJoin(id, stat, n) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileJoin(u.id, id, stat, n); },
+    async tileStart(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileStart(u.id, id); },
+    async tileLeave(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileLeave(u.id, id); },
+    async tileView(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileView(u.id, id); },
+    async tileMove(id, act, tbl) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.tileMove(u.id, id, act, tbl); },
+    tileSub(id, cb) { return B.tileSub(id, cb); },
     // 상영관
     async theaterRooms() { const u = await this.user(); if (!u) return []; return B.theaterRooms(u.id); },
     async theaterOpen(title, kind, svc, src, nick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterOpen(u.id, title, kind, svc, src, nick); },

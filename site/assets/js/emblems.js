@@ -57,6 +57,8 @@
       spark(52, 10, 3) + spark(11, 48, 2, .8)),
     /* (지금은 메인에 없지만 남겨 둬요) 상점 · 새 인물 */
     shop: svg(id => `<path d="M12 18H52L55 28H9Z" ${F(id)}/><path d="M12 28V50H52V28" ${F(id)}/><rect x="18" y="34" width="10" height="16" rx="1" fill="${INK}"/><rect x="33" y="34" width="13" height="9" rx="1" fill="${INK}"/>`, spark(52, 10, 3)),
+    tarot: svg(id => `<g transform="rotate(-12 26 34)"><rect x="12" y="14" width="24" height="38" rx="3" ${F(id)} opacity=".55"/></g>
+      <g transform="rotate(8 38 32)"><rect x="25" y="11" width="25" height="40" rx="3" ${F(id)}/><path d="M37.5 21L39.4 28.6L47 30.5L39.4 32.4L37.5 40L35.6 32.4L28 30.5L35.6 28.6Z" fill="${INK}"/></g>`),
     theater: svg(id => `<rect x="9" y="13" width="46" height="31" rx="4" ${F(id)}/><path d="M28 21.5V35.5L39.5 28.5Z" fill="${INK}"/>
       <path d="M32 44V51" stroke="#fff" stroke-width="3"/><path d="M22 52H42" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>`),
     stock: svg(id => `<rect x="12" y="37" width="8" height="15" rx="1.4" ${F(id)} opacity=".6"/><rect x="25" y="30" width="8" height="22" rx="1.4" ${F(id)} opacity=".8"/><rect x="38" y="23" width="8" height="29" rx="1.4" ${F(id)}/>
