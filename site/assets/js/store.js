@@ -283,17 +283,34 @@
       // 삼사라 패: 수 검사 · 손패는 서버만 · 누가 둘 때만 같은 방 사람에게 신호 (주기적으로 묻지 않아요)
       async tileStatus() { return ok(await sb.rpc('tile_status')); },
       async tileRooms() { return ok(await sb.rpc('tile_rooms')) || []; },
-      async tileOpen(me, stat, n) { return ok(await sb.rpc('tile_open', { p_stat: stat, p_n: n })); },
-      async tileJoin(me, id, stat, n) { return ok(await sb.rpc('tile_join', { p_id: id, p_stat: stat, p_n: n })); },
+      async tileOpen(me, stat, n, msg) { return ok(await sb.rpc('tile_open', { p_stat: stat, p_n: n, p_msg: msg || '' })); },
+      async tileJoin(me, id, stat, n, msg) { return ok(await sb.rpc('tile_join', { p_id: id, p_stat: stat, p_n: n, p_msg: msg || '' })); },
       async tileStart(me, id) { return ok(await sb.rpc('tile_start', { p_id: id })); },
       async tileLeave(me, id) { ok(await sb.rpc('tile_leave', { p_id: id })); },
       async tileView(me, id) { return ok(await sb.rpc('tile_view', { p_id: id })); },
       async tileMove(me, id, act, tbl) { return ok(await sb.rpc('tile_move', { p_id: id, p_act: act, p_tbl: tbl || null })); },
-      tileSub(id, cb) {
+      tileSub(id, cb, onEv) {   // p = 판이 바뀜 (다시 받기) · e = 표정 이모지 (받지 않아요 · 서버 저장 없음)
         const ch = sb.channel('t:' + id, { config: { broadcast: { self: false } } });
         const ping = () => ch.send({ type: 'broadcast', event: 'p', payload: {} }).catch(() => {});
-        ch.on('broadcast', { event: 'p' }, () => cb()).subscribe();
-        return { ping, stop() { sb.removeChannel(ch); } };
+        const emit = x => ch.send({ type: 'broadcast', event: 'e', payload: x || {} }).catch(() => {});
+        ch.on('broadcast', { event: 'p' }, () => cb()).on('broadcast', { event: 'e' }, m => onEv && onEv(m.payload || {})).subscribe();
+        return { ping, emit, stop() { sb.removeChannel(ch); } };
+      },
+      // 할래말래: 카드 · 종 검사는 서버만 · 뒤집거나 칠 때만 상대에게 신호 (주기적으로 묻지 않아요)
+      async bellStatus() { return ok(await sb.rpc('bell_status')); },
+      async bellRooms() { return ok(await sb.rpc('bell_rooms')) || []; },
+      async bellOpen(me, bet, n, msg) { return ok(await sb.rpc('bell_open', { p_bet: bet, p_n: n, p_msg: msg || '' })); },
+      async bellJoin(me, id, bet, n, msg) { return ok(await sb.rpc('bell_join', { p_id: id, p_bet: bet, p_n: n, p_msg: msg || '' })); },
+      async bellLeave(me, id) { ok(await sb.rpc('bell_leave', { p_id: id })); },
+      async bellView(me, id) { return ok(await sb.rpc('bell_view', { p_id: id })); },
+      async bellFlip(me, id) { return ok(await sb.rpc('bell_flip', { p_id: id })); },
+      async bellRing(me, id, ver) { return ok(await sb.rpc('bell_ring', { p_id: id, p_ver: ver })); },
+      bellSub(id, cb, onEv) {   // p = 판이 바뀜 (다시 받기) · e = 손 맞음 같은 연출 (받지 않아요)
+        const ch = sb.channel('b:' + id, { config: { broadcast: { self: false } } });
+        const ping = () => ch.send({ type: 'broadcast', event: 'p', payload: {} }).catch(() => {});
+        const emit = x => ch.send({ type: 'broadcast', event: 'e', payload: x || {} }).catch(() => {});
+        ch.on('broadcast', { event: 'p' }, () => cb()).on('broadcast', { event: 'e' }, m => onEv && onEv(m.payload || {})).subscribe();
+        return { ping, emit, stop() { sb.removeChannel(ch); } };
       },
       // 상영관: 목록은 열 때 한 번 · 방 안에서는 재생 상태가 바뀔 때만 신호 · 같이 보는 사람은 들어오고 나갈 때만
       async theaterRooms() { return ok(await sb.rpc('theater_rooms')) || []; },
@@ -586,13 +603,22 @@
     // 삼사라 패
     async tileStatus() { const u = await this.user(); if (!u) return { canPlay: false }; return B.tileStatus(u.id); },
     async tileRooms() { const u = await this.user(); if (!u) return []; return B.tileRooms(u.id); },
-    async tileOpen(stat, n) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileOpen(u.id, stat, n); },
-    async tileJoin(id, stat, n) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileJoin(u.id, id, stat, n); },
+    async tileOpen(stat, n, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileOpen(u.id, stat, n, msg); },
+    async tileJoin(id, stat, n, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileJoin(u.id, id, stat, n, msg); },
     async tileStart(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileStart(u.id, id); },
     async tileLeave(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileLeave(u.id, id); },
     async tileView(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.tileView(u.id, id); },
     async tileMove(id, act, tbl) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.tileMove(u.id, id, act, tbl); },
-    tileSub(id, cb) { return B.tileSub(id, cb); },
+    tileSub(id, cb, onEv) { return B.tileSub(id, cb, onEv); },
+    async bellStatus() { const u = await this.user(); if (!u) return { canPlay: false }; return B.bellStatus(u.id); },
+    async bellRooms() { const u = await this.user(); if (!u) return []; return B.bellRooms(u.id); },
+    async bellOpen(bet, n, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellOpen(u.id, bet, n, msg); },
+    async bellJoin(id, bet, n, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellJoin(u.id, id, bet, n, msg); },
+    async bellLeave(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellLeave(u.id, id); },
+    async bellView(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellView(u.id, id); },
+    async bellFlip(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellFlip(u.id, id); },
+    async bellRing(id, ver) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellRing(u.id, id, ver); },
+    bellSub(id, cb, onEv) { return B.bellSub(id, cb, onEv); },
     // 상영관
     async theaterRooms() { const u = await this.user(); if (!u) return []; return B.theaterRooms(u.id); },
     async theaterOpen(title, kind, svc, src, nick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterOpen(u.id, title, kind, svc, src, nick); },
