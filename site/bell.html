@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>할래말래 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+KR:wght@300;400;600&family=Zhi+Mang+Xing&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/match.css">
+<style>
+.bp { font-family: 'IBM Plex Sans KR', var(--sans); --pk: #ff8fb1; --pk2: #ffd1df; --cr: #fff7ec; --ink: #5a3a4a; }
+.bp .back { display: inline-block; margin-bottom: 10px; font-size: 13px; color: rgba(255,255,255,.6); text-decoration: none; }
+.bp .back:hover { color: #fff; }
+.bp .sub { margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,.6); }
+
+/* ── 귀여운 판 ── */
+.arena { max-width: 560px; margin: 0 auto; display: grid; gap: 12px; }
+.hw { position: relative; display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 9px; border-radius: 999px; background: var(--cr); color: var(--ink); box-shadow: 0 3px 0 #f1d9c6, 0 12px 24px -14px rgba(0,0,0,.8); }
+.hw .av { width: 40px; height: 40px; border-radius: 50%; background: #ffe3ec center / cover; flex: none; box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--pk2); }
+.hw b { display: block; font-size: 14px; color: var(--ink); } .hw small { font-size: 11.5px; color: #a07a8a; }
+.hw .cnt { margin-left: auto; display: flex; align-items: center; gap: 6px; font: 700 13px 'IBM Plex Sans KR', var(--sans); color: var(--ink); }
+.hw .cnt i { font-style: normal; display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 99px; background: #ffe3ec; font: 800 15px 'JetBrains Mono', monospace; color: #e0557f; box-sizing: border-box; }
+.hw.on { box-shadow: 0 3px 0 #f1d9c6, 0 0 0 3px #ffd56b, 0 0 22px rgba(255,213,107,.55); }
+.bub { position: absolute; left: 34px; top: -40px; z-index: 5; padding: 7px 14px; border-radius: 16px; background: #fff; color: #e0336a; font: 800 18px 'IBM Plex Sans KR', var(--sans); white-space: nowrap; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); animation: bubIn .25s cubic-bezier(.2,.9,.3,1.4), shk .12s 3 .25s; pointer-events: none; }
+.bub::after { content: ""; position: absolute; left: 14px; bottom: -7px; border: 8px solid transparent; border-top-color: #fff; border-bottom: 0; }
+@keyframes bubIn { from { transform: scale(.3) translateY(10px); opacity: 0; } }
+@keyframes shk { 50% { transform: translateX(-3px) rotate(-3deg); } }
+.clock { height: 14px; border-radius: 99px; background: #efeaf6; overflow: hidden; box-shadow: inset 0 1px 2px rgba(80,60,120,.15); }
+.clock i { display: block; height: 100%; border-radius: 99px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14' font-family='sans-serif'%3E%3Ctext x='9' y='11' font-size='10' fill='%23ffffff' fill-opacity='.9'%3E%E2%98%85%3C/text%3E%3C/svg%3E") 0 0 / 28px 14px repeat-x, linear-gradient(90deg, #b9a4ff, #8fb8ff); transition: width 1s linear; animation: starRun 2.4s linear infinite; }
+@keyframes starRun { to { background-position: 28px 0, 0 0; } }
+.felt { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; padding: 26px 18px; border-radius: 28px; background-color: #ffe1ea;
+  background-image: repeating-linear-gradient(0deg, rgba(240,90,140,.17) 0 16px, transparent 16px 32px), repeating-linear-gradient(90deg, rgba(240,90,140,.17) 0 16px, transparent 16px 32px);
+  box-shadow: 0 6px 0 #f2a9c0, 0 18px 36px -20px rgba(160,40,90,.45); }
+.felt::before { content: ""; position: absolute; inset: 9px; border-radius: 21px; border: 2px dashed rgba(255,255,255,.95); pointer-events: none; }
+.spot { position: relative; display: grid; justify-items: center; gap: 7px; } .spot small { font: 700 11.5px 'IBM Plex Sans KR', var(--sans); color: #fff; background: #e0457a; padding: 2px 10px; border-radius: 99px; }
+.cardf, .cardb, .cardx { width: 104px; height: 144px; border-radius: 16px; box-sizing: border-box; }
+.cardx { border: 3px dashed #fff; background: rgba(255,255,255,.35); display: grid; place-items: center; color: #d0457a; font: 700 12px 'IBM Plex Sans KR', var(--sans); }
+.cardf { position: relative; background: #fff; border: 4px solid var(--fc, #ffb36b); box-shadow: 0 4px 0 rgba(0,0,0,.08), 0 12px 20px -10px rgba(120,40,70,.45); display: grid; padding: 8px; }
+.cardf.f0 { --fc: #ffb36b; --fb: #fff3e6; } .cardf.f1 { --fc: #ff9fb6; --fb: #fff0f4; } .cardf.f2 { --fc: #b79cff; --fb: #f5f0ff; } .cardf.f3 { --fc: #ff6f8f; --fb: #ffeef2; }
+.cardf { grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
+.cardf .pips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); place-items: center; font-size: 21px; line-height: 1; border-radius: 10px; background: var(--fb); overflow: hidden; min-width: 0; min-height: 0; }
+.cardf .pips span { display: block; width: 100%; text-align: center; overflow: hidden; }
+.cardf .no { position: absolute; top: -10px; right: -10px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--fc); color: #fff; font: 800 13px 'JetBrains Mono', monospace; box-shadow: 0 0 0 3px #fff; }
+.cardf.pop { animation: flipIn .3s cubic-bezier(.2,.9,.3,1.4); }
+@keyframes flipIn { from { transform: rotateY(90deg) scale(.85); } to { transform: none; } }
+.cardb { position: relative; border: 4px solid #fff; background-color: #ff8db0; background-image: radial-gradient(#fff 22%, transparent 24%), radial-gradient(#fff 22%, transparent 24%); background-size: 16px 16px; background-position: 0 0, 8px 8px; box-shadow: 0 4px 0 #f3a9bf, 0 10px 18px -10px rgba(120,40,70,.6); }
+.cardb::after { content: "🔔"; position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #fff; font-size: 18px; box-shadow: 0 0 0 3px #ff8db0, 0 0 0 5px #fff; }
+.bell { position: relative; width: 96px; height: 92px; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .07s; }
+.bell .dome { position: absolute; left: 8px; right: 8px; top: 4px; height: 66px; border-radius: 50% 50% 18px 18px / 70% 70% 18px 18px; background: radial-gradient(circle at 35% 28%, #fff6c2, #ffd23f 35%, #ffb300 70%, #e08a00); box-shadow: inset 0 -6px 0 rgba(170,90,0,.3), 0 3px 0 #c97800, 0 0 0 3px #fff; }
+.bell .dome::before { content: ""; position: absolute; left: 50%; top: -9px; width: 16px; height: 12px; margin-left: -8px; border-radius: 8px 8px 3px 3px; background: #ffc93c; box-shadow: inset 0 -3px 0 rgba(200,120,0,.25); }
+.bell .face { position: absolute; left: 0; right: 0; top: 32px; display: flex; justify-content: center; gap: 18px; }
+.bell .face i { width: 7px; height: 9px; border-radius: 50%; background: #5a3a2a; }
+.bell .face::after { content: ""; position: absolute; left: 50%; top: 9px; width: 12px; height: 6px; margin-left: -6px; border: 2.5px solid #5a3a2a; border-top: 0; border-radius: 0 0 10px 10px; }
+.bell .cheek { position: absolute; top: 44px; width: 13px; height: 7px; border-radius: 50%; background: rgba(255,120,150,.55); } .bell .cheek.l { left: 22px; } .bell .cheek.r { right: 22px; }
+.bell .base { position: absolute; left: 0; right: 0; bottom: 4px; height: 20px; border-radius: 12px; background: linear-gradient(#ff9fbd, #ff7aa2); box-shadow: 0 4px 0 #e0557f; }
+.bell .lbl { position: absolute; left: 0; right: 0; bottom: 6px; font: 800 11px 'IBM Plex Sans KR', var(--sans); color: #fff; letter-spacing: .12em; }
+.bell:active, .bell.hit { transform: scale(.92, .86) translateY(4px); }
+.bell:active .face i, .bell.hit .face i { height: 3px; margin-top: 3px; }
+.bell.ok .dome { animation: ring .55s; } @keyframes ring { 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(3deg); } }
+.bell.ok::after { content: "딩!"; position: absolute; left: 50%; top: -26px; translate: -50% 0; font: 800 16px 'IBM Plex Sans KR', var(--sans); color: #ffd56b; text-shadow: 0 2px 0 #c77f00; animation: bubIn .3s; }
+.felt.miss { animation: shake .35s; } @keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+.slapfx { position: absolute; left: 50%; top: 18px; translate: -50% 0; font-size: 40px; animation: slap .5s ease-out forwards; pointer-events: none; z-index: 4; }
+@keyframes slap { 0% { transform: translateY(-30px) scale(1.4); opacity: 0; } 30% { transform: none; opacity: 1; } 100% { transform: scale(.9); opacity: 0; } }
+.mine-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 22px; background: var(--cr); color: var(--ink); box-shadow: 0 3px 0 #f1d9c6, 0 14px 28px -14px rgba(0,0,0,.8); position: relative; }
+.mine-row.on { box-shadow: 0 3px 0 #f1d9c6, 0 0 0 3px #ffd56b, 0 0 24px rgba(255,213,107,.55); }
+.mine-row b { color: var(--ink); } .mine-row small { color: #a07a8a; font-size: 11.5px; }
+.mine-row .bub { left: 90px; top: -38px; }
+.deck { position: relative; width: 66px; height: 92px; flex: none; cursor: pointer; border: 0; padding: 0; background: none; }
+.deck .cardb { position: absolute; inset: 0; width: auto; height: auto; border-width: 3px; border-radius: 12px; }
+.deck .cardb::after { width: 26px; height: 26px; font-size: 13px; }
+.deck .cardb:nth-child(1) { transform: translate(5px, 5px) rotate(4deg); } .deck .cardb:nth-child(2) { transform: translate(2px, 2px) rotate(2deg); }
+.deck b { position: absolute; left: 50%; bottom: -9px; translate: -50% 0; font: 800 11px 'JetBrains Mono', monospace; color: #fff; background: #ff7aa2; border-radius: 99px; padding: 2px 9px; box-shadow: 0 0 0 2px #fff; }
+.deck.go { animation: hop 1.1s ease-in-out infinite; } .deck.go .cardb:last-of-type { box-shadow: 0 0 0 3px #ffd56b, 0 0 18px rgba(255,213,107,.9); }
+@keyframes hop { 50% { transform: translateY(-5px); } }
+.deck:disabled { cursor: default; }
+.hint { font-size: 12px; color: #a07a8a; margin-top: 2px; }
+.hint kbd { font: 700 10.5px 'JetBrains Mono', monospace; padding: 1px 6px; border-radius: 6px; background: #ffe3ec; color: #c74c74; }
+.cd3 { position: absolute; inset: 0; display: grid; place-items: center; font: 800 72px 'JetBrains Mono', monospace; color: #ff7aa2; background: rgba(255,243,246,.8); border-radius: 28px; text-shadow: 0 4px 0 #fff; z-index: 6; }
+.cd3[hidden] { display: none; }
+.blog { font-size: 12.5px; color: rgba(255,255,255,.7); min-height: 18px; text-align: center; }
+.resign { margin-left: auto; font: 700 12px 'IBM Plex Sans KR', var(--sans); color: #a07a8a; background: #fff; border: 2px solid #f3d6e0; border-radius: 99px; padding: 7px 12px; cursor: pointer; }
+.bwait { max-width: 520px; margin: 0 auto; padding: 22px; border-radius: 18px; }
+.bwait .seats { display: grid; gap: 10px; margin: 14px 0; }
+.bwait .hw.empty { justify-content: center; color: #c9a3b2; font-size: 13px; min-height: 58px; background: rgba(255,247,236,.4); }
+.tacts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.res-t { text-align: center; } .res-t h2 { font: 700 26px 'IBM Plex Sans KR', var(--sans); color: #fff; margin: 6px 0 4px; } .res-t p { color: rgba(255,255,255,.6); font-size: 13px; }
+.res-l { display: grid; gap: 10px; margin: 16px 0; text-align: left; }
+.chg { margin-left: auto; font: 700 13px 'IBM Plex Sans KR', var(--sans); } .chg.up { color: #2fae74; } .chg.dn { color: #e0557f; }
+/* 판 · 기다림 · 결과 화면은 검정 대신 분홍 땡땡이 배경 (로비는 대국과 같게) */
+body.cute { background: #fff; }
+body.cute::before { display: none; }
+body.cute::after { content: ""; display: block; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 1; animation: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' font-family='sans-serif'%3E%3Cg fill='%23f4bfd0'%3E%3Ctext x='18' y='40' font-size='18'%3E%E2%98%85%3C/text%3E%3Ctext x='150' y='72' font-size='11' fill-opacity='.8'%3E%E2%98%85%3C/text%3E%3Ctext x='92' y='150' font-size='14'%3E%E2%98%85%3C/text%3E%3Ctext x='210' y='190' font-size='20' fill-opacity='.7'%3E%E2%98%85%3C/text%3E%3Ctext x='40' y='228' font-size='10' fill-opacity='.8'%3E%E2%98%85%3C/text%3E%3C/g%3E%3Cg fill='%23d9d4da'%3E%3Ctext x='200' y='24' font-size='9'%3E%E2%98%85%3C/text%3E%3Ctext x='130' y='240' font-size='12'%3E%E2%98%85%3C/text%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px, linear-gradient(to top, #fde3ec, rgba(253,227,236,0) 60%);
+  -webkit-mask: linear-gradient(to top, #000 0%, rgba(0,0,0,.6) 30%, transparent 70%); mask: linear-gradient(to top, #000 0%, rgba(0,0,0,.6) 30%, transparent 70%); }
+body.cute .mt-wrap { position: relative; z-index: 1; }
+body.cute .bp .back { color: #c2457a; font-weight: 600; }
+body.cute .blog { color: #b0386a; font-weight: 600; }
+body.cute .clock { background: #efeaf6; }
+.bwait { max-width: 520px; margin: 0 auto; padding: 22px; border-radius: 24px; background: #fff7ec; color: var(--ink); box-shadow: 0 5px 0 #f1cdb8, 0 20px 40px -20px rgba(120,40,70,.5); }
+.bwait h3 { margin: 0; font: 800 17px 'IBM Plex Sans KR', var(--sans); color: #e0457a; }
+.bwait .sub { color: #a07a8a; }
+.bwait .hw { box-shadow: 0 0 0 2px #ffe0ea; }
+.res-t h2 { color: var(--ink) !important; } .res-t p { color: #a07a8a !important; }
+.cbtn { font: 700 13px 'IBM Plex Sans KR', var(--sans); padding: 10px 18px; border-radius: 99px; border: 0; background: #ff6f9c; color: #fff; box-shadow: 0 3px 0 #d94a7a; cursor: pointer; }
+.cbtn.lt { background: #fff; color: #c2457a; box-shadow: 0 3px 0 #f3c9d6; }
+.cbtn:active { transform: translateY(2px); box-shadow: none; }
+body.cute .rs-loot { max-width: 520px; }
+@media (max-width: 520px) { .cardf, .cardb, .cardx { width: 82px; height: 114px; } .cardf .pips { font-size: 15px; } .bell { width: 80px; height: 80px; } .bell .dome { height: 56px; } .bell .face { top: 26px; } .bell .cheek { top: 37px; } .felt { gap: 8px; padding: 22px 12px; } }
+</style>
+</head>
+<body data-page="match" class="mt-noir" data-nofooter>
+<main class="mt-wrap bp">
+  <a class="back" href="match.html">← 대국</a>
+  <section class="mt-view" id="v-lobby">
+    <div class="mt-head"><div><h1>할래말래</h1><p class="sub">같은 과일이 딱 5개면 종을 쳐요 · 2명 · 한 판 3분</p></div><span class="mt-today" id="st"><span class="mt-orb"></span><b>불러오는 중…</b></span></div>
+    <div class="lobby"><div class="rooms" id="rooms"></div>
+      <aside class="gl open" id="open">
+        <div class="tabhd"><span class="tab"><i></i>방 열기</span><span class="ln"><i></i><i></i><i></i></span></div>
+        <label class="lb">베팅 · 내가 걸 것 (상대는 들어올 때 따로 골라요)</label>
+        <div class="seg" id="o-bet"><button type="button" data-b="int">🧠 지력</button><button type="button" data-b="msg">✉ 메시지</button><button type="button" class="on" data-b="coin">💰 영전</button></div>
+        <div id="o-body"></div>
+        <div class="ft"><span class="left" id="o-left"></span><button type="button" class="mt-btn w" id="o-go">방 열기</button></div>
+      </aside></div>
+  </section>
+  <section class="mt-view" id="v-wait" hidden></section>
+  <section class="mt-view" id="v-game" hidden></section>
+  <section class="mt-view" id="v-res" hidden></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=bell.html'); return; }
+  const po = await Store.playOpen('match').catch(() => ({ open: false }));
+  if (!po.open) { playClosed($('.mt-wrap'), 'match'); return; }
+  const DEMO = Store.mode === 'demo';
+  const show = id => { ['v-lobby', 'v-wait', 'v-game', 'v-res'].forEach(v => $('#' + v).hidden = v !== id); document.body.classList.toggle('cute', id !== 'v-lobby'); };
+  const ago = iso => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 6e4)); return m < 1 ? '방금' : m < 60 ? m + '분 전' : Math.round(m / 60) + '시간 전'; };
+  const avStyle = h => { h = h ? ((window.headMp4 && headMp4(h) || {}).poster || h) : ''; return h ? `background-image:url('${esc(h)}')` : ''; };
+
+  // 카드: 과일 = 번호 / 10 (귤 · 복숭아 · 포도 · 체리) · 개수 = 표[번호 % 10]
+  const FR = ['🍊', '🍑', '🍇', '🍒'], CNT = [1, 1, 1, 2, 2, 2, 3, 3, 4, 5];
+  const PIP = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9] };
+  const cardHTML = (c, pop) => c == null ? '<div class="cardx">비어 있어요</div>'
+    : `<div class="cardf f${Math.floor(c / 10)} ${pop ? 'pop' : ''}"><div class="pips">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => `<span>${PIP[CNT[c % 10]].includes(k) ? FR[Math.floor(c / 10)] : ''}</span>`).join('')}</div><span class="no">${CNT[c % 10]}</span></div>`;
+  const BET = { coin: '💰 영전', int: '🧠 지력', msg: '✉ 메시지' };
+  const betTxt = p => p.bet === 'msg' ? BET.msg : `${BET[p.bet]} ${p.n}`;
+
+  // 소리 (파일 없이 브라우저에서 만들어요)
+  let AC = null;
+  const ac = () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; };
+  const tone = (f, d, { type = 'sine', v = .2, at = 0, to = null } = {}) => { const a = ac(); if (!a) return; const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + d); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .005); g.gain.exponentialRampToValueAtTime(.0008, t + d); o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .02); };
+  const noise = (d, { v = .3, f = 1800, q = 1, type = 'bandpass', at = 0 } = {}) => { const a = ac(); if (!a) return; const t = a.currentTime + at, n = a.sampleRate * d, b = a.createBuffer(1, n, a.sampleRate), x = b.getChannelData(0); for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); const s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain(); s.buffer = b; fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = v; s.connect(fl).connect(g).connect(a.destination); s.start(t); };
+  // 맑은 종: 탁상 종처럼 배음이 겹쳐서 길게 울려요
+  const ding = () => { [[2093, .22, 1.8], [4186, .06, .9], [5775, .05, .6], [8370, .025, .35], [2099, .12, 1.6]].forEach(([f, v, d]) => tone(f, d, { v })); noise(.02, { v: .15, f: 7000, q: .7 }); };
+  const thud = () => { tone(240, .12, { type: 'triangle', v: .12, to: 140 }); noise(.04, { v: .08, f: 900 }); };
+  const buzz = () => { tone(200, .18, { type: 'square', v: .05, to: 150 }); tone(150, .22, { type: 'square', v: .05, at: .12, to: 110 }); };
+  // 손 맞음: 탁! + 아악
+  const slap = () => { noise(.07, { v: .9, f: 2400, q: .6 }); noise(.05, { v: .5, f: 600, q: .8, type: 'lowpass' }); };
+  const ouch = () => { const a = ac(); if (!a) return; const t = a.currentTime + .08, o = a.createOscillator(), lf = a.createOscillator(), lg = a.createGain(), f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), g = a.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(620, t); o.frequency.linearRampToValueAtTime(880, t + .12); o.frequency.exponentialRampToValueAtTime(420, t + .75);
+    lf.frequency.value = 9; lg.gain.value = 22; lf.connect(lg).connect(o.frequency);
+    f1.type = 'bandpass'; f1.frequency.value = 900; f1.Q.value = 4; f2.type = 'bandpass'; f2.frequency.value = 1500; f2.Q.value = 5;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + .04); g.gain.setValueAtTime(.35, t + .45); g.gain.exponentialRampToValueAtTime(.001, t + .8);
+    o.connect(f1).connect(g); o.connect(f2).connect(g); g.connect(a.destination); o.start(t); lf.start(t); o.stop(t + .85); lf.stop(t + .85); };
+  // 말풍선은 화면 위에 띄워요 (판이 다시 그려져도 안 사라지게) · 두상 바로 위
+  const bubble = (sel, text) => { const el = $(sel); if (!el) return; const av = el.querySelector('.av') || el.querySelector('#deck') || el, r = av.getBoundingClientRect(); $$(`.bub.fly[data-for="${sel}"]`).forEach(x => x.remove());
+    const b = document.createElement('span'); b.className = 'bub fly'; b.dataset.for = sel; b.textContent = text; b.style.cssText = `position:fixed;left:${r.left + r.width / 2 - 20}px;top:${r.top - 46}px`; document.body.appendChild(b); setTimeout(() => b.remove(), 1700); };
+
+  /* ───────── 베팅 (대국과 같은 모양) ───────── */
+  const R = { coin: [100, 500, 100, 100], int: [1, 3, 1, 1] };   // 최소 · 최대 · 칸 · 처음
+  const betBody = (kind, body, left, wal) => {
+    if (kind === 'msg') { body.innerHTML = `<label class="lb">내 비밀 메시지 · 지면 상대에게 공개돼요</label><textarea maxlength="100" placeholder="판마다 새로 써요"></textarea><p class="hint">지면 내 메시지가 이긴 사람에게만 공개돼요 · 이기거나 비기면 지워져요</p>`; left.textContent = '0 / 100'; const ta = body.querySelector('textarea'); ta.oninput = () => left.textContent = ta.value.length + ' / 100'; return; }
+    const [a, b, s, v] = R[kind];
+    body.innerHTML = `<label class="lb">${kind === 'coin' ? `걸 영전 · ${a} ~ ${b} · 들어갈 때 맡겨 둬요` : `걸 지력 · ${a} ~ ${b}`}</label><div class="amt"><input type="range" min="${a}" max="${b}" step="${s}" value="${v}"><b>${v}</b></div>`;
+    left.textContent = kind === 'coin' ? `가진 영전 ${(wal ? wal.coins : 0).toLocaleString()}` : '지면 내 지력을 잃어요';
+    const r = body.querySelector('input[type=range]'); r.oninput = () => body.querySelector('.amt b').textContent = r.value;
+  };
+  const betRead = (kind, body) => { const ta = body.querySelector('textarea'), r = body.querySelector('input[type=range]'); return { bet: kind, n: r ? +r.value : 0, msg: ta ? ta.value.trim() : '' }; };
+
+  /* ───────── 로비 ───────── */
+  let status = {}, betKind = 'coin', wal = null;
+  $('#o-bet').onclick = e => { const b = e.target.closest('[data-b]'); if (!b) return; betKind = b.dataset.b; $$('#o-bet button').forEach(x => x.classList.toggle('on', x === b)); betBody(betKind, $('#o-body'), $('#o-left'), wal); };
+  $('#o-go').onclick = async e => { const p = betRead(betKind, $('#o-body')); if (p.bet === 'msg' && !p.msg) return toast('비밀 메시지를 적어야 방을 열 수 있어요.', 'err'); e.target.disabled = true;
+    try { const id = await Store.bellOpen(p.bet, p.n, p.msg); enterWait(id); } catch (err) { toast(err.message, 'err'); e.target.disabled = false; } };
+
+  async function lobby() {
+    leave(); show('v-lobby');
+    status = await Store.bellStatus().catch(() => ({ canPlay: false }));
+    if (status.active) return enterGame(status.active);
+    if (status.waiting) return enterWait(status.waiting);
+    wal = await Store.wallet().catch(() => null);
+    betBody(betKind, $('#o-body'), $('#o-left'), wal);
+    $('#st').innerHTML = `<span class="mt-orb"></span><b>${!status.hasChar ? '게시된 캐릭터가 필요해요' : status.canPlay ? '지금 한 판 할 수 있어요' : '이틀 안에 이미 대국했어요'}</b><em>모든 대국 합쳐 이틀에 1판</em>`;
+    const rooms = await Store.bellRooms().catch(() => []);
+    $('#rooms').innerHTML = (rooms.length ? rooms.map(r => `<article class="gl room"><div class="tabhd"><span class="tab"><i></i>할래말래</span><span class="ln"></span></div>
+        <div><b>${esc(r.players[0].name)}의 방</b><small class="rm-sub">${ago(r.created_at)} 열림</small>
+          <div class="bet"><span class="chip">${betTxt(r.players[0])}</span></div></div>
+        <button type="button" class="mt-btn w" data-join="${esc(r.id)}" data-name="${esc(r.players[0].name)}" data-chip="${esc(betTxt(r.players[0]))}" ${status.canPlay && !r.mine ? '' : 'disabled'}>들어가기</button></article>`).join('')
+      : '<div class="gl mt-cool"><b>열린 방이 없어요</b>오른쪽에서 방을 열고 기다려 보세요.</div>') + '<p style="margin:10px 2px 0"><button type="button" class="mt-btn" id="rf">새로 보기</button></p>';
+    $('#o-go').disabled = !status.canPlay || !status.hasChar;
+  }
+  $('#rooms').addEventListener('click', async e => {
+    if (e.target.closest('#rf')) return lobby();
+    const j = e.target.closest('[data-join]'); if (!j) return;
+    const pick = await askBet(j.dataset.name, j.dataset.chip); if (!pick) return;
+    j.disabled = true;
+    try { const id = await Store.bellJoin(j.dataset.join, pick.bet, pick.n, pick.msg); const s = Store.bellSub(id, () => {}); setTimeout(() => { s.ping(); s.stop(); }, 800); enterGame(id); }
+    catch (err) { toast(err.message, 'err'); j.disabled = false; }
+  });
+  function askBet(name, chip) {   // 대국 '내 베팅' 창과 같아요
+    return new Promise(done => {
+      let kind = 'coin';
+      const d = document.createElement('div'); d.className = 'mt-ask';
+      d.innerHTML = `<div class="gl mt-ask-box"><div class="tabhd"><span class="tab"><i></i>내 베팅</span><span class="ln"><i></i><i></i><i></i></span></div>
+        <div class="vs-bet"><small>${esc(name)}이(가) 건 것</small><span class="chip">${esc(chip)}</span></div>
+        <label class="lb">내가 걸 것 · 상대와 달라도 돼요</label>
+        <div class="seg" data-k><button type="button" data-b="int">🧠 지력</button><button type="button" data-b="msg">✉ 메시지</button><button type="button" class="on" data-b="coin">💰 영전</button></div>
+        <div data-body></div>
+        <div class="ft"><span class="cnt" data-left></span><span style="display:flex;gap:8px"><button type="button" class="mt-btn" data-x>취소</button><button type="button" class="mt-btn w" data-ok>들어가기</button></span></div></div>`;
+      document.body.appendChild(d);
+      const body = d.querySelector('[data-body]'), left = d.querySelector('[data-left]');
+      betBody(kind, body, left, wal);
+      d.querySelector('[data-k]').onclick = e => { const b = e.target.closest('[data-b]'); if (!b) return; kind = b.dataset.b; d.querySelectorAll('[data-k] button').forEach(x => x.classList.toggle('on', x === b)); betBody(kind, body, left, wal); if (kind === 'msg') setTimeout(() => body.querySelector('textarea').focus(), 10); };
+      const close = v => { d.remove(); document.removeEventListener('keydown', esc_); done(v); };
+      const esc_ = e => { if (e.key === 'Escape') close(null); };
+      document.addEventListener('keydown', esc_);
+      d.onclick = e => { if (e.target === d || e.target.closest('[data-x]')) close(null); };
+      d.querySelector('[data-ok]').onclick = () => { const p = betRead(kind, body); if (kind === 'msg' && !p.msg) { toast('비밀 메시지를 적어야 들어갈 수 있어요.', 'err'); return; } close(p); };
+      setTimeout(() => d.classList.add('on'), 10);
+    });
+  }
+
+  /* ───────── 공통 ───────── */
+  let sub = null, V = null, tickT = null, idleT = null, demoT = null;
+  function leave() { if (sub) sub.stop(); sub = null; clearInterval(tickT); clearTimeout(idleT); clearInterval(demoT); tickT = idleT = demoT = null; V = null; }
+  const subscribe = (id, fn, onEv) => { if (sub) sub.stop(); sub = Store.bellSub(id, fn, onEv); };
+
+  /* ───────── 기다리는 방 ───────── */
+  async function enterWait(id) {
+    leave(); show('v-wait');
+    const load = async () => {
+      let v; try { v = await Store.bellView(id); } catch (e) { toast(e.message, 'err'); return lobby(); }
+      if (v.status === 'play') return enterGame(id, v);
+      if (v.status !== 'wait') { toast('방이 닫혔어요.'); return lobby(); }
+      const seats = [0, 1].map(i => { const p = v.players[i]; return p ? `<div class="hw"><span class="av" style="${avStyle(p.head)}"></span><div><b>${esc(p.name)}${p.me ? ' · 나' : ''}</b><small>${betTxt(p)} 걸었어요</small></div></div>` : '<div class="hw empty">빈 자리</div>'; }).join('');
+      $('#v-wait').innerHTML = `<div class="bwait"><h3>🔔 할래말래 · 기다리는 중</h3>
+        <div class="seats">${seats}</div><p class="sub">한 명이 들어오면 3초 뒤에 바로 시작해요</p>
+        <div class="tacts">${DEMO ? '<button type="button" class="cbtn" data-bot>연습 상대 부르기</button>' : ''}<button type="button" class="cbtn lt" data-leave>방 닫기</button></div></div>`;
+    };
+    subscribe(id, load);
+    $('#v-wait').onclick = async e => {
+      if (e.target.closest('[data-bot]')) { if (DEMO && window.DemoBackend) await window.DemoBackend.bellBot(user.id, id); return load(); }   // 데모 전용
+      if (e.target.closest('[data-leave]')) { try { await Store.bellLeave(id); } catch (err) { toast(err.message, 'err'); } return lobby(); }
+    };
+    load();
+  }
+
+  /* ───────── 판 ───────── */
+  let busy = false, lastTop = [];
+  async function enterGame(id, v0) {
+    leave(); show('v-game');
+    subscribe(id, () => load(id), ev => { if (ev.k === 'slap') hurt('#op-row'); });   // 상대가 거의 동시에 쳤어요
+    if (v0) apply(v0); else await load(id);
+    tickT = setInterval(tick, 250);
+    if (DEMO) demoT = setInterval(() => load(id), 500);   // 데모 전용: 연습 상대 움직임 받기 (서버 요청 아님)
+  }
+  async function load(id) { try { apply(await Store.bellView(id || V.id)); } catch (e) { if (!V) { toast(e.message, 'err'); lobby(); } } }
+  const now = () => Date.now() + (V ? V.skew || 0 : 0);
+  function apply(v) {
+    if (V && V.ver > v.ver && v.status === 'play') return;   // 늦게 온 옛 화면은 버려요
+    const changed = !V || V.ver !== v.ver;
+    V = Object.assign(v, { skew: Date.parse(v.now) - Date.now() });
+    if (v.status === 'done' || v.status === 'closed') return result();
+    if (changed) draw();
+    // 상대가 7초 넘게 안 뒤집으면 한 번만 다시 받아요 (서버가 그때 저절로 뒤집어요)
+    clearTimeout(idleT);
+    if (!DEMO && v.turn !== v.me) idleT = setTimeout(async () => { if (document.hidden || !V) return; const was = V.ver; await load(); if (V && V.ver !== was) sub && sub.ping(); }, Math.max(0, Date.parse(v.turn_at) + 7600 - now()));
+  }
+  function draw() {
+    const v = V, me = v.players[v.me], op = v.players[1 - v.me], mine = v.turn === v.me, tops = [op.top, me.top];
+    const pop = tops.map((t, i) => t != null && t !== lastTop[i]); lastTop = tops;
+    const last = (v.log || [])[v.log.length - 1];
+    $('#v-game').innerHTML = `<div class="arena">
+      <div class="hw ${!mine ? 'on' : ''}" id="op-row"><span class="av" style="${avStyle(op.head)}"></span><div><b>${esc(op.name)}</b><small>${betTxt(op)} · 펼친 ${op.face}장</small></div><div class="cnt">남은 <i>${op.pile}</i></div></div>
+      <div class="clock"><i data-clock></i></div>
+      <div class="felt" id="felt">
+        <div class="spot">${cardHTML(op.top, pop[0])}<small>${esc(op.name)}</small></div>
+        <button type="button" class="bell" id="bell" aria-label="종 치기"><span class="dome"></span><span class="face"><i></i><i></i></span><span class="cheek l"></span><span class="cheek r"></span><span class="base"></span><span class="lbl">SPACE</span></button>
+        <div class="spot">${cardHTML(me.top, pop[1])}<small>나</small></div>
+        <div class="cd3" data-cd hidden></div>
+      </div>
+      <div class="blog">${last ? `${esc(last.by)} · ${{ ring: `딩! ${last.x}장 가져갔어요`, miss: '잘못 쳐서 한 장 줬어요', auto: '시간이 지나 저절로 뒤집혔어요', resign: '기권했어요' }[last.k] || ''}` : '같은 과일이 딱 5개가 되면 종을 쳐요'}</div>
+      <div class="mine-row ${mine ? 'on' : ''}" id="me-row">
+        <button type="button" class="deck ${mine ? 'go' : ''}" id="deck" ${mine ? '' : 'disabled'}><span class="cardb"></span><span class="cardb"></span><span class="cardb"></span><b>${me.pile}</b></button>
+        <div><b>${esc(me.name)} · 나</b><small>${betTxt(me)} · 펼친 ${me.face}장</small><div class="hint">${mine ? '내 차례 · 더미를 눌러 뒤집어요' : `${esc(op.name)} 차례`} · <kbd>F</kbd> 뒤집기 <kbd>Space</kbd> 종</div></div>
+        <button type="button" class="resign" data-resign>기권</button>
+      </div></div>`;
+    if (pop.some(Boolean)) thud();
+    tick();
+  }
+  function tick() {
+    if (!V || V.status !== 'play') return;
+    const t = now(), st = Date.parse(V.started_at), en = Date.parse(V.ends_at), cd = $('[data-cd]'), ck = $('[data-clock]');
+    if (cd) { cd.hidden = t >= st; if (t < st) cd.textContent = Math.ceil((st - t) / 1000); }
+    if (ck) ck.style.width = Math.max(0, Math.min(100, (en - t) / 1800)) + '%';
+    if (t > en + 600 && !V._endAsked) { V._endAsked = true; load(); }   // 3분이 지나면 한 번만
+  }
+  // 손 맞음 연출: 탁 · 아악 · 상대 두상 말풍선 (둘이 거의 동시에 쳤을 때 · 양쪽 화면 모두)
+  const OUCH = [['아아아악!!!', '아아아아악'], ['아아악!! 나 죽네!!', '아아악 나 죽네'], ['으아아악!!!', '으아아아악'], ['아야야야야!!', '아야야야야'], ['손목 나갔어!!!', '아악 손목 나갔어'], ['살려줘!!!', '아아악 살려줘']];
+  // 진짜 아픈 비명: 거칠게 찢어지는 소리 + 숨 + 떨림
+  const shriek = () => { const a = ac(); if (!a) return; const t = a.currentTime + .05, o = a.createOscillator(), o2 = a.createOscillator(), lf = a.createOscillator(), lg = a.createGain(), ws = a.createWaveShaper(), f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), g = a.createGain();
+    const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * 4); } ws.curve = cv;
+    o.type = 'sawtooth'; o2.type = 'square'; [o, o2].forEach((q, k) => { q.frequency.setValueAtTime(700 + k * 7, t); q.frequency.linearRampToValueAtTime(1150 + k * 9, t + .15); q.frequency.setValueAtTime(1100 + k * 9, t + .55); q.frequency.exponentialRampToValueAtTime(380, t + 1.25); });
+    lf.frequency.value = 13; lg.gain.value = 45; lf.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+    f1.type = 'bandpass'; f1.frequency.value = 1100; f1.Q.value = 3; f2.type = 'bandpass'; f2.frequency.value = 2600; f2.Q.value = 4;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.32, t + .03); g.gain.setValueAtTime(.3, t + .8); g.gain.exponentialRampToValueAtTime(.001, t + 1.3);
+    o.connect(ws); o2.connect(ws); ws.connect(f1).connect(g); ws.connect(f2).connect(g); g.connect(a.destination);
+    [o, o2, lf].forEach(q => { q.start(t); q.stop(t + 1.35); });
+    noise(.5, { v: .22, f: 3000, q: .5, at: .05 }); };
+  function hurt(sel) {
+    const [txt] = OUCH[Math.floor(Math.random() * OUCH.length)];
+    slap(); setTimeout(shriek, 50); bubble(sel, txt);
+    const f = $('#felt'); if (f) { const x = document.createElement('span'); x.className = 'slapfx'; x.textContent = '✋'; f.appendChild(x); setTimeout(() => x.remove(), 600); }
+  }
+  async function flip() {
+    if (!V || busy || V.turn !== V.me || now() < Date.parse(V.started_at)) return;
+    busy = true;
+    try { const v = await Store.bellFlip(V.id); sub && sub.ping(); apply(v); }
+    catch (err) { if (/내 차례|진행 중/.test(err.message)) load(); else toast(err.message, 'err'); }
+    busy = false;
+  }
+  async function ring() {
+    if (!V || V.status !== 'play' || now() < Date.parse(V.started_at)) return;
+    ac();
+    const b = $('#bell'); if (b) { b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 140); }
+    const was = V.players[V.me].pile, sent = Date.now();
+    try {
+      const v = await Store.bellRing(V.id, V.ver); sub && sub.ping();
+      const got = v.players[v.me].pile > was; apply(v);
+      if (got) { ding(); $('#bell') && $('#bell').classList.add('ok'); if (DEMO && Math.random() < .6) setTimeout(() => hurt('#op-row'), 220); }   // 데모 전용: 연습 상대가 한발 늦게 손을 덮쳐요
+      else if (v.status === 'play') { buzz(); $('#felt') && $('#felt').classList.add('miss'); toast('5개가 아니에요 · 한 장을 줬어요', 'err'); }
+    } catch (err) {
+      if (/늦었/.test(err.message)) {
+        // 상대가 먼저 쳤어요: 상대 손등을 탁 (방금 상대가 종을 쳤을 때만)
+        await load();
+        const l = (V.log || [])[V.log.length - 1], op = V.players[1 - V.me];
+        if (l && l.k === 'ring' && l.by === op.name && sent + (V.skew || 0) - Date.parse(l.at) < 1500) { hurt('#op-row'); setTimeout(() => { const o = OUCH[Math.floor(Math.random() * OUCH.length)][0]; bubble('#me-row', o); shriek(); }, 380); sub && sub.emit({ k: 'slap' }); } else toast('한발 늦었어요');   // 늦게 친 나도 같이 비명
+      } else if (/진행 중/.test(err.message)) load(); else toast(err.message, 'err');
+    }
+  }
+  $('#v-game').addEventListener('click', async e => {
+    if (e.target.closest('#deck')) return flip();
+    if (e.target.closest('#bell')) return ring();
+    if (e.target.closest('[data-resign]')) { if (!confirm('기권할까요? 건 것을 잃어요.')) return; try { await Store.bellLeave(V.id); sub && sub.ping(); } catch (err) { toast(err.message, 'err'); } return load(); }
+  });
+  document.addEventListener('keydown', e => {
+    if ($('#v-game').hidden || /input|textarea/i.test((e.target || {}).tagName) || e.repeat) return;
+    if (e.code === 'Space') { e.preventDefault(); ring(); }
+    else if (e.code === 'KeyF' || e.code === 'Enter') { e.preventDefault(); flip(); }
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && V && V.status === 'play') load(); });
+
+  /* ───────── 결과 (대국과 같은 전리품) ───────── */
+  function result() {
+    clearInterval(tickT); clearTimeout(idleT); clearInterval(demoT); tickT = idleT = demoT = null; if (sub) { sub.stop(); sub = null; }
+    const v = V, win = v.players.find(p => p.win), me = v.players[v.me] || {}, op = v.players[1 - v.me] || {};
+    const lose = v.players.find(p => !p.win) || {};
+    const chg = p => !win ? (p.bet === 'coin' ? '영전 돌려받음' : '그대로') : p.win ? (lose.bet === 'msg' ? '상대 메시지 공개' : `+ ${betTxt(lose)}`) : p.bet === 'msg' ? '내 메시지가 공개돼요' : `− ${betTxt(p)}`;
+    show('v-res');
+    $('#v-res').innerHTML = `<div class="bwait res-t"><h3>🔔 할래말래 · 결과</h3>
+      <h2>${!win ? '비겼어요' : me.win ? '이겼어요' : `${esc(win.name)}이 이겼어요`}</h2><p>${esc(v.why || '')}</p>
+      <div class="res-l">${v.players.map(p => `<div class="hw"><span class="av" style="${avStyle(p.head)}"></span><div><b>${esc(p.name)}${p.me ? ' · 나' : ''}</b><small>카드 ${p.pile + p.face}장</small></div><span class="chg ${!win ? '' : p.win ? 'up' : 'dn'}">${chg(p)}</span></div>`).join('')}</div>
+      <button type="button" class="cbtn" data-home>대국으로</button></div>
+      ${v.secret ? `<div class="gl rs-loot" style="max-width:520px;margin:14px auto 0"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(op.name)}의 봉인된 메시지</small><p>${esc(v.secret)}</p><div class="from">― ${esc(op.name)}</div></div></div>` : ''}`;
+    $('#v-res').onclick = e => { if (e.target.closest('[data-home]')) lobby(); };
+  }
+
+  addEventListener('pagehide', leave);
+  lobby();
+});
+</script>
+</body>
+</html>
