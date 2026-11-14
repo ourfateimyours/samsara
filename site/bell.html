@@ -134,7 +134,7 @@ body.cute .rs-loot { max-width: 520px; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js"></script>
+<script src="assets/js/store.js?v=1115"></script>
 <script src="assets/js/common.js"></script>
 <script>
 App.ready.then(async user => {
@@ -142,7 +142,14 @@ App.ready.then(async user => {
   const po = await Store.playOpen('match').catch(() => ({ open: false }));
   if (!po.open) { playClosed($('.mt-wrap'), 'match'); return; }
   const DEMO = Store.mode === 'demo';
-  const show = id => { ['v-lobby', 'v-wait', 'v-game', 'v-res'].forEach(v => $('#' + v).hidden = v !== id); document.body.classList.toggle('cute', id !== 'v-lobby'); };
+  const show = id => { ['v-lobby', 'v-wait', 'v-game', 'v-res'].forEach(v => $('#' + v).hidden = v !== id); document.body.classList.toggle('cute', id === 'v-wait' || id === 'v-game'); };
+  // 결과창: 오목 · 체스와 같은 모양 (match.css 의 rs · rs-loot)
+  const RS_ICO = { draw: '<path d="M5 9.5h14M5 14.5h14"/>', win: '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>', lose: '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" opacity=".35"/><path d="M4 20L20 4"/>' };
+  const resCard = ({ state, head, title, sc, detail, id, loots }) => `<div class="res-wrap res"><div class="gl rs ${state}"><div class="tabhd"><span class="tab"><i></i>대국 결과</span><span class="ln"><i></i><i></i><i></i></span><span class="code">${{ draw: '무승부', win: '승리', lose: '패배' }[state]}</span></div>
+      <div class="rs-badge"><span class="rs-por" style="${avStyle(head)}"></span><svg class="rs-ic" viewBox="0 0 24 24">${RS_ICO[state]}</svg></div>
+      <div class="rs-body"><h3>${title}</h3><div class="sc">${sc}</div><div class="gain"><span>베팅</span><b class="${/[0-9]/.test(detail) ? '' : 'txt'}">${esc(detail)}</b></div></div>
+      <div class="rs-ft"><span class="rs-uid">MATCH · ${esc(String(id).slice(-6).toUpperCase())}</span><button type="button" class="mt-btn w" id="back">대국 로비로</button></div></div>
+    ${loots.map(l => `<div class="gl rs-loot"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(l.name)}의 봉인된 메시지</small><p>${esc(l.msg || '')}</p><div class="from">― ${esc(l.name)}</div></div></div>`).join('')}</div>`;
   const ago = iso => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 6e4)); return m < 1 ? '방금' : m < 60 ? m + '분 전' : Math.round(m / 60) + '시간 전'; };
   const avStyle = h => { h = h ? ((window.headMp4 && headMp4(h) || {}).poster || h) : ''; return h ? `background-image:url('${esc(h)}')` : ''; };
 
@@ -372,16 +379,14 @@ App.ready.then(async user => {
   /* ───────── 결과 (대국과 같은 전리품) ───────── */
   function result() {
     clearInterval(tickT); clearTimeout(idleT); clearInterval(demoT); tickT = idleT = demoT = null; if (sub) { sub.stop(); sub = null; }
-    const v = V, win = v.players.find(p => p.win), me = v.players[v.me] || {}, op = v.players[1 - v.me] || {};
-    const lose = v.players.find(p => !p.win) || {};
-    const chg = p => !win ? (p.bet === 'coin' ? '영전 돌려받음' : '그대로') : p.win ? (lose.bet === 'msg' ? '상대 메시지 공개' : `+ ${betTxt(lose)}`) : p.bet === 'msg' ? '내 메시지가 공개돼요' : `− ${betTxt(p)}`;
+    const v = V, me = v.players[v.me] || {}, op = v.players[1 - v.me] || {}, draw_ = !v.winner, win = !!me.win;
+    const amt = p => p.bet === 'coin' ? `영전 ${'{s}'}${(+p.n).toLocaleString()}` : `지력 ${'{s}'}${p.n}`;
+    const gain = p => p.bet === 'msg' ? '상대 메시지 공개' : amt(p).replace('{s}', '+'), lose = p => p.bet === 'msg' ? '내 메시지가 상대에게 공개돼요' : amt(p).replace('{s}', '−');
+    const detail = draw_ ? '건 것을 서로 돌려받았어요' : win ? gain(op) : lose(me);
     show('v-res');
-    $('#v-res').innerHTML = `<div class="bwait res-t"><h3>🔔 할래말래 · 결과</h3>
-      <h2>${!win ? '비겼어요' : me.win ? '이겼어요' : `${esc(win.name)}이 이겼어요`}</h2><p>${esc(v.why || '')}</p>
-      <div class="res-l">${v.players.map(p => `<div class="hw"><span class="av" style="${avStyle(p.head)}"></span><div><b>${esc(p.name)}${p.me ? ' · 나' : ''}</b><small>카드 ${p.pile + p.face}장</small></div><span class="chg ${!win ? '' : p.win ? 'up' : 'dn'}">${chg(p)}</span></div>`).join('')}</div>
-      <button type="button" class="cbtn" data-home>대국으로</button></div>
-      ${v.secret ? `<div class="gl rs-loot" style="max-width:520px;margin:14px auto 0"><div class="tabhd"><span class="tab"><i></i>전리품</span><span class="ln"><i></i><i></i><i></i></span></div><div class="loot"><span class="tape"></span><small>${esc(op.name)}의 봉인된 메시지</small><p>${esc(v.secret)}</p><div class="from">― ${esc(op.name)}</div></div></div>` : ''}`;
-    $('#v-res').onclick = e => { if (e.target.closest('[data-home]')) lobby(); };
+    $('#v-res').innerHTML = resCard({ state: draw_ ? 'draw' : win ? 'win' : 'lose', head: me.head, title: `${esc(op.name)}${draw_ ? '와(과) 무승부' : win ? '에게 승리했어요' : '에게 졌어요'}`,
+      sc: `할래말래 · ${esc(v.why || '')}`, detail, id: v.id, loots: v.secret ? [{ name: op.name, msg: v.secret }] : [] });
+    $('#back').onclick = () => location.href = 'match.html';
   }
 
   addEventListener('pagehide', leave);
