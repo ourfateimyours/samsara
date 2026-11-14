@@ -193,7 +193,7 @@ App.ready.then(async user => {
     betBody(betKind, $('#o-body'), $('#o-left'), wal);
     $('#st').innerHTML = `<span class="mt-orb"></span><b>${!status.hasChar ? '게시된 캐릭터가 필요해요' : status.canPlay ? '지금 한 판 할 수 있어요' : '이틀 안에 이미 대국했어요'}</b><em>모든 대국 합쳐 이틀에 1판</em>`;
     const rooms = await Store.tileRooms().catch(() => []);
-    $('#rooms').innerHTML = (rooms.length ? rooms.map(r => `<article class="gl room"><div class="tabhd"><span class="tab"><i></i>사리큐브 · ${r.players.length} / 3</span><span class="ln"></span></div>
+    $('#rooms').innerHTML = (rooms.length ? rooms.map(r => `<article class="gl room"><div class="tabhd"><span class="tab"><i></i>사리큐브 · ${r.players.length} / 3</span><span class="ln"></span></div><span class="g"><svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="7.5" height="12" rx="1.6"/><rect x="13.5" y="5.5" width="7.5" height="12" rx="1.6"/><path d="M6.75 9.5v4M15.5 9.5h3.5l-2 4"/></svg></span>
         <div><b>${esc(r.players[0].name)}의 방</b><small class="rm-sub">${ago(r.created_at)} 열림</small>
           <div class="bet">${r.players.map(p => `<span class="chip">${esc(p.name)} · ${betTxt(p)}</span>`).join(' ')}</div></div>
         <button type="button" class="mt-btn w" data-join="${esc(r.id)}" data-who="${esc(r.players.map(p => p.name + ' · ' + betTxt(p)).join('\n'))}" ${status.canPlay && r.players.length < 3 ? '' : 'disabled'}>들어가기</button></article>`).join('')
