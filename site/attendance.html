@@ -129,12 +129,13 @@ App.ready.then(async user => {
     return `background:${luma > 165 ? `color-mix(in srgb, ${col} 62%, #000)` : col};color:#fff`;
   };
 
+  const FRONT = t => String(t || '').trim() === '그냥';   // 출석 명단에서 이름 앞에 붙는 칭호 ('그냥 김민정') · 나머지는 이름 뒤
   function renderRoll() {
     const list = rows.filter(r => r.day === today).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     $('#roll-n').textContent = `${list.length}명`;
     const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
     $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
-      <span class="who" style="color:${r.tag ? esc(r.tag) : '#fff'}">${esc(r.nick)}${r.title ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
+      <span class="who" style="color:${r.tag ? esc(r.tag) : '#fff'}">${r.title && FRONT(r.title) ? `<span class="ttl-chip" style="margin:0 6px 0 0">${esc(r.title)}</span>` : ''}${esc(r.nick)}${r.title && !FRONT(r.title) ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
       ${r.comment ? `<span class="cm" style="${bubbleOf(r.user_id)}">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
   }
 
