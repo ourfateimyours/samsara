@@ -8,17 +8,28 @@
   try { localStorage.removeItem('naru:remember-id'); } catch (e) {}
   /* 잠깐 기억해 두기: 페이지를 옮겨도 같은 정보를 서버에 다시 묻지 않아요 (이 탭에서만 · 로그아웃하면 비워요) */
   const CACHE = 'naru:c:';
+  /* 누구나 보는 정보 (설정 · 상점 · 칭호 배지 · 출석 · 랭킹) 와 오늘 수업/사리팡 했는지는 브라우저에 기억해요 — 새 탭으로 다시 와도 서버에 또 묻지 않게.
+     사적인 것 (심박 · 내 정보 · 캐릭터 목록) 은 지금처럼 이 탭에서만 기억해요 (탭을 닫으면 사라져요). */
+  const SHARED = /^(settings|shop|badges|att:|lrank|ls:|ps:)/;
+  const box = key => SHARED.test(key) ? localStorage : sessionStorage;
   const hold = async (key, ms, load) => {
     if (!remoteOn) return load();
-    try { const c = JSON.parse(sessionStorage.getItem(CACHE + key)); if (c && Date.now() - c.t < ms) return c.v; } catch (e) {}
+    try { const c = JSON.parse(box(key).getItem(CACHE + key)); if (c && Date.now() - c.t < ms && Date.now() >= c.t) return c.v; } catch (e) {}
     const v = await load();
-    try { sessionStorage.setItem(CACHE + key, JSON.stringify({ t: Date.now(), v })); } catch (e) {}
+    try { box(key).setItem(CACHE + key, JSON.stringify({ t: Date.now(), v })); } catch (e) {}
     return v;
   };
-  const drop = (...keys) => { try {
-    if (keys.length) keys.forEach(k => sessionStorage.removeItem(CACHE + k));
-    else Object.keys(sessionStorage).filter(k => k.startsWith(CACHE)).forEach(k => sessionStorage.removeItem(k));
-  } catch (e) {} };
+  const drop = (...keys) => { [sessionStorage, localStorage].forEach(st => { try {
+    if (keys.length) keys.forEach(k => st.removeItem(CACHE + k));
+    else Object.keys(st).filter(k => k.startsWith(CACHE)).forEach(k => st.removeItem(k));
+  } catch (e) {} }); };
+  /* 오늘 했는지 같은 '하루짜리' 답: 5분 기억 · 날짜가 바뀌면 버리고 새로 받아요 */
+  const dayHold = async (key, day, load, fresh) => {
+    if (fresh) drop(key);
+    const get = () => hold(key, 3e5, async () => ({ d: day, v: await load() }));
+    let c = await get(); if (!c || c.d !== day) { drop(key); c = await get(); }
+    return c.v;
+  };
   const newId = () => (crypto.randomUUID ? crypto.randomUUID()
     : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const now = () => new Date().toISOString();
@@ -559,9 +570,10 @@
     async catPet(up) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.catPet(u.id, up); },    CAT, affToday,
     /* 미니 게임: 오늘 했는지 { played, done, win, mult, delta } · 시작(영전 걸기) · 끝(점수 → 정산 결과) */
     PANG, PANG_LEVELS, pangLevel,
-    async pangStatus() { const u = await this.user(); if (!u) return { played: false }; return B.pangStatus(u.id); },
-    async pangStart(bet, level) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.pangStart(u.id, bet, level); },
-    async pangFinish(moves) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.pangFinish(u.id, moves); },
+    // fresh=true: 사리팡 화면처럼 꼭 지금 상태가 필요한 곳 · 홈은 5분 기억한 답을 써요 (시작 · 끝나면 바로 지워요)
+    async pangStatus(fresh) { const u = await this.user(); if (!u) return { played: false }; return remote ? dayHold('ps:' + u.id, kstDay(), () => B.pangStatus(u.id), fresh) : B.pangStatus(u.id); },
+    async pangStart(bet, level) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('ps:' + u.id); return B.pangStart(u.id, bet, level); },
+    async pangFinish(moves) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('ps:' + u.id); return B.pangFinish(u.id, moves); },
     LESSONS, GRADES, lessonDay,
     async playOpen(kind) {
       const [s, u] = await Promise.all([this.settings(), this.user()]);
@@ -572,11 +584,12 @@
     async lessonItems(subj) { await this.requireAdmin(); return B.lessonItems(subj); },
     async lessonItemSave(subj, it) { await this.requireAdmin(); return B.lessonItemSave(subj, it); },
     async lessonItemDel(subj, id) { await this.requireAdmin(); return B.lessonItemDel(subj, id); },
-    async lessonStatus() { const u = await this.user(); if (!u) return { today: null }; return B.lessonStatus(u.id); },
-    async lessonStart(subj, charId, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonStart(u.id, subj, charId, msg); },   // msg: 1등이 되면 랭킹 전광판에 흐를 한마디 (40자)
-    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj, 'lrank:all'); return r; },   // 끝나면 그 과목 랭킹은 새로
-    async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonNext(u.id); },
-    async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.lessonHint(u.id); },
+    // fresh=true: 수업 화면처럼 꼭 지금 상태가 필요한 곳 · 홈은 5분 기억한 답을 써요 (수업을 건드리면 바로 지워요)
+    async lessonStatus(fresh) { const u = await this.user(); if (!u) return { today: null }; return remote ? dayHold('ls:' + u.id, lessonDay(), () => B.lessonStatus(u.id), fresh) : B.lessonStatus(u.id); },
+    async lessonStart(subj, charId, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('ls:' + u.id); return B.lessonStart(u.id, subj, charId, msg); },   // msg: 1등이 되면 랭킹 전광판에 흐를 한마디 (40자)
+    async lessonAnswer(choice) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('ls:' + u.id); const r = await B.lessonAnswer(u.id, choice); if (r && r.result) drop('lrank:' + r.result.subj, 'lrank:all'); return r; },   // 끝나면 그 과목 랭킹은 새로
+    async lessonNext() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('ls:' + u.id); return B.lessonNext(u.id); },
+    async lessonHint() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('ls:' + u.id); return B.lessonHint(u.id); },
     // 사건 보드 스티커: 남의 쪽지에 붙이기 · 떼기 (규칙은 서버에서)
     async noteStickerAdd(noteId, url) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.noteStickerAdd(u.id, noteId, url); },
     async noteStickerDel(noteId, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.noteStickerDel(u.id, noteId, id); },
