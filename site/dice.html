@@ -531,6 +531,18 @@ body.player .ctl, body.player .drawer, body.player .settleBtn { display: none !i
 .dicebox.can { cursor: pointer; } .dicebox.can:hover canvas { filter: brightness(1.25); }
 .hint { margin-top: 6px; font: 600 9px var(--mono); letter-spacing: .3em; color: var(--sub); text-shadow: var(--ts); visibility: hidden; } .hint.on { visibility: visible; }
 body.player .hint { display: none; }
+/* 피격 연출: 배경만 반전 · 찢김 · 흔들림 + 맞은 칸 + 물결 파동 */
+.hinv { animation: hinv .32s steps(1); } @keyframes hinv { 0%, 30% { filter: invert(1) grayscale(1) contrast(1.6); } 31%, 55% { filter: none; } 56%, 75% { filter: invert(1) grayscale(1) contrast(2); } 76% { filter: none; } }
+.hrgb { animation: hrgb .45s steps(6); } @keyframes hrgb { 20% { filter: drop-shadow(-14px 0 rgba(255,60,90,.8)) drop-shadow(14px 0 rgba(60,120,255,.8)); } 40% { filter: drop-shadow(10px 0 rgba(255,60,90,.8)) drop-shadow(-10px 0 rgba(60,120,255,.8)) contrast(1.6); } 60% { filter: drop-shadow(-6px 0 rgba(255,60,90,.8)) drop-shadow(6px 0 rgba(60,120,255,.8)); } }
+.hquake { animation: hquake .6s cubic-bezier(.36,.07,.19,.97); } @keyframes hquake { 10% { transform: translate(-14px, 6px) rotate(-.6deg); } 20% { transform: translate(12px, -8px) rotate(.5deg); } 30% { transform: translate(-10px, 4px); } 45% { transform: translate(8px, 3px); } 60% { transform: translate(-5px, -2px); } 80% { transform: translate(2px, 1px); } }
+.hrgb.hquake { animation: hrgb .45s steps(6), hquake .6s cubic-bezier(.36,.07,.19,.97); }
+.hbars { position: absolute; inset: 0; } .hbars i { position: absolute; left: 0; right: 0; background: #fff; mix-blend-mode: difference; animation: hbar .4s steps(3) forwards; } @keyframes hbar { 100% { opacity: 0; } }
+.party .mem.hit { animation: memhit .8s cubic-bezier(.36,.07,.19,.97); } @keyframes memhit { 0% { background: #fff; transform: translateX(-30px) skewX(-12deg); } 15% { transform: translateX(18px); background: rgba(255,255,255,.6); } 30% { transform: translateX(-10px); } 50% { transform: translateX(5px); } 100% { transform: none; } }
+.memnum { position: absolute; right: 100%; top: 50%; margin-right: 14px; translate: 0 -50%; z-index: 3; font: 400 30px var(--serif); white-space: nowrap; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.8); animation: memnum 1.6s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes memnum { 0% { transform: scale(2.6); opacity: 0; filter: blur(6px); } 12% { transform: scale(.92); opacity: 1; filter: none; } 20% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateX(-20px); } }
+/* 물결 파동: 얇은 고리 4겹이 빠르게 번져요 */
+.ripple { position: absolute; left: 50%; top: 46%; width: 30px; height: 30px; margin: -15px; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 6px rgba(255,255,255,.6); animation: ripple .55s cubic-bezier(.1,.75,.3,1) backwards; }
+@keyframes ripple { 0% { transform: scale(.2); } 70% { opacity: .8; } 100% { transform: scale(60); opacity: 0; } }
 /* 실제 페이지: 관리자 버튼 · 닫힌 화면 */
 body:not(.admin) .ctl, body:not(.admin) .drawer, body:not(.admin) .settleBtn, body:not(.admin) #aStart { display: none !important; }
 .tb.warn2 { border-left-color: var(--gold); }
@@ -747,7 +759,8 @@ const diceXY = () => { const r = $('#dicebox').getBoundingClientRect(); return [
 /* ───────── 손 인 · 잉크 ───────── */
 // 손 인(7장)은 첫 다이스를 굴릴 때 미리 받아 둬요 · 페이지만 열어 둔 사람은 안 받아요
 let handP = null;
-const handReady = () => handP || (handP = Promise.all(HAND.map(u => { const i = new Image(); i.src = u; return i.decode().catch(() => {}); })).then(() => fill($('#sealfx'))));
+// 그림을 다 못 받아도 1.5초 뒤엔 그냥 진행해요 (연출이 멈춰 버리지 않게)
+const handReady = () => handP || (handP = Promise.race([Promise.all(HAND.map(u => { const i = new Image(); i.src = u; return i.decode().catch(() => {}); })), new Promise(r => setTimeout(r, 1500))]).then(() => fill($('#sealfx'))));
 const fill = el => { if (el.children.length !== HAND.length) el.innerHTML = HAND.map(u => `<img src="${u}" alt="">`).join(''); return [...el.children]; };
 const playSeal = (el, ms) => handReady().then(() => new Promise(done => { const fr = fill(el); let i = 0; const st = setInterval(() => { fr.forEach((f, k) => f.classList.toggle('on', k === i)); i++; if (i >= fr.length) { clearInterval(st); setTimeout(() => { fr.forEach(f => f.classList.remove('on')); done(); }, 520); } }, ms); }));
 const inkBurst = huge => { const k = $('#ink'); if (!k.src) k.src = k.dataset.src; handReady(); k.classList.toggle('huge', !!huge); k.style.setProperty('--r', R(0, 360).toFixed(0) + 'deg'); replay(k, 'on'); };
@@ -894,7 +907,7 @@ async function play(ev, s) {
     $('#tags').innerHTML = ''; setTint(ev.boss ? 0xb9c4ff : 0xffffff); $('#circ').classList.add('fast');
     if (ev.stat) { tag(`${esc(ev.stat.k)} +${ev.stat.v}`, 'g'); toast2(`<em>${esc(ev.stat.k)}</em> 스탯이 다이스에 더해져요 · <em>+${ev.stat.v}</em>`); }
     if (ev.fixed) tag(`FIXED · ${ev.a}`);
-    await rollTo(ev.a); $('#circ').classList.remove('fast');
+    await Promise.race([rollTo(ev.a), wait(2600)]); $('#circ').classList.remove('fast');
     const shown = ev.boss ? `${ev.a} + ${ev.b}` : ev.stat ? `${ev.a} + ${esc(ev.stat.k)} ${ev.stat.v}` : `${ev.a}`;
     setPot(+s.pot || 0, true); inkBurst(false);
     const [dx, dy] = diceXY(); sparks(dx, dy, ev.boss ? 34 : 20, ev.boss ? 260 : 170); if (ev.boss) { replay($('#scr'), 'shake'); replay($('#cfw'), 'boo'); }
@@ -921,10 +934,17 @@ async function play(ev, s) {
       await wait(1800); w.classList.add('break'); await wait(900); setPot(0);
     } else {
       await playSeal($('#sealfx'), 170); inkBurst(true);
-      replay($('#flash'), 'on'); replay($('#scr'), 'shake'); replay($('#cfw'), 'boo');
+      // 피격: 배경 반전 섬광 → 색 찢김 + 흰 띠 · 맞은 사람 칸 피격 · 얇고 빠른 물결 파동 (파티 · 숫자는 또렷하게 남아요)
+      const BK = [$('#bgw'), $('#boss')];
+      BK.forEach(e => replay(e, 'hinv')); await wait(330);
+      BK.forEach(e => { replay(e, 'hrgb'); replay(e, 'hquake'); });
+      const bars = document.createElement('div'); bars.className = 'hbars'; bars.innerHTML = Array.from({ length: 7 }, () => `<i style="top:${R(0, 96).toFixed(0)}%;height:${R(.4, 5).toFixed(1)}%"></i>`).join(''); $('#fx').appendChild(bars); setTimeout(() => bars.remove(), 500);
+      const row = ev.pick < 4 && $$('.mem')[ev.pick];
+      if (row) { replay(row, 'hit'); const mn = document.createElement('span'); mn.className = 'memnum'; mn.textContent = '-' + won(ev.amount); row.appendChild(mn); setTimeout(() => mn.remove(), 1700); }
+      $('#fx').insertAdjacentHTML('beforeend', [0, 1, 2, 3].map(i => `<i class="ripple" style="animation-delay:${i * 70}ms;opacity:${(1 - i * .2).toFixed(1)}"></i>`).join(''));
+      setTimeout(() => $$('#fx .ripple').forEach(e => e.remove()), 1000);
       const bg = $('#big'); bg.innerHTML = `<div><small>TOTAL DAMAGE</small><b>0</b><span><em>${target}</em> 이 이번 턴 피해를 전부 떠안았어요</span></div>`; replay(bg, 'on');
-      const bn = bg.querySelector('b'); bn.dataset.v = 0; await countUp(bn, ev.amount, 1300); replay(bn, 'pop'); replay($('#scr'), 'shake'); replay($('#flash'), 'on'); sparks(innerWidth / 2, innerHeight / 2, 48, Math.min(innerWidth, 900) * .5);
-      const rg = document.createElement('div'); rg.className = 'ring2'; $('#fx').appendChild(rg); setTimeout(() => rg.remove(), 1000);
+      const bn = bg.querySelector('b'); bn.dataset.v = 0; await Promise.race([countUp(bn, ev.amount, 1300), wait(1800)]); replay(bn, 'pop'); BK.forEach(e => replay(e, 'hquake')); sparks(innerWidth / 2, innerHeight / 2, 48, Math.min(innerWidth, 900) * .5);
       setPot(0); await wait(2000);
     }
     toast2(`새 덱 · <em>PARTY ${ROMAN[(s.deck || 0) % ROMAN.length]}</em>`); $('#party').classList.add('gone'); await wait(450); $('#party').classList.remove('gone'); chamber = 0; drawCyl();
@@ -933,7 +953,7 @@ async function play(ev, s) {
     const ttl = { steal: 'BUFF // TURN STEAL', fix: 'BUFF // FATE LOCK', ward: 'BUFF // WARD' }[ev.kind] || 'BUFF';
     cutin(ttl, '', who, esc(ev.text || def)); await wait(2900);
     if (ev.kind === 'steal') { const row = $$('.mem')[ev.bi]; if (row) replay(row, 'steal-anim'); await wait(700); toast2(`<em>${who}</em> 이 원념의 차례를 빼앗았어요`); }
-    else if (ev.kind === 'fix') { $('#tags').innerHTML = ''; tag(`FIXED · ${ev.num}`); $('#circ').classList.add('fast'); await rollTo(ev.num); $('#circ').classList.remove('fast'); const [x, y] = diceXY(); sparks(x, y, 18, 150); toast2(`<em>${who}</em> 이 다음 다이스를 <em>${ev.num}</em> 으로 고정했어요`); }
+    else if (ev.kind === 'fix') { $('#tags').innerHTML = ''; tag(`FIXED · ${ev.num}`); $('#circ').classList.add('fast'); await Promise.race([rollTo(ev.num), wait(2600)]); $('#circ').classList.remove('fast'); const [x, y] = diceXY(); sparks(x, y, 18, 150); toast2(`<em>${who}</em> 이 다음 다이스를 <em>${ev.num}</em> 으로 고정했어요`); }
     else if (ev.kind === 'ward') { S = Object.assign({}, S, { ward: s.ward }); drawParty(); const r = $('#party').getBoundingClientRect(); sparks(r.left + r.width / 2, r.top + r.height / 2, 30, 220); toast2(`<em>${who}</em> 이 파티에 결계를 쳤어요 · 다음 피해를 한 번 막아요`); }
   } else if (ev.k === 'pause') { toast2(s.paused ? '잠시 멈췄어요' : '다시 시작해요'); }
 }
