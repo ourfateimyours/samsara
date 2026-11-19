@@ -391,7 +391,7 @@ body.player .ctl, body.player .drawer, body.player .settleBtn { display: none !i
 /* 파티: 색 막대 없이 이름 + 흰 밑줄만 (실제 페이지에서는 프로필 사진이 들어가요) */
 .mem .pic { background: none; opacity: 1; filter: none; border-bottom: 1px solid rgba(255,255,255,.55); -webkit-mask: linear-gradient(270deg, #000 40%, transparent); mask: linear-gradient(270deg, #000 40%, transparent); }
 .mem.cur .pic { background: linear-gradient(270deg, rgba(255,255,255,.2), transparent 85%); opacity: 1; filter: none; border-bottom: 1px solid #fff; }
-.mem.stolen .pic { background: linear-gradient(270deg, rgba(230,195,122,.3), transparent 85%); }
+.mem.stolen:not([style*="--hd"]) .pic { background: linear-gradient(270deg, rgba(230,195,122,.3), transparent 85%); }   /* 두상이 있는 캐릭터면 두상 그대로 */
 /* 리볼버: 금속 그라데이션 대신 얇은 선 그림 */
 .cyl .body { background: radial-gradient(circle, transparent 0 9%, rgba(255,255,255,.8) 9% 10.5%, transparent 10.5%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.85), inset 0 0 0 5px rgba(8,10,26,.25), inset 0 0 0 6px rgba(255,255,255,.3); }
 .cyl .ch { background: rgba(8,10,26,.45); box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); } .cyl .ch em { font-weight: 500; color: #fff; }
@@ -1021,7 +1021,7 @@ function demoAct(fn, a) {
     d.deck++; bump({ k: 'settle', pick, n: tg ? tg.n : null, amount: pot, blocked, ward_by: by || null }); demoDeck();
     if (d.deck >= 2) { apply(demoOut()); const t = setInterval(() => { if (!busy && !queue.length) { clearInterval(t); setTimeout(demoEnd, 1200); } }, 300); return; } }
   else if (fn === 'buff') { const nm = (String(a.p_name || '').trim() || '이름 없는 능력자').slice(0, 14); let bi = -1;
-    if (a.p_kind === 'steal') { for (let i = d.step; i < d.order.length; i++) if (d.order[i].boss) { bi = i; break; } if (bi < 0) return toast2('빼앗을 원념 차례가 없어요'); d.order[bi] = { n: nm, stolen: true }; }
+    if (a.p_kind === 'steal') { for (let i = d.step; i < d.order.length; i++) if (d.order[i].boss) { bi = i; break; } if (bi < 0) return toast2('빼앗을 원념 차례가 없어요'); const pc = d.pool.find(p => p.n.trim() === nm); d.order[bi] = pc ? Object.assign({}, pc, { stolen: true }) : { n: nm, stolen: true }; }
     else if (a.p_kind === 'fix') { if (!(a.p_num >= 1 && a.p_num <= 20)) return toast2('1 ~ 20 사이 숫자를 넣어 주세요'); d.fixed = { n: a.p_num, who: nm }; }
     else d.ward = { who: nm };
     bump({ k: 'buff', kind: a.p_kind, who: nm, text: String(a.p_text || '').slice(0, 40), num: a.p_num, bi }); }
