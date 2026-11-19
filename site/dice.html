@@ -42,7 +42,7 @@ button { font-family: inherit; }
   -webkit-mask: radial-gradient(ellipse 34% 46% at 50% 44%, #000 50%, rgba(0,0,0,.6) 72%, transparent 100%); mask: radial-gradient(ellipse 34% 46% at 50% 44%, #000 50%, rgba(0,0,0,.6) 72%, transparent 100%); animation: bfloat 7s ease-in-out infinite; }
 @keyframes bfloat { 50% { transform: translateY(-1.2%) scale(1.01); } }
 .boss.turn .b0 { filter: drop-shadow(0 0 40px rgba(255,255,255,.5)); }
-.cfw { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .2; filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,.8));
+.cfw { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .2; filter: brightness(0) invert(1);
   -webkit-mask: radial-gradient(ellipse 70% 65% at 50% 46%, transparent 30%, #000 85%); mask: radial-gradient(ellipse 70% 65% at 50% 46%, transparent 30%, #000 85%); animation: creep 9s ease-in-out infinite; }
 @keyframes creep { 0%, 100% { transform: scale(1) rotate(0deg); } 30% { transform: scale(1.03, 1.06) rotate(-.6deg) skewX(-1.5deg); } 62% { transform: scale(1.05, 1.02) rotate(.5deg) skewY(1deg); } }
 .cfw.boo { animation: surge var(--bd, 3s) cubic-bezier(.1,.9,.2,1) 1, creep 9s ease-in-out infinite; }
@@ -100,7 +100,10 @@ button { font-family: inherit; }
 @keyframes icp { 50% { box-shadow: 0 0 22px rgba(230,195,122,.95); } }
 .mem.cur::after { content: "TURN"; position: absolute; left: 40px; top: 5px; font: 700 8px var(--mono); letter-spacing: .4em; color: var(--gold); text-shadow: var(--ts); }
 .mem.done { opacity: .4; }
-.mem.bs .no { background: none; color: #fff; border: 1px dashed #fff; box-shadow: none; }
+.mem.bs .no { background: none !important; border: 0; box-shadow: none !important; }
+/* 원념 차례 표시: 위아래로 길쭉한 날렵한 다이아 */
+.mem .bdm { display: block; width: 9px; height: 20px; background: #fff; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 0 4px rgba(255,255,255,.7)); }
+.mem.cur .bdm { background: var(--gold); filter: drop-shadow(0 0 5px rgba(230,195,122,.9)); }
 .mem.bs .pic { --c: linear-gradient(270deg, rgba(255,255,255,.4), transparent); }
 .mem.stolen .pic { --c: linear-gradient(270deg, rgba(230,195,122,.6), transparent); } .mem.stolen .no { background: var(--gold); }
 .mem .tag { position: absolute; left: -6px; top: -8px; z-index: 2; font: 700 8px var(--mono); letter-spacing: .3em; padding: 2px 6px; color: #111; background: #fff; clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
@@ -529,7 +532,7 @@ body.player .ctl, body.player .drawer, body.player .settleBtn { display: none !i
 .hint { margin-top: 6px; font: 600 9px var(--mono); letter-spacing: .3em; color: var(--sub); text-shadow: var(--ts); visibility: hidden; } .hint.on { visibility: visible; }
 body.player .hint { display: none; }
 /* 실제 페이지: 관리자 버튼 · 닫힌 화면 */
-body:not(.admin) .ctl, body:not(.admin) .drawer, body:not(.admin) .settleBtn, body:not(.admin) .hint, body:not(.admin) #aStart { display: none !important; }
+body:not(.admin) .ctl, body:not(.admin) .drawer, body:not(.admin) .settleBtn, body:not(.admin) #aStart { display: none !important; }
 .tb.warn2 { border-left-color: var(--gold); }
 /* 시작 전: 검은 화면 + 노이즈 + 한 줄 */
 .closed { position: absolute; inset: 0; z-index: 35; display: none; place-items: center; text-align: center; background: #000; overflow: hidden; }
@@ -645,7 +648,9 @@ const split = src => new Promise((ok, no) => { const im = new Image(); im.crossO
 // 같은 그림을 두 번 받지 않게: 겹 이미지도 색 번짐 판을 만들 때와 같은 방식(crossorigin)으로 불러서 한 번 받은 걸 같이 써요
 const layer = (el, src, n) => { const X = `src="${src}" crossorigin="anonymous" alt=""`; el.innerHTML = `<img class="b0" ${X}><img class="cr" alt=""><img class="cc" alt="">` + Array.from({ length: n }, () => `<img class="sl" ${X}>`).join('') + `<img class="px" ${X}><div class="nz"></div><div class="vd"></div>`;
   split(src).then(([r, c]) => { el.querySelector('.cr').src = r; el.querySelector('.cc').src = c; }).catch(() => {}); };
-layer($('#bgw'), IMG.bg, 6); layer($('#cfw'), IMG.cf, 4); layer($('#boss'), IMG.boss, 9);
+// 가볍게: 글리치는 원념에만 (조각 4장) · 배경 · 컨페티는 그림 한 장씩만
+const plain = (el, src) => { el.innerHTML = `<img class="b0" src="${src}" alt="">`; };
+plain($('#bgw'), IMG.bg); plain($('#cfw'), IMG.cf); layer($('#boss'), IMG.boss, 4);
 // 틈 사이 그림(5장)은 미리 받지 않아요 · 처음 비칠 때 그 한 장만 받아요
 $('#boss').insertAdjacentHTML('beforeend', '<div class="pk"></div><div class="pk"></div><div class="pk"></div>');
 
@@ -682,7 +687,7 @@ const KNAME = { split: '색수차 튐', scan: '얇은 줄 찢김', shift: '띠 �
 const reset = el => { el.classList.remove('on', 'inv', 'dim', 'pix', 'nzon', 'vdon', 'echo', 'pkon'); slices(el).forEach(s => SV(s, { sx: '1', sy: '1', oy: '50%' })); };
 // 기본값: 세련된 쪽만 켜 두고 (색수차 · 얇은 줄 · 띠 밀림 · 빛 실선) 굵고 지저분한 건 꺼 뒀어요
 const FXDEF = {
-  boss: { name: '성녀', kinds: ['split', 'scan', 'shift', 'peek', 'flick'], k: 1, speed: 1, ab: 1.4, len: 1, burst: .5 },
+  boss: { name: '원념', kinds: ['split', 'scan', 'shift', 'peek'], k: .8, speed: .45, ab: 1, len: .9, burst: .25 },
   bgw: { name: '배경', kinds: ['split', 'scan', 'roll'], k: .6, speed: .5, ab: 1, len: 1, burst: .3 },
   cfw: { name: '컨페티', kinds: ['split', 'melt', 'smear'], k: .7, speed: .8, ab: 1, len: 1, burst: .3 },
 };
@@ -709,7 +714,7 @@ function glitchLoop(id) {
   setInterval(() => { if (!el.classList.contains('echo')) breathe(); }, 700);
   breathe(); setTimeout(go, R(400, 1400));
 }
-['boss', 'bgw', 'cfw'].forEach(glitchLoop);
+glitchLoop('boss');
 const boo = () => { const c = $('#cfw'); c.style.setProperty('--bd', R(2.4, 4).toFixed(2) + 's'); replay(c, 'boo'); setTimeout(boo, R(14000, 26000)); }; setTimeout(boo, R(8000, 14000));
 
 const drawer = (id, on) => { $$('.drawer').forEach(d => d.classList.toggle('on', d.id === id && on)); $('#aBuff').classList.toggle('on', id === 'buffd' && on); };
@@ -738,7 +743,7 @@ const inkBurst = huge => { const k = $('#ink'); if (!k.src) k.src = k.dataset.sr
 
 /* ───────── D20 ───────── */
 const box = $('#dicebox');
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.toneMapping = THREE.ACESFilmicToneMapping; box.appendChild(renderer.domElement);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25)); renderer.toneMapping = THREE.ACESFilmicToneMapping; box.appendChild(renderer.domElement);
 const scene = new THREE.Scene(); scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .02).texture;
 const camera = new THREE.PerspectiveCamera(30, 1, .1, 50); camera.position.set(0, .4, 6.4); camera.lookAt(0, 0, 0);
 const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.3, 'rgba(255,255,255,.5)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
@@ -771,7 +776,9 @@ let rollA = null, fireT = 0; die.quaternion.setFromEuler(new THREE.Euler(.35, .6
 const rollTo = n => new Promise(done => { const f = faces.find(x => x.num === n), qT = new THREE.Quaternion().setFromUnitVectors(f.n, toFront); qT.premultiply(new THREE.Quaternion().setFromAxisAngle(toFront, R(-.25, .25)));
   rollA = { t0: performance.now(), dur: 1500, qT, axis: new THREE.Vector3(R(-1, 1), R(-1, 1), R(-1, 1)).normalize(), ang: Math.PI * R(6, 9), done }; });
 const setTint = c => { fireMat.uniforms.uTint.value.set(c); };
+let lastF = 0;
 renderer.setAnimationLoop(now => {
+  if (!rollA && now - lastF < 33) return; lastF = now;   // 가만히 있을 땐 초당 30번만 그려요
   const t = now / 1000;
   if (rollA) { const k = Math.min(1, (now - rollA.t0) / rollA.dur), e = 1 - Math.pow(1 - k, 3.2); die.quaternion.copy(rollA.qT).premultiply(new THREE.Quaternion().setFromAxisAngle(rollA.axis, (1 - e) * rollA.ang)); die.position.y = Math.abs(Math.sin(k * Math.PI * 3)) * (1 - k) * .9; if (k >= 1) { const d = rollA.done; rollA = null; die.position.y = 0; d(); } }
   else { die.rotation.y += .002; die.position.y = Math.sin(t * 1.6) * .06; }
@@ -804,7 +811,7 @@ function whisper() {
 /* ───────── 게임: 숫자 · 대미지 · 리볼버는 서버가 정하고, 화면은 결과만 받아서 보여 줘요 ─────────
    트래픽: 들어올 때 1번 읽기 · 관리자가 누를 때마다 서버 함수 1번 + 결과를 같은 방 사람들에게 그대로 전달 (다시 묻지 않아요) */
 const cssUrl = u => `url("${String(u).replace(/["\\\n]/g, '')}")`;
-const headUrl = h => h ? ((window.headMp4 && headMp4(h) || {}).poster || h) : '';
+const headUrl = h => h || '';   // 움짤 두상도 그대로 (움직이게)
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const SEATS = ['1', '2', '3', '4', 'B', '·'];
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -820,7 +827,7 @@ function drawParty(fresh) {
   $('#party').innerHTML = `<div class="ward"><i></i><i></i><i></i><i></i><span class="wl">WARD // ${S.ward ? esc(S.ward.who || '') : ''}</span></div><div class="hd"><b>PARTY</b><em>${ROMAN[(S.deck || 0) % ROMAN.length]}</em></div>` + order.map((p, i) => {
     const isB = !!p.boss, isCur = i === step && phase === 'roll', done = i < step || (phase !== 'roll' && i <= step), h = headUrl(p.h);
     const tag = i === step + 1 && phase === 'roll' ? '<span class="tag">NEXT</span>' : '';
-    return `<div class="mem ${isCur ? 'cur' : ''} ${done ? 'done' : ''} ${isB ? 'bs' : ''} ${p.stolen ? 'stolen' : ''}" style='${h ? `--hd:${cssUrl(h)}` : ''}'>${tag}<span class="no">${isB ? 'B' : i + 1}</span><div class="pic"></div><div class="nm">${esc(p.n || '?')}<small>${isB ? 'D20 ×2' : short(scoreOf(p))}</small></div><span class="ic">${done ? '✓' : isCur ? '◆' : '·'}</span></div>`;
+    return `<div class="mem ${isCur ? 'cur' : ''} ${done ? 'done' : ''} ${isB ? 'bs' : ''} ${p.stolen ? 'stolen' : ''}" style='${h ? `--hd:${cssUrl(h)}` : ''}'>${tag}<span class="no">${isB ? '<i class="bdm"></i>' : i + 1}</span><div class="pic"></div><div class="nm">${esc(p.n || '?')}<small>${isB ? 'D20 ×2' : short(scoreOf(p))}</small></div><span class="ic">${done ? '✓' : isCur ? '◆' : '·'}</span></div>`;
   }).join('');
   if (fresh) $$('.mem').forEach((m, i) => { m.style.animationDelay = i * 70 + 'ms'; m.classList.add('come'); });
   $('#party').classList.toggle('warded', !!S.ward);
@@ -828,7 +835,10 @@ function drawParty(fresh) {
   $('#who').innerHTML = phase === 'settle' ? '<span class="dia o"></span><b>턴 마감 대기</b><span class="dia o"></span>' : cur ? `<span class="dia"></span><b>${esc(cur.n || '?')}</b> 의 차례<span class="dia"></span>` : '';
   $('#bossTaken').textContent = short(+((S.scores || {}).boss) || 0);
 }
-const canRoll = () => ADMIN && S.open && !S.paused && S.phase === 'roll' && !busy && !pending;
+// 굴릴 수 있는 사람: 지금 차례인 캐릭터의 주인 · 관리자는 언제나 (원념 · 빼앗은 차례는 관리자만) · 서버도 똑같이 확인해요
+let MINE = new Set();
+const myTurn = () => { const c = (S.order || [])[S.step || 0]; return !!(c && c.id && MINE.has(c.id)); };
+const canRoll = () => (ADMIN || myTurn()) && S.open && !S.paused && S.phase === 'roll' && !busy && !pending;
 function render(fresh) {
   phase = S.phase || 'roll';
   $('#closed').classList.toggle('on', !S.open);
@@ -924,7 +934,7 @@ function cutin(ttl, sym, nm, tx) { drawer('', false); const c = $('#cut');
 
 /* 관리자 버튼: 서버 함수 1번 → 받은 결과를 같은 방 사람들에게 그대로 보내고 내 화면에도 보여 줘요 */
 async function act(fn, args) {
-  if (!ADMIN || pending) return;
+  if (pending || !(ADMIN || (fn === 'roll' && myTurn()))) return;
   if (DEMO) return demoAct(fn, args);
   pending = true; render();
   try { const s = await Store.diceAct(fn, args); if (sub) sub.send(s); apply(s); }
@@ -1018,6 +1028,8 @@ drawCyl();
 App.ready.then(async user => {
   if (!user) return;
   ADMIN = user.grade === 'admin'; document.body.classList.toggle('admin', ADMIN);
+  // 내 캐릭터 목록 (이름 목록 · 5분 기억해 둔 걸 써요) → 내 차례인지 알아봐요
+  try { MINE = new Set((await Store.charNames()).filter(c => c.owner_id === user.id).map(c => c.id)); } catch (e) {}
   try { apply(await Store.diceView()); } catch (e) { $('#boot').textContent = e.message || '불러오지 못했어요'; return; }
   sub = Store.diceSub(s => { if (DEMO) { if (!realS || s.seq > realS.seq) realS = s; } else apply(s); });   // 데모 중에 온 진짜 결과는 따로 모아 뒀다가 데모가 끝나면 맞춰요
   $('#boot').classList.add('off');
