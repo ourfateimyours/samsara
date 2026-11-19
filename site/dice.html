@@ -101,8 +101,8 @@ button { font-family: inherit; }
 .mem.cur::after { content: "TURN"; position: absolute; left: 40px; top: 5px; font: 700 8px var(--mono); letter-spacing: .4em; color: var(--gold); text-shadow: var(--ts); }
 .mem.done { opacity: .4; }
 .mem.bs .no { background: none !important; border: 0; box-shadow: none !important; }
-/* 원념 차례 표시: 위아래로 길쭉한 날렵한 다이아 */
-.mem .bdm { display: block; width: 9px; height: 20px; background: #fff; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 0 4px rgba(255,255,255,.7)); }
+/* 원념 차례 표시: 작고 날렵한 다이아 */
+.mem .bdm { display: block; width: 10px; height: 10px; background: #fff; transform: rotate(45deg); filter: drop-shadow(0 0 4px rgba(255,255,255,.7)); }
 .mem.cur .bdm { background: var(--gold); filter: drop-shadow(0 0 5px rgba(230,195,122,.9)); }
 .mem.bs .pic { --c: linear-gradient(270deg, rgba(255,255,255,.4), transparent); }
 .mem.stolen .pic { --c: linear-gradient(270deg, rgba(230,195,122,.6), transparent); } .mem.stolen .no { background: var(--gold); }
@@ -650,7 +650,7 @@ const layer = (el, src, n) => { const X = `src="${src}" crossorigin="anonymous" 
   split(src).then(([r, c]) => { el.querySelector('.cr').src = r; el.querySelector('.cc').src = c; }).catch(() => {}); };
 // 가볍게: 글리치는 원념에만 (조각 4장) · 배경 · 컨페티는 그림 한 장씩만
 const plain = (el, src) => { el.innerHTML = `<img class="b0" src="${src}" alt="">`; };
-plain($('#bgw'), IMG.bg); plain($('#cfw'), IMG.cf); layer($('#boss'), IMG.boss, 4);
+plain($('#bgw'), IMG.bg); layer($('#boss'), IMG.boss, 4);   // 컨페티는 뺐어요 (대신 아래에서 흰 불씨가 올라와요)
 // 틈 사이 그림(5장)은 미리 받지 않아요 · 처음 비칠 때 그 한 장만 받아요
 $('#boss').insertAdjacentHTML('beforeend', '<div class="pk"></div><div class="pk"></div><div class="pk"></div>');
 
@@ -715,19 +715,30 @@ function glitchLoop(id) {
   breathe(); setTimeout(go, R(400, 1400));
 }
 glitchLoop('boss');
-const boo = () => { const c = $('#cfw'); c.style.setProperty('--bd', R(2.4, 4).toFixed(2) + 's'); replay(c, 'boo'); setTimeout(boo, R(14000, 26000)); }; setTimeout(boo, R(8000, 14000));
 
 const drawer = (id, on) => { $$('.drawer').forEach(d => d.classList.toggle('on', d.id === id && on)); $('#aBuff').classList.toggle('on', id === 'buffd' && on); };
 $('#aBuff').onclick = () => drawer('buffd', !$('#buffd').classList.contains('on'));
 $$('.drawer [data-x]').forEach(b => b.onclick = () => drawer('', false));
 
-/* ───────── 빛가루 ───────── */
+/* ───────── 흰 불씨: 아래에서 위로 잿더미 같은 빛이 계속 피어올라요 ───────── */
 (() => { const cv = $('#dust'), g = cv.getContext('2d'); let W, H; const fit = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; }; fit(); addEventListener('resize', fit);
-  const P = Array.from({ length: 46 }, () => ({ x: Math.random(), y: Math.random(), r: R(.6, 2.2), v: R(.00025, .0011), w: R(0, 6.28), gold: Math.random() < .4 }));
-  let last = 0; const draw = now => { requestAnimationFrame(draw); if (now - last < 33) return; last = now; g.clearRect(0, 0, W, H);
-    P.forEach(p => { p.y -= p.v; p.w += .02; if (p.y < -.03) { p.y = 1.03; p.x = Math.random(); } const x = (p.x + Math.sin(p.w) * .012) * W, y = p.y * H, a = .35 + Math.sin(p.w * 2.3) * .3;
-      g.fillStyle = p.gold ? `rgba(246,227,176,${a})` : `rgba(255,255,255,${a})`; g.beginPath(); g.arc(x, y, p.r, 0, 6.29); g.fill();
-    }); };
+  // 번지는 빛은 한 번만 그려 두고 찍어요 (가벼워요)
+  const glow = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), r = x.createRadialGradient(16, 16, 0, 16, 16, 16); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.25, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = r; x.fillRect(0, 0, 32, 32); return c; })();
+  const N = innerWidth < 700 ? 90 : 160;
+  const born = (p, first) => Object.assign(p, { x: Math.random(), y: first ? Math.random() * 1.1 : 1 + R(0, .12), s: R(.6, 2.6), v: R(.0012, .0042), sway: R(.004, .02), w: R(0, 6.28), ws: R(.02, .07), fl: R(0, 6.28), fs: R(.15, .5), life: R(.35, 1) });
+  const P = Array.from({ length: N }, () => born({}, true));
+  let last = 0; const draw = now => { requestAnimationFrame(draw); if (now - last < 33) return; last = now; g.clearRect(0, 0, W, H); g.globalCompositeOperation = 'lighter';
+    for (const p of P) {
+      p.y -= p.v; p.w += p.ws; p.fl += p.fs; p.x += Math.sin(p.w) * p.sway * .06;
+      const top = 1 - p.life * .95; if (p.y < top) born(p);
+      const h = Math.max(0, Math.min(1, (p.y - top) / (1.05 - top)));   // 위로 갈수록 사그라들어요
+      const a = h * (.45 + .55 * Math.max(0, Math.sin(p.fl)));          // 불씨처럼 깜빡여요
+      if (a < .02) continue;
+      const x = p.x * W, y = p.y * H, sz = p.s * (4 + 3 * h);
+      g.globalAlpha = a * .55; g.drawImage(glow, x - sz, y - sz, sz * 2, sz * 2);
+      g.globalAlpha = a; g.fillStyle = '#fff'; g.fillRect(x - p.s * .5, y - p.s * .5, p.s, p.s);
+    }
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; };
   requestAnimationFrame(draw); })();
 const sparks = (x, y, n, far) => { const f = $('#fx'); for (let i = 0; i < n; i++) { const s = document.createElement('i'), a = R(0, 6.28), d = R(far * .35, far); s.className = 'spk'; s.style.cssText = `left:${x}px;top:${y}px;--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d).toFixed(0)}px;--d:${R(.5, 1.1).toFixed(2)}s`; f.appendChild(s); setTimeout(() => s.remove(), 1200); }
   for (let i = 0; i < Math.ceil(n / 4); i++) { const s = document.createElement('i'), w = R(far * .8, far * 1.8); s.className = 'streak'; s.style.cssText = `left:${x - w / 2}px;top:${y}px;width:${w}px;--a:${R(0, 180).toFixed(0)}deg;animation-delay:${i * 30}ms`; f.appendChild(s); setTimeout(() => s.remove(), 800); } };
