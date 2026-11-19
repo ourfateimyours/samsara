@@ -323,6 +323,14 @@
         ch.on('broadcast', { event: 'p' }, () => cb()).on('broadcast', { event: 'e' }, m => onEv && onEv(m.payload || {})).subscribe();
         return { ping, emit, stop() { sb.removeChannel(ch); } };
       },
+      // 다이스 룰렛: 숫자 · 대미지는 서버 함수 · 관리자가 누른 결과를 같은 방 사람들에게 그대로 밀어줘요 (보는 사람은 다시 묻지 않아요 · 주기적 요청 없음)
+      async diceView() { return ok(await sb.rpc('dice_view')); },
+      async diceAct(me, fn, args) { return ok(await sb.rpc('dice_' + fn, args || {})); },
+      diceSub(cb) {
+        const ch = sb.channel('dice', { config: { broadcast: { self: false } } });
+        ch.on('broadcast', { event: 's' }, m => m && m.payload && cb(m.payload)).subscribe();
+        return { send: s => ch.send({ type: 'broadcast', event: 's', payload: s }).catch(() => {}), stop() { sb.removeChannel(ch); } };
+      },
       // 상영관: 목록은 열 때 한 번 · 방 안에서는 재생 상태가 바뀔 때만 신호 · 같이 보는 사람은 들어오고 나갈 때만
       async theaterRooms() { return ok(await sb.rpc('theater_rooms')) || []; },
       async theaterOpen(me, title, kind, svc, src, nick) { return ok(await sb.rpc('theater_open', { p_title: title, p_kind: kind, p_svc: svc || '', p_src: src, p_nick: nick })); },
@@ -632,6 +640,10 @@
     async bellFlip(id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellFlip(u.id, id); },
     async bellRing(id, ver) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.bellRing(u.id, id, ver); },
     bellSub(id, cb, onEv) { return B.bellSub(id, cb, onEv); },
+    // 다이스 룰렛 (fn: reset · open · pause · roll · skip · settle · buff)
+    async diceView() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.diceView(u.id); },
+    async diceAct(fn, args) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.diceAct(u.id, fn, args); },
+    diceSub(cb) { return B.diceSub(cb); },
     // 상영관
     async theaterRooms() { const u = await this.user(); if (!u) return []; return B.theaterRooms(u.id); },
     async theaterOpen(title, kind, svc, src, nick) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.theaterOpen(u.id, title, kind, svc, src, nick); },
