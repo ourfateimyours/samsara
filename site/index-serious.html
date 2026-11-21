@@ -15,6 +15,122 @@
 <link rel="stylesheet" href="assets/css/lobby.css?v=1114">
 <link rel="stylesheet" href="assets/css/banner.css">
 <link rel="stylesheet" href="assets/css/serious.css">
+<style id="gx-style">
+/* ═══ 2기 홈 시안 · 레퍼런스 구성 (왼쪽 위 이름 + 아이콘 · 카운트다운 티켓 · 오른쪽 큰 화면 + 챕터 카드) ═══ */
+.lobby { --gx-ink: #f3f5ff; --gx-dim: rgba(220,226,255,.62); --gx-line: rgba(240,244,255,.85); --gx-glow: rgba(140,158,255,.7); --gx-navy: #1b2052;
+  --gx-panel: linear-gradient(115deg, rgba(150,160,255,.32), rgba(66,76,176,.34) 45%, rgba(22,26,74,.62));
+  --gx-glass: linear-gradient(160deg, rgba(255,255,255,.34), rgba(170,182,255,.16) 50%, rgba(56,66,160,.34));
+  --gx-pill: linear-gradient(90deg, #fff, rgba(232,236,255,.92) 55%, rgba(255,255,255,.12));
+  --gx-txt: linear-gradient(180deg, #fff 30%, #c8c2ff); --gx-pink: linear-gradient(180deg, #fff 35%, #ffc9ec); }
+
+/* 배경: 푸른 보랏빛으로 물들이고 가장자리 빛무리 · 반짝이 */
+#gx-stars { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+/* 맨 위 막대: 아예 없애요 (메뉴는 홈 화면 안에 다 있어요) */
+@media (min-width: 1101px) { body.lobby-page .site-header { display: none !important; } body.lobby-page { --header-h: 0px; } }
+@media (min-width: 1101px) {
+/* ── 왼쪽 위: 이름 (레퍼런스 LV 98 자리) + 정갈한 아이콘 줄 ── */
+.gx-id { position: absolute; left: clamp(20px, 4vw, 60px); top: var(--top); z-index: 4; display: flex; flex-direction: column; align-items: flex-start; }
+/* 이름 뒤 무지개 빛번짐 (붕 뜬 느낌 대신 빛 위에 얹히게) */
+.gx-id::before { content: ""; position: absolute; left: -70px; top: -90px; z-index: -1; width: 300px; height: 264px; pointer-events: none; background: url(assets/img/gx/flare.webp) center / contain no-repeat; mix-blend-mode: screen; opacity: .7; transform: rotate(-18deg); }
+.gx-id .lb-card { position: static; min-width: 0; padding: 0 0 0 14px; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; clip-path: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(200,210,255,.5) 60%, rgba(255,255,255,0)) 0 4px / 1.5px calc(100% - 4px) no-repeat !important; }
+.gx-id .lb-card::before, .gx-id .lb-card::after { display: none !important; }
+.gx-id .lb-card .eb { color: var(--gx-dim); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.gx-id .lb-card .row { margin-top: 2px; }
+.gx-id .lb-card .nm { color: transparent !important; background: var(--gx-txt); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 8px var(--gx-glow)) drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+.gx-id .lb-card .bar { display: none; }
+.gx-id .lb-card .date { margin-top: 4px; font: 700 9px 'JetBrains Mono', monospace; letter-spacing: .2em; color: var(--gx-ink); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.gx-id .lb-card .date span { color: inherit; }
+/* 호감도 · 심박: 유리 알약 두 개 */
+.gx-st { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.gx-it { position: relative; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 10px 0 8px; border-radius: 99px; color: var(--gx-ink);
+  background: linear-gradient(160deg, rgba(255,255,255,.22), rgba(170,182,255,.08) 50%, rgba(40,46,110,.3)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.42), inset 0 1px 0 rgba(255,255,255,.5), 0 0 12px rgba(150,165,255,.28);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3); }
+.gx-it svg { width: 12px; height: 12px; color: #ffc0dd; filter: drop-shadow(0 0 4px #ff86c0); }
+.gx-it + .gx-it svg { color: #cfd6ff; filter: drop-shadow(0 0 4px var(--gx-glow)); }
+.gx-it small { font: 600 10px 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; opacity: .8; }
+.gx-it b { font: 700 11px/1 'JetBrains Mono', monospace; color: #fff; text-shadow: 0 0 6px var(--gx-glow); }
+.gx-id .gx-tk { position: relative; margin-top: 10px; zoom: .85; }
+/* 원래 왼쪽 버튼 · 수업 대국은 그대로 · 티켓 밑으로만 살짝 내려요 */
+.lobby .lb-side { top: calc(var(--top) + 186px); } .lobby .lb-heir { top: calc(var(--top) + 190px); }/* ── 카운트다운 티켓 (레퍼런스 티켓 치수 · 색 그대로) ── */
+.gx-tk { position: relative; display: flex; gap: 4px; height: 66px; }
+.gx-tk .tk-m { position: relative; width: 240px; height: 66px; overflow: hidden; color: #fff;
+  background: linear-gradient(90deg, rgba(22,28,62,.86), rgba(36,44,92,.66)); border: 1px solid rgba(235,240,255,.38);
+  box-shadow: inset 0 0 0 3px rgba(12,16,40,.35), inset 0 0 0 4px rgba(235,240,255,.12), 0 0 14px rgba(120,140,230,.35); }
+.gx-tk .tk-m::before { content: ""; position: absolute; inset: 8px; pointer-events: none;
+  background: linear-gradient(#fff,#fff) 0 0 / 6px 1px, linear-gradient(#fff,#fff) 0 0 / 1px 6px, linear-gradient(#fff,#fff) 100% 0 / 6px 1px, linear-gradient(#fff,#fff) 100% 0 / 1px 6px,
+  linear-gradient(#fff,#fff) 0 100% / 6px 1px, linear-gradient(#fff,#fff) 0 100% / 1px 6px, linear-gradient(#fff,#fff) 100% 100% / 6px 1px, linear-gradient(#fff,#fff) 100% 100% / 1px 6px; background-repeat: no-repeat; opacity: .85; }
+.gx-tk .tk-wm { position: absolute; left: 52px; top: -9px; font: 700 42px/1 'Noto Serif KR', serif; letter-spacing: .06em; color: rgba(255,255,255,.06); -webkit-text-stroke: 1px rgba(255,255,255,.2); pointer-events: none; white-space: nowrap; }
+.gx-tk .tk-b { position: absolute; left: 21px; top: 22px; font: 700 12px/1 'JetBrains Mono', monospace; letter-spacing: .12em; color: #fff; text-shadow: 0 0 6px rgba(190,205,255,.6); }
+.gx-tk .tk-s { position: absolute; left: 22px; top: 38px; font: 700 5.5px/1 'JetBrains Mono', monospace; letter-spacing: .24em; color: rgba(225,230,245,.7); }
+.gx-tk .tk-x { position: absolute; left: 134px; top: 24px; z-index: 3; width: 17px; height: 17px; background: url(https://i.imgur.com/dyxaZIz.png) center / contain no-repeat; filter: brightness(0) invert(1) drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px rgba(210,222,255,.95)) drop-shadow(0 0 10px rgba(150,170,255,.7)); }
+.gx-tk .tk-p { position: absolute; left: 160px; top: 25px; z-index: 3; width: 152px; height: 16px; padding-left: 12px; white-space: nowrap;
+  font: 800 7px/16px 'JetBrains Mono', monospace; letter-spacing: .16em; color: #1c2246;
+  background: linear-gradient(90deg, #fff, #f1f8ff 50%, #d6eefc); box-shadow: 0 0 8px rgba(220,236,255,.75); }
+.gx-tk .tk-d { position: absolute; left: 160px; top: 46px; z-index: 3; font: 700 4.5px/1.6 'JetBrains Mono', monospace; letter-spacing: .2em; color: rgba(225,230,245,.6); }
+.gx-tk .tk-d b { display: block; font-size: 5.5px; color: #fff; letter-spacing: .14em; }
+.gx-tk .tk-st { position: relative; width: 46px; height: 66px; overflow: hidden;
+  background: linear-gradient(150deg, rgba(225,235,255,.42), rgba(160,180,240,.2) 55%, rgba(60,72,140,.3)); border: 1px solid rgba(235,240,255,.55);
+  box-shadow: inset 0 0 0 3px rgba(12,16,40,.18), inset 0 0 0 4px rgba(255,255,255,.22), 0 0 12px rgba(140,160,240,.35); }
+.gx-tk .tk-st::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.38), transparent 40%); }
+.gx-tk .tk-sp { position: absolute; left: 236px; top: -7px; z-index: 4; width: 14px; height: 15px; background: url(assets/img/gx/sparkle.webp) center / contain no-repeat; filter: drop-shadow(0 0 4px #fff); pointer-events: none; }
+}
+@media (max-width: 1100px) {
+  .gx-id { display: contents; }
+  .gx-tk, .gx-st { display: none; }
+}
+@media (min-width: 1101px) {
+/* 오른쪽 위 영전 · 심박: 까만 판 대신 유리 버튼 */
+.lobby:not(.is-day) .lb-pill { background: linear-gradient(160deg, rgba(255,255,255,.2), rgba(170,182,255,.08) 50%, rgba(40,46,110,.3)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), inset 0 1px 0 rgba(255,255,255,.55), 0 0 16px rgba(150,165,255,.3) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3); }
+.lobby:not(.is-day) .lb-pill .plus { background: rgba(255,255,255,.1); }
+.lobby:not(.is-day) .lb-chips span { position: relative; border-radius: 99px; padding: 3px 10px; color: rgba(235,238,255,.8); background: linear-gradient(160deg, rgba(255,255,255,.2), rgba(170,182,255,.08) 50%, rgba(40,46,110,.3)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), inset 0 1px 0 rgba(255,255,255,.45), 0 0 10px rgba(150,165,255,.25) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.lobby .lb-chips span { position: relative; }
+/* 새 심박이 오면: 가는 1px 선 + 엷게 번지는 네온 (분홍 대신 흰 · 연보랏빛) */
+@keyframes gxBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.05); } 28% { transform: scale(1); } 42% { transform: scale(1.03); } 64% { transform: scale(1); } }
+@keyframes gxGlow { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 0 6px rgba(200,212,255,.35); } 18% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.95), 0 0 10px rgba(220,228,255,.8), 0 0 26px rgba(160,175,255,.45); } 50% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 0 8px rgba(210,220,255,.5), 0 0 18px rgba(160,175,255,.25); } }
+@keyframes gxRing { 0% { opacity: .8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.35, 1.9); } }
+@keyframes gxUp { 0% { opacity: 0; transform: translate(-50%, 4px); filter: blur(2px); } 25% { opacity: 1; filter: blur(0); } 100% { opacity: 0; transform: translate(-50%, -22px); filter: blur(1px); } }
+.gx-new { animation: gxBeat 1.3s ease-in-out 3, gxGlow 1.3s ease-in-out 3; }
+.gx-new::after { content: ""; position: absolute; inset: 0; border-radius: 99px; border: 1px solid rgba(235,240,255,.9); box-shadow: 0 0 6px rgba(200,212,255,.8), 0 0 14px rgba(150,165,255,.4); pointer-events: none; animation: gxRing 1.3s cubic-bezier(.2,.7,.3,1) 3; }
+.gx-new svg { color: #fff !important; filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px rgba(170,185,255,.9)) !important; }
+.gx-plus { position: fixed; z-index: 60; pointer-events: none; font: 600 11px 'JetBrains Mono', monospace; letter-spacing: .08em; color: #fff; text-shadow: 0 0 4px rgba(255,255,255,.9), 0 0 12px rgba(160,175,255,.9), 0 0 22px rgba(130,145,255,.5); animation: gxUp 1.8s ease-out forwards; }
+}
+@media (prefers-reduced-motion: reduce) { .gx-new, .gx-new::after, .gx-plus { animation: none; } }
+/* 이름: 산 이름표 색이 있으면 흰빛 → 그 색 그라데이션 / 칭호: 이름 옆 작은 글씨 (내 캐릭터 색 네온) */
+@media (min-width: 1101px) {
+.gx-id .lb-card .nm { background: linear-gradient(180deg, #fff 18%, var(--nk, #c8c2ff) 92%) !important; -webkit-background-clip: text !important; background-clip: text !important; }
+.gx-id .lb-card .row { align-items: baseline; gap: 9px; }
+.gx-id .lb-card .ttl::before { content: "— "; opacity: .55; }
+.gx-id .lb-card .ttl { padding: 0; border: 0; background: none; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; color: color-mix(in srgb, var(--tc) 55%, #fff); text-shadow: 0 0 6px color-mix(in srgb, var(--tc) 80%, transparent), 0 0 14px color-mix(in srgb, var(--tc) 45%, transparent); }
+/* 오른쪽 위 받은 심박: 누르면 심박 창 */
+#chips > span:first-child { cursor: pointer; transition: box-shadow .25s; }
+#chips > span:first-child:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,.75), 0 0 12px rgba(190,205,255,.6) !important; }
+
+/* ── 낮: 남색 글씨 · 하얀 유리 · 하늘빛 그라데이션 ── */
+.lobby.is-day { --gx-ink: #23405e; --gx-dim: rgba(35,64,94,.62); --gx-glow: rgba(255,255,255,.9); --gx-navy: #1d3e5c; }
+.lobby.is-day .gx-id::before { mix-blend-mode: normal; opacity: .5; }
+.lobby.is-day .gx-id .lb-card { background: linear-gradient(180deg, #fff, rgba(255,255,255,.55) 60%, rgba(255,255,255,0)) 0 4px / 1.5px calc(100% - 4px) no-repeat !important; filter: drop-shadow(0 0 3px rgba(140,205,255,.95)) drop-shadow(0 0 6px rgba(90,165,240,.6)); }
+.lobby.is-day .gx-id .lb-card .nm { background: linear-gradient(180deg, #fff 30%, var(--nk, #eaf6ff) 100%) !important; -webkit-background-clip: text !important; background-clip: text !important; filter: drop-shadow(0 1px 1px rgba(30,70,110,.45)) drop-shadow(0 0 5px rgba(140,205,255,.95)) drop-shadow(0 0 14px rgba(90,165,240,.65)); }
+.lobby.is-day .gx-id .lb-card .date span { color: #fff !important; }
+.lobby.is-day .gx-id .lb-card .eb, .lobby.is-day .gx-id .lb-card .date { color: #fff; text-shadow: 0 1px 1px rgba(30,70,110,.45), 0 0 5px rgba(140,205,255,.95), 0 0 12px rgba(90,165,240,.7); }
+.lobby.is-day .gx-id .lb-card .ttl { color: color-mix(in srgb, var(--tc) 35%, #fff); text-shadow: 0 1px 1px rgba(30,70,110,.45), 0 0 5px color-mix(in srgb, var(--tc) 90%, transparent), 0 0 12px color-mix(in srgb, var(--tc) 60%, transparent); }
+.lobby.is-day .gx-it { color: #2c4d6b; background: linear-gradient(160deg, rgba(255,255,255,.85), rgba(225,240,252,.6)); box-shadow: inset 0 0 0 1px #fff, 0 2px 10px rgba(60,110,160,.22), 0 0 12px rgba(255,255,255,.7); }
+.lobby.is-day .gx-it svg { color: #e0709f; filter: none; } .lobby.is-day .gx-it b { color: #1d3e5c; text-shadow: none; }
+.lobby.is-day .gx-tk .tk-m { color: #1d3e5c; background: linear-gradient(90deg, rgba(255,255,255,.88), rgba(222,238,252,.74)); border-color: rgba(255,255,255,.95); box-shadow: inset 0 0 0 3px rgba(255,255,255,.4), inset 0 0 0 4px rgba(70,120,170,.18), 0 4px 16px rgba(60,110,160,.22); }
+.lobby.is-day .gx-tk .tk-m::before { filter: brightness(.35) sepia(1) hue-rotate(170deg) saturate(3); }
+.lobby.is-day .gx-tk .tk-b { color: #1d3e5c; text-shadow: 0 0 6px #fff; }
+.lobby.is-day .gx-tk .tk-s, .lobby.is-day .gx-tk .tk-d { color: rgba(35,64,94,.7); } .lobby.is-day .gx-tk .tk-d b { color: #1d3e5c; }
+.lobby.is-day .gx-tk .tk-x { filter: brightness(0) invert(.22) sepia(1) hue-rotate(175deg) saturate(3) drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px rgba(120,190,240,.9)); }
+.lobby.is-day .gx-tk .tk-p { color: #fff; background: linear-gradient(90deg, #3d7fb0, #74bde0 55%, #a8e0d4); box-shadow: 0 0 10px rgba(255,255,255,.9); text-shadow: 0 1px 2px rgba(20,50,90,.4); }
+.lobby.is-day .gx-tk .tk-st { background: linear-gradient(150deg, rgba(255,255,255,.95), rgba(200,228,248,.7) 55%, rgba(150,200,235,.6)); border-color: #fff; box-shadow: inset 0 0 0 3px rgba(255,255,255,.4), inset 0 0 0 4px rgba(70,120,170,.18), 0 4px 14px rgba(60,110,160,.2); }
+.lobby.is-day .gx-tk .tk-sp { filter: drop-shadow(0 0 3px #7cc4e4) drop-shadow(0 0 6px #fff); }
+.lobby.is-day .gx-new { animation: gxBeat 1.3s ease-in-out 3; box-shadow: inset 0 0 0 1px #fff, 0 0 14px rgba(120,190,240,.8) !important; }
+.lobby.is-day .gx-new::after { border-color: #7cc4e4; box-shadow: 0 0 8px rgba(120,190,240,.8); }
+.lobby.is-day .gx-plus { color: #2c5a80; text-shadow: 0 0 6px #fff, 0 0 12px #fff; }
+}</style>
 </head>
 <body data-page="home" class="serious home-only lobby-page" data-nofooter>
 
@@ -551,5 +667,50 @@ Store.matchStatus().then(s => {
   });
 });</script>
 <script src="assets/js/serious.js"></script>
+<script>
+/* 2기 홈 시안: 있던 요소는 그대로 옮기기만 해요 (id · 기능 유지) */
+(() => {
+  const $ = s => document.querySelector(s), mk = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const lobby = $('#lobby'), bg = $('.lb-bg'); if (!lobby || !bg) return;
+  const END = new Date('2026-12-23T00:00:00+09:00').getTime();   // 서울 종말: 2026-11-22 기준 31일 뒤 자정 (한국 시간)
+  const p2 = n => String(n).padStart(2, '0');
+
+  /* 배경 */
+  
+  const shot = () => { const u = getComputedStyle($('.lb-bg .photo')).backgroundImage; if (u && u !== 'none') lobby.style.setProperty('--gx-shot', u); };
+  shot(); setTimeout(shot, 600);
+
+  /* 왼쪽 위: 이름 + 아이콘 줄 */
+  const card = $('.lb-card'), id = mk('div', 'gx-id');
+  card.before(id); id.append(card);
+  card.querySelector('.eb').textContent = 'REC';
+  const st = mk('div', 'gx-st', '<span class="gx-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg><small>사리 호감도</small><b id="gx-aff">0</b></span>'); card.append(st);
+  const affNow = () => { const w = parseFloat($('#bar').style.width) || 0; $('#gx-aff').textContent = Math.round(w / 100 * (window.Store && Store.CAT ? Store.CAT.max : 200)); };
+  new MutationObserver(affNow).observe($('#bar'), { attributes: true }); affNow(); const beat = () => { const b = $('#chips span b'); if (!b) return; const n = +b.textContent || 0; let last = null; try { last = localStorage.getItem('gx:beat'); } catch (e) {}
+    if (last !== null && n > +last && matchMedia('(min-width: 1101px)').matches) { const el = b.closest('span'); el.classList.remove('gx-new'); void el.offsetWidth; el.classList.add('gx-new'); setTimeout(() => el.classList.remove('gx-new'), 4000);
+      const r = el.getBoundingClientRect(); if (r.width) { const t = mk('span', 'gx-plus', '♥ +' + (n - last)); t.style.left = (r.left + r.width / 2) + 'px'; t.style.top = (r.top - 4) + 'px'; document.body.append(t); setTimeout(() => t.remove(), 1900); } }
+    try { localStorage.setItem('gx:beat', n); } catch (e) {} };
+  new MutationObserver(beat).observe($('#chips'), { childList: true, subtree: true, characterData: true }); beat();
+  /* 받은 심박 누르면 심박 창 (아래 메뉴 심박 버튼과 같아요) */
+  $('#chips').addEventListener('click', e => { const sp = e.target.closest('#chips > span'); if (sp && sp === $('#chips').firstElementChild && $('#db-tele')) $('#db-tele').click(); });
+  /* 산 이름표 색 → 그라데이션 끝 색 */
+  const nk = $('#nick'), nkc = () => { const c = nk.style.color; if (c) nk.style.setProperty('--nk', c); }; new MutationObserver(nkc).observe(nk, { attributes: true, attributeFilter: ['style'] }); nkc();
+
+  /* 왼쪽: 카운트다운 티켓 */
+  const tk = mk('div', 'gx-tk', `<div class="tk-m"><b class="tk-b" id="gx-cd">00:00:00:00</b><small class="tk-s">TILL THE END</small></div><i class="tk-x"></i><span class="tk-p" id="gx-dd">END OF SEOUL · D-00</span><span class="tk-d">DESTINATION<b>THE LAST SEOUL</b></span><div class="tk-st"></div><i class="tk-sp"></i>`);
+  tk.setAttribute('aria-label', '서울 종말까지 남은 시간'); id.append(tk);
+  (function tick() { const t = Math.max(0, END - Date.now()), d = Math.floor(t / 864e5);
+    $('#gx-cd').textContent = `${p2(d)}:${p2(Math.floor(t / 36e5) % 24)}:${p2(Math.floor(t / 6e4) % 60)}:${p2(Math.floor(t / 1e3) % 60)}`; $('#gx-dd').textContent = `END OF SEOUL · D-${p2(d)}`; setTimeout(tick, 1000); })();
+
+  /* 반짝이 (흰색 · 주황) */
+  const cv = mk('canvas'); cv.id = 'gx-stars'; bg.appendChild(cv); const g = cv.getContext('2d'); let W, H;
+  const fit = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; }; fit(); addEventListener('resize', fit);
+  const rnd = (a, b) => a + Math.random() * (b - a), S = Array.from({ length: 34 }, (_, i) => ({ x: i < 12 ? rnd(.68, .98) : Math.random(), y: i < 12 ? rnd(.15, .7) : Math.random() * .8, s: rnd(2, 6), sp: rnd(.5, 1.4), p: rnd(0, 6.3), w: Math.random() < .4 }));
+  let last = 0; (function draw(t) { requestAnimationFrame(draw); if (t - last < 50) return; last = t; g.clearRect(0, 0, W, H);
+    for (const s of S) { const a = Math.pow(.5 + .5 * Math.sin(t / 1000 * s.sp + s.p), 3), x = s.x * W, y = s.y * H, L = s.s * (.6 + a); if (a < .05) continue;
+      g.fillStyle = s.w ? `rgba(255,196,140,${a})` : `rgba(240,245,255,${a * .9})`; g.shadowColor = s.w ? 'rgba(255,150,70,.95)' : 'rgba(190,205,255,.9)'; g.shadowBlur = 8;
+      g.fillRect(x - L, y - .5, L * 2, 1); g.fillRect(x - .5, y - L, 1, L * 2); g.beginPath(); g.arc(x, y, 1.3, 0, 6.3); g.fill(); } })();
+})();
+</script>
 </body>
 </html>
