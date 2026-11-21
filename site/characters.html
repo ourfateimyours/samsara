@@ -73,7 +73,7 @@ App.ready.then(async user => {
   const rankScore = c => RANKS.indexOf(normChar(c.data).rank);
   groups.forEach(g => g.list.sort((a, b) => rankScore(b) - rankScore(a) || String(a.data.name || '').localeCompare(String(b.data.name || ''), 'ko')));
   let gi = 0, page = 0;
-  const perPage = () => 5; // 한 쪽에 5명씩 가로로 (등급 높은 순 왼→오), 넘치면 다음 쪽으로 — 화면이 좁으면 옆으로 밀어서 봐요
+  const perPage = () => 9999; // 한 가문은 한 쪽에 전원 · 4명마다 다음 줄로 (등급 높은 순 왼→오, 위→아래) · 넘치면 위아래로 스크롤
   // 액자 카드 모양 (위아래 왼쪽 모서리가 비스듬히 잘린 세로 카드) — 테두리 빛도 이 선을 따라 돌아요
   const CARD_PTS = '29,1 199,1 199,294 29,294 1,265 1,30';
   let swiped = 0;
@@ -112,7 +112,7 @@ App.ready.then(async user => {
     arrowHint($('#prev'), before ? `+${before}명` : gi > 0 ? groups[gi - 1].name : '', before > 0);
     arrowHint($('#next'), after ? `+${after}명` : gi < groups.length - 1 ? groups[gi + 1].name : '', after > 0);
     st.dataset.dir = dir || 0; // 넘긴 방향으로 미끄러져 들어오기
-    st.classList.add('pcards');
+    st.classList.add('pcards', 'all'); st.scrollTop = 0;
     // 멤버란 카드 틀: 모서리가 깎인 세로 카드에 두상(움짤) 한 장, 위에 번호·계급, 아래에 가문·이름
     st.innerHTML = g.list.slice(page * pp, page * pp + pp).map((c, i) => {
       const d = normChar(c.data), no = g.list.indexOf(c) + 1, el = ELEMENTS[d.element];
