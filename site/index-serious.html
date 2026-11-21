@@ -78,7 +78,8 @@
 }
 @media (max-width: 1100px) {
   .gx-id { display: contents; }
-  .gx-tk, .gx-st { display: none; }
+  .gx-tk, .gx-st, .gx-acts { display: none; }
+  .gx-trrow { display: contents; }
 }
 @media (min-width: 1101px) {
 /* 오른쪽 위 영전 · 심박: 까만 판 대신 유리 버튼 */
@@ -98,7 +99,19 @@
 .gx-new svg { color: #fff !important; filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px rgba(170,185,255,.9)) !important; }
 .gx-plus { position: fixed; z-index: 60; pointer-events: none; font: 600 11px 'JetBrains Mono', monospace; letter-spacing: .08em; color: #fff; text-shadow: 0 0 4px rgba(255,255,255,.9), 0 0 12px rgba(160,175,255,.9), 0 0 22px rgba(130,145,255,.5); animation: gxUp 1.8s ease-out forwards; }
 }
-@media (prefers-reduced-motion: reduce) { .gx-new, .gx-new::after, .gx-plus { animation: none; } }
+/* 오른쪽 위: 맨 위 막대 대신 관리 · 마이 페이지 · 로그아웃 (유리 버튼 · PC만) */
+.gx-trrow { display: flex; align-items: center; gap: 10px; }
+.gx-acts { display: flex; gap: 6px; }
+.gx-ab { position: relative; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 13px 2px 11px; border: 0; border-radius: 99px; cursor: pointer; text-decoration: none; font: 600 11px 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; color: #eef1ff; text-shadow: 0 0 6px rgba(190,205,255,.7), 0 1px 3px rgba(0,0,0,.5);
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(240,244,255,.85) 50%, rgba(255,255,255,0)) 50% 100% / 100% 1px no-repeat, radial-gradient(ellipse 62% 95% at 50% 100%, rgba(195,208,255,.32), rgba(170,182,255,.08) 55%, rgba(170,182,255,0) 75%);
+  box-shadow: none; transition: background-size .3s, translate .25s, filter .25s; }
+.gx-ab svg { width: 13px; height: 13px; flex: none; filter: drop-shadow(0 0 3px rgba(200,212,255,.8)); }
+.gx-ab:hover { translate: 0 -1px; filter: drop-shadow(0 2px 6px rgba(180,195,255,.55)); background: linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) 50% 100% / 100% 1px no-repeat, radial-gradient(ellipse 70% 110% at 50% 100%, rgba(210,220,255,.45), rgba(170,182,255,.12) 55%, rgba(170,182,255,0) 78%); }
+.gx-ab[hidden] { display: none; }
+.lobby.is-day .gx-ab { color: #fff; text-shadow: 0 1px 1px rgba(30,70,110,.45), 0 0 6px rgba(140,205,255,.9);
+  background: linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)) 50% 100% / 100% 1px no-repeat, radial-gradient(ellipse 62% 95% at 50% 100%, rgba(255,255,255,.55), rgba(220,240,255,.15) 55%, rgba(255,255,255,0) 75%); }
+.lobby.is-day .gx-ab svg { filter: drop-shadow(0 0 3px rgba(140,205,255,.9)); }
+@media (max-width: 1100px) { .gx-acts { display: none !important; } .gx-trrow { display: contents !important; } }@media (prefers-reduced-motion: reduce) { .gx-new, .gx-new::after, .gx-plus { animation: none; } }
 /* 이름: 산 이름표 색이 있으면 흰빛 → 그 색 그라데이션 / 칭호: 이름 옆 작은 글씨 (내 캐릭터 색 네온) */
 @media (min-width: 1101px) {
 .gx-id .lb-card .nm { background: linear-gradient(180deg, #fff 18%, var(--nk, #c8c2ff) 92%) !important; -webkit-background-clip: text !important; background-clip: text !important; }
@@ -702,7 +715,13 @@ Store.matchStatus().then(s => {
   (function tick() { const t = Math.max(0, END - Date.now()), d = Math.floor(t / 864e5);
     $('#gx-cd').textContent = `${p2(d)}:${p2(Math.floor(t / 36e5) % 24)}:${p2(Math.floor(t / 6e4) % 60)}:${p2(Math.floor(t / 1e3) % 60)}`; $('#gx-dd').textContent = `END OF SEOUL · D-${p2(d)}`; setTimeout(tick, 1000); })();
 
-  /* 반짝이 (흰색 · 주황) */
+  /* 오른쪽 위: 관리 · 마이 페이지 · 로그아웃 (숨긴 맨 위 막대의 버튼을 그대로 눌러 줘요) */
+  const pill = $('.lb-pill');
+  if (pill) { const row = mk('div', 'gx-trrow'); pill.before(row);
+    const acts = mk('div', 'gx-acts', '<a class="gx-ab" href="admin.html" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg>관리</a><a class="gx-ab" href="mypage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>마이 페이지</a><button class="gx-ab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/></svg>로그아웃</button>');
+    row.append(acts, pill);
+    acts.querySelector('button').onclick = async () => { const lo = document.querySelector('.site-header [data-logout]'); if (lo) return lo.click(); try { await Store.signOut(); } catch (e) {} location.href = 'login.html'; };
+    if (window.App && App.ready) App.ready.then(us => { if (us && us.grade === 'admin') acts.firstElementChild.hidden = false; }); }   // 관리 버튼은 관리자만 (부관리자는 안 보여요)  /* 반짝이 (흰색 · 주황) */
   const cv = mk('canvas'); cv.id = 'gx-stars'; bg.appendChild(cv); const g = cv.getContext('2d'); let W, H;
   const fit = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; }; fit(); addEventListener('resize', fit);
   const rnd = (a, b) => a + Math.random() * (b - a), S = Array.from({ length: 34 }, (_, i) => ({ x: i < 12 ? rnd(.68, .98) : Math.random(), y: i < 12 ? rnd(.15, .7) : Math.random() * .8, s: rnd(2, 6), sp: rnd(.5, 1.4), p: rnd(0, 6.3), w: Math.random() < .4 }));
