@@ -74,6 +74,7 @@ window.normChar = (d = {}) => {
       keyring: Object.assign({ type: 'none', text: '', img: '' }, d.keyring || (d.charmImg ? { type: 'acrylic', img: d.charmImg } : {})), silhouette: false, card: false,   // 검은 실루엣 · 카드 액자 표시는 없앴어요 (예전 기록에 켜져 있어도 꺼진 채로)
     items: (d.items || []).slice(0, 6),
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
+    ult: safeUrl(d.ult) ? d.ult : '',   // 궁극기 움짤: 세 번째 스킬을 열면 설명 뒤에 깔려요
     phoneBg: d.phoneBg === 'moon' ? 'moon' : 'earth',   // 관계 휴대폰 배경: 지구 / 달
     figAlign: d.figAlign === 'left' || d.figAlign === 'right' ? d.figAlign : 'center',   // 전신 그림 위치 (컴퓨터): 가운데 / 왼쪽 끝 / 오른쪽 끝
     figAlignM: ['center', 'left', 'right'].includes(d.figAlignM) ? d.figAlignM : '',   // 휴대폰 · 태블릿 위치 ('' = 아직 안 정함 → 컴퓨터 위치를 따라가요)
@@ -247,6 +248,7 @@ window.CharEditor = {
           ${pstyleBar('as_', d.ability.style, '능력 · 스킬 글 서식')}
           <label class="field"><span>능력 설명 <small>위 서식 그대로 프로필에 나와요 · 스킬 설명도 같은 서식이에요 · 능력 설명엔 글 서식 태그를 쓸 수 없어요</small></span><textarea name="a_desc" rows="4" class="ps-text" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</textarea></label>
           <div class="field"><span>스킬</span><div class="fmt-guide" data-fg="skill"></div><div id="e-skill"></div></div>
+          <label class="field"><span>궁극기 움짤 <small>세 번째 스킬이 궁극기예요 · 움짤(GIF) 주소를 넣으면 세 번째 스킬을 열 때 설명 뒤에 나와요 · 비워 두면 보통 스킬</small></span><input name="ult" value="${esc(d.ult)}" placeholder="https://i.imgur.com/....gif"></label>
 
         </div>
 
@@ -418,7 +420,7 @@ window.CharEditor = {
         song: { title: '', artist: '', url: v('s_url'), cover: '' },
         ability: { name: v('a_name'), sub: '', desc: v('a_desc'), style: asNow() },
         danger: v('danger') === '' ? '' : Math.max(0, Math.min(100, +v('danger') || 0)),
-        skills: getSkills(), stats,
+        skills: getSkills(), stats, ult: /^https?:\/\//i.test(v('ult')) ? v('ult') : '',
         persona: f.persona.value.replace(/\s+$/, ''), persona_style: psNow(),
         profile: parseKV(d.profile).filter(([k]) => !BODY_KEYS.some(b => b[0] === k)).concat(BODY_KEYS.map(([k, n]) => [k, v(n)]).filter(([, x]) => x)).map(([k, x]) => `${k}: ${x}`).join('\n'),
         prompts: [],

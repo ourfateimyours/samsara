@@ -445,10 +445,11 @@ App.ready.then(async user => {
       ${d.ability.name ? `<div class="skh"><div class="skh-t"><small class="skh-k">ABILITY</small><b>${esc(d.ability.name)}</b><span class="skh-line" aria-hidden="true"><i></i></span></div>
         </div>` : ''}
       ${d.ability.desc ? `<div class="text sk-text" style="margin:14px 0 10px;${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</div>` : ''}
-      ${d.skills.map((s, i) => `<div class="skr" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
+      ${d.skills.map((s, i) => { const u = i === 2 && d.ult, dsc = `<div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${rt(s.desc || '설명이 없어요.', 'skill')}</div>`;
+        return `<div class="skr ${u ? 'ult' : ''}" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>
-        <div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${rt(s.desc || '설명이 없어요.', 'skill')}</div></div>`).join('')}
+        ${u ? `<div class="ultwrap"><i class="ultimg" data-src="${esc(d.ult)}"></i><div class="ulthud" aria-hidden="true"><i class="ln b"></i><i class="pl c"></i><i class="pl d"></i><span class="lb l"><b>ULTIMATE</b></span><span class="lb r">SKILL ${pad2(i + 1)}<s>/</s>LV.${esc(s.lv || '-')}</span><span class="lb f">FINAL STORY</span></div>${dsc}</div>` : dsc}</div>`; }).join('')}
       ${!d.ability.name && !d.skills.length ? empty : ''}` },
 
     { t: '소지품', en: 'BELONGINGS', r: () => d.items.length ? `<div class="items-grid">${d.items.map(itemCard).join('')}</div>` : empty }
@@ -479,7 +480,16 @@ App.ready.then(async user => {
     $('#apv b').textContent = SEC[(cur - 1 + SEC.length) % SEC.length].t;
     $('#anx b').textContent = SEC[(cur + 1) % SEC.length].t;
     $$('[data-go]', arc).forEach(b => b.classList.toggle('on', +b.dataset.go === cur));
-    if (opt.skill != null) { const r = $(`.skr[data-sk="${opt.skill}"]`, arc); if (r) { r.classList.add('open'); r.scrollIntoView({ block: 'center' }); } }
+    if (opt.skill != null) { const r = $(`.skr[data-sk="${opt.skill}"]`, arc); if (r) { r.classList.add('open'); r.scrollIntoView({ block: 'center' }); ultShow(r); } }
+  }
+  // 궁극기(세 번째 스킬): 열 때 움짤을 처음 불러오고 선 · 글씨를 다시 그어요
+  function ultShow(r) {
+    if (!r.classList.contains('ult')) return;
+    const img = $('.ultimg', r), w = $('.ultwrap', r);
+    if (!r.classList.contains('open')) { img.classList.remove('on'); w.classList.remove('on'); return; }
+    w.classList.remove('on'); void w.offsetWidth; w.classList.add('on');
+    if (!img.style.backgroundImage) { const src = img.dataset.src, pre = new Image(); pre.onload = () => { img.style.backgroundImage = `url("${src.replace(/["\\]/g, '')}")`; requestAnimationFrame(() => img.classList.add('on')); }; pre.src = src; }
+    else { img.classList.remove('on'); void img.offsetWidth; img.classList.add('on'); }
   }
   function openArc(i, opt) { arc.hidden = false; arc.classList.add('arc-open'); document.body.classList.add('no-scroll', 'arc-on'); go(i, opt); }
   function closeArc() { arc.hidden = true; arc.classList.remove('arc-open'); document.body.classList.remove('arc-on'); if (innerWidth > 1000) document.body.classList.remove('no-scroll'); else document.body.classList.remove('no-scroll'); }
@@ -490,7 +500,7 @@ App.ready.then(async user => {
     if (e.target === arc) return closeArc();
     if (e.target.closest('[data-phone]')) { closeArc(); return Phone.open(row, all); }
     const g = e.target.closest('[data-go]'); if (g) return go(+g.dataset.go);
-    const sk = e.target.closest('.skr > button'); if (sk) return sk.parentElement.classList.toggle('open');
+    const sk = e.target.closest('.skr > button'); if (sk) { const r = sk.parentElement; r.classList.toggle('open'); return ultShow(r); }
     const ed = e.target.closest('[data-edit]'); if (ed) { closeArc(); return CharEditor.open(row, ed.dataset.edit); }
     const ic = e.target.closest('.item-card'); if (ic && !e.target.closest('a')) return openItem(+ic.dataset.i);
   });
