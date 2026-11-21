@@ -324,3 +324,17 @@ body.archive-theme.dossier-page { background: #050608; }
   .pcard .pc-b b { font-size: 15px; }
   .pcard .pc-b i { margin-top: 2px; padding-top: 8px; font-size: 6.5px; line-height: 1.6; letter-spacing: .1em; gap: 2px 4px; flex-wrap: wrap; white-space: normal; }   /* 길면 두 줄로 */
 }
+
+/* 멤버란 — 한 가문 전원을 한 쪽에: 4명마다 다음 줄로 내려가요 · 넘치면 위아래로 스크롤 (폰은 한 줄에 3명) */
+.roster .r-stage.pcards.all .pcard { --w: clamp(150px, min(calc((100vw - 260px) / 4 - 22px), calc((100dvh - 250px) * 5 / 8)), 250px); }
+.roster .r-stage.pcards.all { display: grid; grid-template-columns: repeat(4, max-content); justify-content: center; align-content: start; align-items: start; column-gap: 22px; row-gap: 40px;
+  overflow-x: hidden; overflow-y: auto; scroll-snap-type: none; scrollbar-width: none; padding: 6px 0 30px; }
+.roster .r-stage.pcards.all::-webkit-scrollbar { display: none; }
+.roster .r-stage.pcards.all .pcard { scroll-snap-align: none; }
+@media (max-width: 760px) {
+  .roster .r-stage.pcards.all { grid-template-columns: repeat(3, max-content); column-gap: 10px; row-gap: 26px; }
+  .roster .r-stage.pcards.all .pcard { --w: calc((100vw - 20px - 20px) / 3); }
+}
+/* 멤버란 — 평소엔 흑백 · 마우스를 올리면 색이 살아나요 */
+.roster .r-stage.pcards.all .pcard .pc-f img:not(.sil), .roster .r-stage.pcards.all .pcard .pc-f video { filter: grayscale(1) contrast(1.04); }
+.roster .r-stage.pcards.all .pcard:hover .pc-f img:not(.sil), .roster .r-stage.pcards.all .pcard:focus-visible .pc-f img:not(.sil), .roster .r-stage.pcards.all .pcard:hover .pc-f video, .roster .r-stage.pcards.all .pcard:focus-visible .pc-f video { filter: none; }

@@ -862,3 +862,42 @@ body.no-copy img { -webkit-user-drag: none; user-drag: none; }
   .fig.wide.mbig img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
   .fig.wide.mbig.al-left img { object-position: left center; } .fig.wide.mbig.al-right img { object-position: right center; }
 }
+/* ═══ 궁극기 (세 번째 스킬 + 궁극기 움짤): 스킬 줄을 열면 움짤이 설명 뒤에 깔리고 · 아래 실선 · 작은 영문 라벨 ═══
+.ultwrap { position: relative; margin-bottom: 14px; }
+
+/* 움짤: 오른쪽에 깔고 · 왼쪽과 위아래는 검정으로 스르르 사라져요 */
+.ultimg { position: absolute; top: 0; bottom: 0; right: 0; width: 78%; z-index: 0; pointer-events: none; opacity: 0; transform: scale(1.05); transition: opacity 1s ease, transform 2s cubic-bezier(.16, 1, .3, 1);
+  background: center / cover no-repeat; filter: contrast(1.06) saturate(.92);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 30%, #000 68%, #000 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 30%, #000 68%, #000 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%); mask-composite: intersect; }
+.skr.ult.open .ultimg.on { opacity: .9; transform: none; }
+.ultimg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%); mix-blend-mode: soft-light; }
+
+/* 얹는 것: 위아래 가는 실선 (왼쪽에서 한 번에 그어져요) · 네 귀퉁이 십자 · 작은 영문 라벨 */
+.ulthud { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* 실선은 아래 한 줄만 · 왼쪽은 투명 → 오른쪽으로 갈수록 선명하게 */
+.ulthud .ln { position: absolute; left: 0; right: 0; height: 1px; transform-origin: 0 50%; transform: scaleX(0); }
+.ulthud .ln.t, .ulthud .pl.a, .ulthud .pl.b { display: none; }
+.ulthud .ln.b { bottom: 0; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .25) 45%, rgba(255, 255, 255, .95) 100%); }
+.ultwrap.on .ln { animation: uLn .7s cubic-bezier(.7, 0, .15, 1) forwards; }
+@keyframes uLn { to { transform: none; } }
+.ulthud .pl { position: absolute; width: 9px; height: 9px; opacity: 0; background: linear-gradient(#fff, #fff) 50% 50% / 100% 1px no-repeat, linear-gradient(#fff, #fff) 50% 50% / 1px 100% no-repeat; }
+.ulthud .pl.a { left: 0; top: 12px; } .ulthud .pl.b { right: 0; top: 12px; } .ulthud .pl.c { left: 0; bottom: 12px; } .ulthud .pl.d { right: 0; bottom: 12px; }
+.ultwrap.on .pl { animation: uIn .01s linear .62s forwards; }
+.ulthud .lb { position: absolute; font: 500 9px var(--mono); letter-spacing: .28em; color: rgba(255, 255, 255, .72); opacity: 0; white-space: nowrap; text-shadow: 0 1px 6px rgba(0, 0, 0, .9); }
+.ulthud .lb b { font-weight: 600; color: #111; background: #fff; padding: 2px 7px 1px; letter-spacing: .24em; }
+.ulthud .lb s { text-decoration: none; margin: 0 .7em; opacity: .5; }
+.ulthud .lb.l { left: 20px; top: 11px; } .ulthud .lb.r { right: 20px; top: 13px; } .ulthud .lb.f { right: 20px; bottom: 13px; color: rgba(255, 255, 255, .5); }
+.ultwrap.on .lb { animation: uIn .01s linear forwards; } .ultwrap.on .lb.l { animation-delay: .5s; } .ultwrap.on .lb.r { animation-delay: .58s; } .ultwrap.on .lb.f { animation-delay: .7s; }
+@keyframes uIn { to { opacity: 1; } }
+
+/* 설명 글 */
+.skr.ult.open .dsc { position: relative; z-index: 2; min-height: 236px; padding: 46px 44% 40px 98px; display: flex; align-items: center; text-shadow: 0 1px 10px rgba(0, 0, 0, .85), 0 0 2px rgba(0, 0, 0, .6); animation: uDsc .7s cubic-bezier(.16, 1, .3, 1) .45s backwards; }
+@keyframes uDsc { from { opacity: 0; transform: translateX(-10px); } }
+@media (max-width: 1000px) {
+  .ultimg { width: 100%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.4) 22%, #000 60%, #000 100%), linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.4) 22%, #000 60%, #000 100%), linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%); }
+  .skr.ult.open .ultimg.on { opacity: .62; }
+  .skr.ult.open .dsc { padding: 44px 16px 40px 16px; min-height: 220px; }
+  .ulthud .lb.l { left: 16px; } .ulthud .lb.r, .ulthud .lb.f { right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .ultimg { transition: opacity .3s; transform: none; } .ultwrap.on .ln, .ultwrap.on .pl, .ultwrap.on .lb { animation-duration: .01s; animation-delay: 0s; } .skr.ult.open .dsc { animation: none; } }
