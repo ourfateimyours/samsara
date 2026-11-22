@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>비밀 문자 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+<script>
+/* 밤 · 낮: 메인 위 유리 창이면 메인이 알려 준 대로 · 따로 열면 06시~18시는 낮 */
+(() => { const q = new URLSearchParams(location.search), h = new Date().getHours();
+  const day = q.has('day') ? q.get('day') === '1' : (h >= 6 && h < 18);
+  document.documentElement.classList.toggle('im-day', day); if (q.has('embed')) document.documentElement.classList.add('im-embed'); })();
+</script>
+<style>
+/* ═══ 비밀 문자: 아이메시지 · 반투명 유리 창 · 밤은 어둡게 · 낮은 하얗게 · 클래스는 im- 로 시작 ═══ */
+:root { color-scheme: dark; --ink: #fff; --sub: rgba(255,255,255,.58); --faint: rgba(255,255,255,.4); --line: rgba(255,255,255,.1); --hover: rgba(255,255,255,.07);
+  --card: linear-gradient(160deg, rgba(255,255,255,.12), rgba(150,160,215,.06) 40%, rgba(12,12,26,.46)); --edge: rgba(255,255,255,.16);
+  --me: #0a84ff; --them: rgba(70,70,80,.62); --them-ink: #fff; --field: rgba(0,0,0,.25); --pick: rgba(255,255,255,.8); --pick-ink: #111; --pick-sub: #55555c; --pick-line: rgba(255,255,255,.6); }
+html.im-day { color-scheme: light; --ink: #111; --sub: #6e6e73; --faint: #8e8e93; --line: rgba(0,0,0,.08); --hover: rgba(0,0,0,.04);
+  --card: linear-gradient(160deg, rgba(255,255,255,.9), rgba(250,250,252,.84)); --edge: rgba(255,255,255,.9);
+  --me: #007aff; --them: #e9e9eb; --them-ink: #111; --field: #fff; --pick: rgba(255,255,255,.95); --pick-ink: #111; --pick-sub: #6e6e73; --pick-line: rgba(0,0,0,.04); }
+body.im-page { margin: 0; height: 100dvh; overflow: hidden; color: var(--ink); font-family: -apple-system, 'IBM Plex Sans KR', sans-serif;
+  background: #05060c url(assets/img/lobby-bg.webp) center / cover no-repeat; }
+body.im-page::before { content: ""; position: fixed; inset: 0; background: rgba(4,5,14,.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+html.im-day body.im-page::before { background: rgba(255,255,255,.35); }
+html.im-embed, html.im-embed body.im-page { background: transparent; }
+html.im-embed body.im-page::before { display: none; }
+.im-app { position: fixed; left: 50%; top: 50%; translate: -50% -50%; width: min(980px, 94vw); height: min(720px, 88dvh); display: grid; grid-template-columns: 320px 1fr; overflow: hidden; border-radius: 26px;
+  background: var(--card); -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5);
+  box-shadow: inset 0 0 0 1px var(--edge), 0 30px 80px rgba(0,0,0,.45); animation: imIn .45s cubic-bezier(.2,1.1,.35,1) both; }
+@keyframes imIn { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+.im-x { position: absolute; z-index: 3; right: 14px; top: 12px; width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; color: var(--ink); font-size: 15px; background: var(--hover); box-shadow: inset 0 0 0 1px var(--line); }
+.im-side { display: flex; flex-direction: column; min-height: 0; box-shadow: inset -1px 0 0 var(--line); }
+.im-sh { padding: 16px 18px 8px; }
+.im-sh .im-row { display: flex; align-items: center; justify-content: space-between; min-height: 30px; }
+.im-sh a, .im-ic { color: var(--me); text-decoration: none; font-size: 15px; background: none; border: 0; cursor: pointer; padding: 4px 2px; }
+.im-sh h1 { margin: 4px 0 4px; font: 700 28px/1.2 -apple-system, 'IBM Plex Sans KR', sans-serif; letter-spacing: -.01em; }
+.im-left { font-size: 12px; color: var(--sub); }
+.im-left b { color: var(--ink); font-weight: 600; }
+.im-closed { margin: 6px 14px 0; padding: 8px 12px; border-radius: 12px; background: var(--hover); color: var(--sub); font-size: 12.5px; }
+.im-list { flex: 1; overflow-y: auto; padding: 6px 8px 18px; scrollbar-width: thin; }
+.im-th { display: block; width: 100%; padding: 11px 14px 11px 22px; border: 0; border-radius: 14px; background: none; color: inherit; text-align: left; cursor: pointer; position: relative; transition: background .15s; }
+.im-th:hover { background: var(--hover); }
+/* 누르면 하얗게 */
+.im-th:active, .im-th.im-on { background: var(--pick); color: var(--pick-ink); box-shadow: inset 0 0 0 1px var(--pick-line), 0 4px 16px rgba(0,0,0,.12); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.im-th.im-on .im-tx time, .im-th.im-on .im-tx p, .im-th.im-on .im-tx small, .im-th:active .im-tx p { color: var(--pick-sub); }
+.im-tx .im-top { display: flex; align-items: baseline; gap: 8px; }
+.im-tx b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 15px; }
+.im-tx b.im-anon { font-style: italic; }
+.im-tx time { flex: none; font-size: 12px; color: var(--faint); }
+.im-tx p { margin: 2px 0 0; font-size: 13px; color: var(--sub); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
+.im-tx small { display: block; font-size: 11px; color: var(--faint); margin-top: 1px; }
+.im-dot { position: absolute; left: 7px; top: 50%; width: 9px; height: 9px; margin-top: -5px; border-radius: 50%; background: var(--me); }
+.im-empty { padding: 30px 20px; text-align: center; color: var(--faint); font-size: 13.5px; line-height: 1.7; }
+
+.im-main { display: flex; flex-direction: column; min-height: 0; }
+.im-mh { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; min-height: 58px; padding: 8px 12px; box-shadow: inset 0 -1px 0 var(--line); }
+.im-mh .im-back { justify-self: start; visibility: hidden; }
+.im-mh .im-who { justify-self: center; text-align: center; }
+.im-mh .im-who b { display: block; font-size: 15px; font-weight: 600; }
+.im-mh .im-who b.im-anon { font-style: italic; }
+.im-mh .im-who small { display: block; font-size: 11px; color: var(--sub); margin-top: 1px; }
+.im-glass { justify-self: center; margin-top: 4px; padding: 3px 10px; border-radius: 99px; border: 0; cursor: pointer; font-size: 11.5px; color: var(--me); background: var(--hover); box-shadow: inset 0 0 0 1px var(--line); }
+.im-glass:disabled { color: var(--faint); cursor: default; }
+.im-msgs { flex: 1; overflow-y: auto; padding: 16px 18px 10px; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; }
+.im-when { align-self: center; margin: 12px 0 6px; font-size: 11.5px; color: var(--faint); }
+.im-when b { font-weight: 600; }
+.im-b { max-width: min(72%, 440px); padding: 8px 13px; border-radius: 19px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.im-b.im-me { align-self: flex-end; background: var(--me); color: #fff; }
+.im-b.im-them { align-self: flex-start; background: var(--them); color: var(--them-ink); }
+.im-b.im-tail.im-me { border-bottom-right-radius: 6px; } .im-b.im-tail.im-them { border-bottom-left-radius: 6px; }
+.im-b + .im-b.im-gap { margin-top: 8px; }
+.im-read { align-self: flex-end; font-size: 11px; color: var(--faint); margin: 3px 2px 0; }
+.im-b.im-new { animation: imPop .35s cubic-bezier(.2,1.3,.4,1) both; }
+@keyframes imPop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+.im-start { margin: auto; text-align: center; color: var(--faint); font-size: 13.5px; line-height: 1.7; }
+.im-note { margin: 0 14px 0; padding: 8px 12px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--sub); }
+.im-comp { display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px 14px; }
+.im-comp textarea { flex: 1; resize: none; max-height: 120px; min-height: 22px; padding: 9px 15px; border-radius: 21px; border: 0; background: var(--field); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: 15px/1.35 -apple-system, 'IBM Plex Sans KR', sans-serif; outline: none; }
+.im-comp textarea:focus { box-shadow: inset 0 0 0 1px var(--me); }
+.im-comp textarea::placeholder { color: var(--faint); }
+.im-send { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; margin-bottom: 2px; font-size: 18px; font-weight: 700; color: #fff; background: var(--me); }
+.im-send:disabled { background: var(--hover); color: var(--faint); cursor: default; }
+.im-cnt { flex: none; align-self: center; font: 500 11px 'JetBrains Mono', monospace; color: var(--faint); }
+
+/* 아이폰 스위치 (익명으로 보내기) */
+.im-sw { position: relative; flex: none; width: 46px; height: 28px; }
+.im-sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.im-sw i { position: absolute; inset: 0; border-radius: 99px; background: var(--hover); box-shadow: inset 0 0 0 1px var(--line); transition: background .2s; pointer-events: none; }
+.im-sw i::after { content: ""; position: absolute; left: 2px; top: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: translate .2s; }
+.im-sw input:checked + i { background: #34c759; } .im-sw input:checked + i::after { translate: 18px 0; }
+
+.im-new-h { display: flex; align-items: center; gap: 8px; padding: 12px 18px; box-shadow: inset 0 -1px 0 var(--line); font-size: 15px; }
+.im-new-h > span { color: var(--sub); }
+.im-new-h select, .im-new-h input:not([type=checkbox]) { flex: 1; min-width: 0; background: none; border: 0; color: var(--ink); font: 15px -apple-system, 'IBM Plex Sans KR', sans-serif; outline: none; }
+.im-new-h .im-grow { flex: 1; }
+.im-new-h select option { background: #1c1c26; color: #fff; }
+html.im-day .im-new-h select option { background: #fff; color: #111; }
+.im-pick { overflow-y: auto; max-height: 48%; padding: 4px 8px; }
+.im-pick button { display: block; width: 100%; padding: 10px 14px; border: 0; border-radius: 12px; background: none; color: var(--ink); cursor: pointer; text-align: left; font-size: 15px; }
+.im-pick button:hover { background: var(--hover); }
+.im-pick button:active { background: var(--pick); color: var(--pick-ink); }
+
+@media (max-width: 760px) {
+  .im-app { inset: 0; left: 0; top: 0; translate: none; width: auto; height: auto; grid-template-columns: 1fr; border-radius: 0; }
+  .im-app.im-chat .im-side { display: none; } .im-app:not(.im-chat) .im-main { display: none; }
+  .im-mh .im-back { visibility: visible; }
+}
+</style>
+</head>
+<body class="im-page" data-page="sms" data-noheader data-nofooter>
+<div class="im-app" id="app"><button class="im-x" id="x" type="button" aria-label="닫기" hidden>✕</button>
+  <aside class="im-side">
+    <div class="im-sh"><div class="im-row"><a href="index.html" id="home">‹ 홈</a><span><button class="im-ic" id="refresh" type="button" title="새로고침">↻</button> <button class="im-ic" id="compose" type="button" title="새 문자">✎</button></span></div>
+      <h1>메시지</h1><div class="im-left">비밀 문자 · 남은 <b id="left">-</b> / 15통 · 돋보기 <b id="glass">0</b></div></div>
+    <div class="im-closed" id="closed" hidden>지금은 비밀 문자를 보낼 수 없어요 · 받은 문자는 읽을 수 있어요</div>
+    <div class="im-list" id="list"><div class="im-empty">불러오는 중…</div></div>
+  </aside>
+  <main class="im-main" id="main">
+    <div class="im-start" id="start">대화를 고르거나 ✎ 로 새 문자를 보내 보세요<br>익명으로도 보낼 수 있어요 · 한 사람당 15통까지</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script>
+App.ready.then(async user => {
+  if (!user) { location.replace('login.html?next=sms.html'); return; }
+  const app = $('#app'), main = $('#main');
+  // 메인 위 유리 창으로 열렸을 때 (sms-notify.js): 닫기는 바깥 페이지에 알려요
+  const EMBED = document.documentElement.classList.contains('im-embed'), shut = () => parent.postMessage('sms-close', location.origin);
+  if (EMBED) { $('#x').hidden = false; $('#x').onclick = shut; $('#home').hidden = true; document.addEventListener('pointerdown', e => { if (!e.target.closest('.im-app')) shut(); }); addEventListener('keydown', e => { if (e.key === 'Escape') shut(); }); }
+  const hm = iso => { const d = new Date(iso); return `${d.getHours() < 12 ? '오전' : '오후'} ${(d.getHours() % 12) || 12}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const dayLabel = iso => { const d = new Date(iso), t = new Date(); const same = (a, b) => a.toDateString() === b.toDateString(); const y = new Date(t); y.setDate(t.getDate() - 1); return same(d, t) ? '오늘' : same(d, y) ? '어제' : `${d.getMonth() + 1}월 ${d.getDate()}일`; };
+  const otherName = t => t.other.name ? t.other.name + (t.other.anon ? ' 🔍' : '') : '익명';
+  let data = { on: false, left: 0, glass: 0, threads: [] }, cur = null, mine = [], others = [];
+  const canSendNow = () => (data.on || user.grade === 'admin') && data.left > 0;
+
+  // 캐릭터 목록: 멤버란과 같은 캐시 (요청 안 늘어요)
+  try {
+    const [all, my] = await Promise.all([Store.charCards(), Store.myCharacters()]);
+    mine = my.filter(c => c.published_at).map(c => ({ id: c.id, name: (c.data || {}).name || '이름 없음' }));
+    const mineIds = new Set(my.map(c => c.id));
+    others = all.filter(c => !mineIds.has(c.id)).map(c => ({ id: c.id, name: normChar(c.data).name || '이름 없음' })).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  } catch (e) {}
+
+  const lastAt = t => (t.msgs[t.msgs.length - 1] || {}).at || '';
+  const sorted = () => data.threads.filter(t => t.msgs.length).sort((a, b) => lastAt(b).localeCompare(lastAt(a)));
+  function drawList() {
+    $('#left').textContent = data.left; $('#glass').textContent = data.glass || 0; $('#closed').hidden = data.on || user.grade === 'admin';
+    const ts = sorted();
+    $('#list').innerHTML = ts.length ? ts.map(t => { const last = t.msgs[t.msgs.length - 1], unread = t.msgs.some(m => !m.mine && !m.read);
+      return `<button class="im-th ${cur && cur.id === t.id ? 'im-on' : ''}" type="button" data-t="${esc(t.id)}">${unread ? '<i class="im-dot"></i>' : ''}
+        <span class="im-tx"><span class="im-top"><b class="${t.other.name ? '' : 'im-anon'}">${esc(otherName(t))}</b><time>${esc(dayLabel(last.at) === '오늘' ? hm(last.at) : dayLabel(last.at))}</time></span>
+        <p>${esc(last.mine ? '나: ' + last.body : last.body)}</p><small>${esc(t.my_name)}${t.my_anon ? ' · 익명으로' : ''}</small></span></button>`; }).join('')
+      : '<div class="im-empty">아직 주고받은 문자가 없어요<br>✎ 를 눌러 첫 문자를 보내 보세요</div>';
+  }
+  $('#list').onclick = e => { const b = e.target.closest('[data-t]'); if (b) openThread(b.dataset.t); };
+
+  async function load() {
+    try { data = await Store.smsList(); }
+    catch (e) { data = { on: false, left: 0, glass: 0, threads: [] }; $('#list').innerHTML = '<div class="im-empty">지금은 비밀 문자가 쉬는 중이에요</div>'; $('#compose').hidden = true; return; }
+    drawList(); if (cur && cur.id) { const t = data.threads.find(x => x.id === cur.id); if (t) { cur = t; drawChat(); } }
+  }
+  $('#refresh').onclick = load;   // 자동으로 계속 묻지 않아요 · 새 답장은 ↻ 로
+
+  /* 대화방 · 아직 보내지 않은 새 대화는 id 없이 { from, fromName, to, toName, anon } */
+  function drawChat(fresh) {
+    const t = cur, msgs = t.msgs || [], canSend = canSendNow();
+    let html = '', prevAt = null;
+    msgs.forEach((r, i) => {
+      if (!prevAt || (new Date(r.at) - new Date(prevAt)) / 6e4 > 30) html += `<div class="im-when"><b>${esc(dayLabel(r.at))}</b> ${esc(hm(r.at))}</div>`;
+      const next = msgs[i + 1], tail = !next || next.mine !== r.mine || (new Date(next.at) - new Date(r.at)) / 6e4 > 30, prev = msgs[i - 1];
+      html += `<div class="im-b ${r.mine ? 'im-me' : 'im-them'} ${tail ? 'im-tail' : ''} ${prev && prev.mine !== r.mine ? 'im-gap' : ''} ${fresh === r.id ? 'im-new' : ''}">${esc(r.body)}</div>`;
+      prevAt = r.at;
+    });
+    const lastMine = [...msgs].reverse().find(r => r.mine);
+    if (lastMine && msgs[msgs.length - 1] === lastMine) html += `<div class="im-read">${lastMine.read ? '읽음' : '전송됨'}</div>`;
+    // 돋보기: 익명 상대 · 아직 확인 전 · 서로 한 통 이상씩
+    const anonOther = t.other && !t.other.name, both = msgs.some(m => m.mine) && msgs.some(m => !m.mine);
+    const glassBtn = t.id && anonOther ? `<button class="im-glass" id="reveal" type="button" ${both && data.glass > 0 ? '' : 'disabled'}>${!both ? '🔍 서로 한 통씩 주고받으면 확인할 수 있어요' : data.glass > 0 ? `🔍 누군지 확인하기 (돋보기 ${data.glass}개)` : '🔍 상점에서 돋보기를 사면 확인할 수 있어요'}</button>` : '';
+    const title = t.other ? otherName(t) : t.toName;
+    // 받은 쪽의 첫 답장: 익명으로 답할지 고르기
+    const firstReply = t.id && t.me === 'b' && !t.my_set;
+    main.innerHTML = `<div class="im-mh"><button class="im-ic im-back" type="button" id="back">‹ 목록</button>
+        <div class="im-who"><b class="${t.other && !t.other.name ? 'im-anon' : ''}">${esc(title)}</b><small>${esc(t.my_name || t.fromName)}${(t.my_anon || t.anon) ? ' · 익명으로 보내는 중' : ''}</small>${glassBtn}</div><span></span></div>
+      <div class="im-msgs" id="msgs">${html || '<div class="im-start">첫 문자를 보내 보세요</div>'}</div>
+      ${firstReply ? `<div class="im-note"><span>나도 익명으로 답하기 <small style="opacity:.7">(한 번 정하면 이 대화에선 그대로예요)</small></span><label class="im-sw"><input type="checkbox" id="replyAnon"><i></i></label></div>` : ''}
+      <form class="im-comp" id="comp"><textarea id="body" rows="1" maxlength="300" placeholder="${canSend ? 'iMessage' : data.left <= 0 ? '15통을 다 보냈어요' : '지금은 보낼 수 없어요'}" ${canSend ? '' : 'disabled'}></textarea><span class="im-cnt" id="cnt"></span><button class="im-send" id="send" type="submit" disabled aria-label="보내기">↑</button></form>`;
+    const box = $('#msgs'); box.scrollTop = box.scrollHeight;
+    $('#back').onclick = () => { app.classList.remove('im-chat'); cur = null; drawList(); };
+    if ($('#reveal')) $('#reveal').onclick = async () => {
+      if (!await askConfirm('돋보기 1개를 써서 이 익명 상대가 누군지 확인할까요?')) return;
+      try { const o = await Store.smsReveal(t.id); t.other = o; data.glass = Math.max(0, (data.glass || 0) - 1); toast(`${o.name} 였어요 🔍`); drawList(); drawChat(); }
+      catch (ex) { toast(ex.message, 'err'); }
+    };
+    const ta = $('#body'), send = $('#send');
+    const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; const n = ta.value.trim().length; send.disabled = !canSend || !n; $('#cnt').textContent = n > 250 ? `${n}/300` : ''; };
+    ta.oninput = grow; ta.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!send.disabled) $('#comp').requestSubmit(); } };
+    $('#comp').onsubmit = async e => {
+      e.preventDefault(); const body = ta.value.trim(); if (!body || send.disabled) return; send.disabled = true;
+      try {
+        if (!t.id) {   // 새 대화 첫 문자
+          const r = await Store.smsStart(t.from, t.to, t.anon, body); data.left = r.left;
+          await load(); cur = data.threads.find(x => x.id === r.thread) || cur; drawList(); drawChat(r.id);
+        } else {
+          const anon = firstReply ? !!($('#replyAnon') || {}).checked : null;
+          const r = await Store.smsSend(t.id, body, anon); data.left = r.left;
+          if (firstReply) { t.my_set = true; t.my_anon = anon; }
+          t.msgs.push({ id: r.id, mine: true, body, read: false, at: r.at }); drawList(); drawChat(r.id);
+        }
+        const b = $('#body'); if (b) b.focus();
+      } catch (ex) { toast(ex.message, 'err'); send.disabled = false; }
+    };
+    if (canSend && matchMedia('(pointer:fine)').matches) ta.focus();
+  }
+  async function openThread(id) {
+    const t = data.threads.find(x => x.id === id); if (!t) return;
+    cur = t; app.classList.add('im-chat'); drawList(); drawChat();
+    if (t.msgs.some(m => !m.mine && !m.read)) { t.msgs.forEach(m => { if (!m.mine) m.read = true; }); drawList(); try { await Store.smsRead(id); } catch (e) {} }   // 안 읽은 게 있을 때만 한 번
+  }
+
+  /* 새 문자: 보내는 캐릭터 · 익명 여부 · 받는 캐릭터 */
+  $('#compose').onclick = () => {
+    if (!mine.length) return toast('게시된 내 캐릭터가 있어야 보낼 수 있어요', 'err');
+    if (!(data.on || user.grade === 'admin')) return toast('지금은 비밀 문자를 보낼 수 없어요', 'err');
+    if (data.left <= 0) return toast('15통을 다 보냈어요', 'err');
+    cur = null; app.classList.add('im-chat'); drawList();
+    main.innerHTML = `<div class="im-mh"><button class="im-ic im-back" type="button" id="back">‹ 목록</button><div class="im-who"><b>새로운 메시지</b></div><span></span></div>
+      <label class="im-new-h"><span>보내는 이:</span><select id="from">${mine.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
+      <div class="im-new-h"><span class="im-grow">익명으로 보내기 <small style="opacity:.7">(받는 사람에겐 '익명' 으로 보여요)</small></span><label class="im-sw"><input type="checkbox" id="anon"><i></i></label></div>
+      <label class="im-new-h"><span>받는 이:</span><input id="q" placeholder="캐릭터 이름" autocomplete="off"></label>
+      <div class="im-pick" id="pick"></div>`;
+    $('#back').onclick = () => { app.classList.remove('im-chat'); main.innerHTML = ''; };
+    const draw = () => { const q = $('#q').value.trim(); $('#pick').innerHTML = others.filter(c => !q || c.name.includes(q)).map(c => `<button type="button" data-id="${esc(c.id)}">${esc(c.name)}</button>`).join('') || '<div class="im-empty">찾는 캐릭터가 없어요</div>'; };
+    $('#q').oninput = draw; draw(); if (matchMedia('(pointer:fine)').matches) $('#q').focus();
+    $('#pick').onclick = e => {
+      const b = e.target.closest('[data-id]'); if (!b) return;
+      const o = others.find(c => c.id === b.dataset.id), f = mine.find(c => c.id === $('#from').value), anon = $('#anon').checked;
+      // 같은 짝 · 같은 익명 여부의 대화가 이미 있으면 거기로
+      const had = data.threads.find(t => t.me === 'a' && t.my_name === f.name && t.my_anon === anon && t.other.name === o.name);
+      if (had) return openThread(had.id);
+      cur = { id: null, from: f.id, fromName: f.name, to: o.id, toName: o.name, anon, msgs: [], my_anon: anon, my_name: f.name, other: null };
+      drawChat();
+    };
+  };
+
+  await load();
+});
+</script>
+</body>
+</html>

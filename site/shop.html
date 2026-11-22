@@ -58,6 +58,8 @@ App.ready.then(async user => {
   const CHEERSVG = { pencil: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="16" y="18" width="48" height="44" rx="2" fill="#fbf8ee"/><path d="M16 30h48M16 40h48M16 50h48" stroke="#9fb4d8" stroke-width="1"/><path d="M26 18v44" stroke="#e08a8a" stroke-width="1"/><path d="M52 58l10-26 4 2-10 26-5 2z" fill="#f2c14e"/><path d="M51 62l1-4 4 2z" fill="#333"/></svg>`,
     sharp: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="16" y="18" width="48" height="44" rx="2" fill="#fdfdff"/><path d="M16 25h48M16 32h48M16 39h48M16 46h48M16 53h48M23 18v44M30 18v44M37 18v44M44 18v44M51 18v44M58 18v44" stroke="#bcd0ee" stroke-width=".6"/><rect x="31" y="13" width="18" height="8" fill="#bedcff" opacity=".8"/><path d="M50 60l12-28" stroke="#34406a" stroke-width="3" stroke-linecap="round"/></svg>`,
     eraser: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="14" y="24" width="52" height="32" rx="8" fill="#fff"/><path d="M14 32a8 8 0 0 1 8-8h22v32H22a8 8 0 0 1-8-8z" fill="#9fb2ff"/><text x="29" y="44" font-size="7" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">ERASE</text><path d="M54 36c2-3 6-1 4 2l-4 4-4-4c-2-3 2-5 4-2z" fill="#ff7aa8"/></svg>` };
+  const GLASS = `<svg viewBox="0 0 80 80" aria-hidden="true" fill="none" stroke="#f1efe9" stroke-linecap="round"><circle cx="35" cy="35" r="16" stroke-width="3.2"/><circle cx="35" cy="35" r="11" fill="#9fc6ff" fill-opacity=".18" stroke="none"/>
+    <path d="M28 29a9 9 0 0 1 8-5" stroke-width="2" opacity=".7"/><path d="M47 47l14 14" stroke-width="6"/></svg>`;   // 돋보기 (비밀 문자 익명 확인)
   let wal, items = [], kind = '', members = [], mine = [], allChars = [];
 
   const item = id => items.find(i => i.id === id);
@@ -68,14 +70,14 @@ App.ready.then(async user => {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
       <div class="w-i">칭호 <b style="color:${t ? esc(myColor()) : 'inherit'};${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div>
-      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div><div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
+      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div>${item('k_glass') || (wal.tickets || {}).k_glass ? `<div class="w-i">돋보기 <b>${(wal.tickets || {}).k_glass || 0}</b>개</div>` : ''}<div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
       <a class="btn ghost sm w-go" href="attendance.html">출석하고 영전 받기 →</a>`;
   }
   /* 칭호 미리보기: 가진 칭호는 내 글자 그대로, 선물 전용 칭호는 "내가 선물하면" 들어갈 내 닉네임으로 */
   const ttlPv = it => Store.titleText(it, wal.items.includes(it.id) ? wal.equip : { from: { [it.id]: user.nickname } });
   const preview = it => it.kind === 'title' ? `<span class="ttl-chip big" style="--tc:${esc(myColor())};${Store.titleFont(it)}">${esc(ttlPv(it))}</span>`
     : it.kind === 'tag' ? `<span class="tagpv" style="color:${esc(it.value)}">${esc(user.nickname)}</span><span class="sw" style="background:${esc(it.value)}"></span>`
-    : it.kind === 'snack' ? CHURU : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
+    : it.kind === 'snack' ? CHURU : it.id === 'k_glass' ? GLASS : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
   function renderGoods() {
     const list = items.filter(i => !kind || i.kind === kind || (kind === 'ticket' && ['boost', 'curse', 'pouch', 'cheer'].includes(i.kind)));
     $('#goods').innerHTML = list.map(it => {
@@ -127,7 +129,7 @@ App.ready.then(async user => {
       ${it.kind === 'cheer' ? `<label class="field"><span>응원 한마디 <small>40자 · 보낸 사람은 안 알려 줘요</small></span><input class="input" id="bx-msg" maxlength="40" placeholder="예) 오늘 수업 甲 받자!"></label>` : ''}
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
-        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.kind === 'ticket' ? '지정권은 사용할 때 관리자에게 알려 주세요.'
+        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.id === 'k_glass' ? '비밀 문자 대화방 위 🔍 버튼으로 익명 상대를 한 번 확인할 수 있어요 서로 한 통 이상씩 주고받아야 써져요' : it.id === 'k_room' ? '지정권은 사용할 때 관리자에게 알려 주세요.' : it.kind === 'ticket' ? '가방에 쌓여요'
         : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
