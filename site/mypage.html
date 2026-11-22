@@ -43,7 +43,7 @@ App.ready.then(async user => {
         <div class="seal star" aria-hidden="true">✦</div>
         <div><div class="eyebrow">My Page</div><h1>${esc(me.nickname)}</h1>
           <div class="meta">${isAdm ? '관리자' : '일반 회원'} · ${esc(me.title || 'Recorder')} · ${pad2(mine.length)} CHARACTERS</div></div>
-        <div class="acts"><button class="btn" data-new>+ 새 캐릭터</button><button class="btn ghost" data-profile>내 프로필 편집</button><button class="btn ghost" data-stat>추가 스탯 배분</button>
+        <div class="acts"><button class="btn" data-new>+ 새 캐릭터</button><button class="btn ghost" data-profile>내 프로필 편집</button>
           ${isAdm ? '<a class="btn ghost" href="admin.html">관리자 페이지</a>' : ''}</div>
       </section>
 
@@ -65,6 +65,7 @@ App.ready.then(async user => {
               ${c.draft ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}&preview=1">👁 미리보기</a>` : ''}
               ${c.published_at ? `<a class="btn sm ghost" href="character.html?id=${encodeURIComponent(c.id)}">게시본 보기</a>` : ''}
               <button class="btn sm ghost" data-edit="${esc(c.id)}">✎ ${c.draft ? '계속 수정' : '수정본 작성'}</button>
+              ${(st !== 'published' || c.draft) ? `<button class="btn sm ghost" data-stat="${esc(c.id)}">＋ 추가 스탯</button>` : ''}
               ${st === 'submitted' ? `<button class="btn sm ghost" data-withdraw="${esc(c.id)}">제출 취소</button>` : ''}
               ${canSubmit && c.draft && !isAdm ? `<button class="btn sm" data-submit="${esc(c.id)}" ${subOk ? '' : 'disabled title="지금은 기간이 아니에요"'}>제출</button>` : ''}
               ${isAdm && c.draft ? `<button class="btn sm" data-publish="${esc(c.id)}">게시 ›</button>` : ''}
@@ -104,15 +105,15 @@ App.ready.then(async user => {
   }
 
   /* 추가 스탯 배분: 원래 스탯은 그대로 · 그 위에 더해지는 몫만 · 확정하면 되돌릴 수 없어요 (서버가 다시 검사해요) */
-  async function statPick() {
+  async function statPick(pick) {
     const [w, mine] = await Promise.all([Store.wallet(), Store.myCharacters()]);
-    const chars = mine.filter(c => c.published_at && c.data);
+    const chars = mine.filter(c => (c.status || 'published') !== 'published' || c.draft);   // 게시 전이거나 수정본을 쓰는 중일 때만
     if (!(w.stat_pts > 0)) return toast('남은 추가 스탯 포인트가 없어요');
-    if (!chars.length) return toast('게시된 캐릭터가 있어야 배분할 수 있어요');
-    let ci = 0; const add = {};
+    if (!chars.length) return toast('게시 전이거나 수정 중인 캐릭터에만 배분할 수 있어요');
+    let ci = Math.max(0, chars.findIndex(c => c.id === pick)); const add = {}; const dat = c => c.draft || c.data || {};
     const box = openModal(`<h2>추가 스탯 배분</h2>
-      <p class="hint-text">원래 스탯은 그대로 두고 그 위에 더해져요 · 한 스탯에 몰아줘도 돼요 · 나눠서 여러 번 써도 돼요<br><b>확정하면 되돌릴 수 없어요</b></p>
-      <label class="field"><span>캐릭터</span><select id="sp-c">${chars.map((c, i) => `<option value="${i}">${esc(c.data.name || '이름 없음')}</option>`).join('')}</select></label>
+      <p class="hint-text">게시 전이거나 수정 중일 때만 할 수 있어요 · 원래 스탯은 그대로 두고 그 위에 더해져요 · 한 스탯에 몰아줘도 돼요 · 나눠서 여러 번 써도 돼요<br><b>확정하면 되돌릴 수 없어요</b></p>
+      <label class="field"><span>캐릭터</span><select id="sp-c">${chars.map((c, i) => `<option value="${i}" ${i === ci ? 'selected' : ''}>${esc(dat(c).name || '이름 없음')}</option>`).join('')}</select></label>
       <div class="sp-left">남은 포인트 <b id="sp-n"></b></div><div class="sp-rows" id="sp-rows"></div>
       <p class="err-text" id="sp-err"></p>
       <div class="modal-foot"><button type="button" class="btn ghost" data-cancel>취소</button><button type="button" class="btn" id="sp-ok">확정</button></div>
@@ -121,7 +122,7 @@ App.ready.then(async user => {
       .sp-row span{font-weight:600}.sp-row em{font-style:normal;color:var(--muted)}.sp-row em sup{color:var(--text)}.sp-row b{text-align:center;font:700 14px var(--mono, monospace)}.sp-row b.on{color:#fff}.sp-row i{font-style:normal;text-align:right;font:600 13px var(--mono, monospace)}</style>`);
     const used = () => Object.values(add).reduce((a, b) => a + b, 0);
     const draw = () => {
-      const c = chars[ci], base = Object.fromEntries(parseKV(c.data.stats)), bo = (w.boosts || {})[c.id] || {};
+      const c = chars[ci], base = Object.fromEntries(parseKV(dat(c).stats)), bo = (w.boosts || {})[c.id] || {};
       $('#sp-n', box).textContent = w.stat_pts - used();
       $('#sp-rows', box).innerHTML = STAT_KEYS.map(k => {
         const b0 = parseFloat(base[k]), extra = Number(bo[k]) || 0, cur = (isNaN(b0) ? 0 : b0) + extra, a = add[k] || 0;
@@ -137,8 +138,8 @@ App.ready.then(async user => {
     $('[data-cancel]', box).onclick = closeModal;
     $('#sp-ok', box).onclick = async () => {
       const c = chars[ci]; if (!used()) return;
-      if (!await askConfirm(`${c.data.name || '이 캐릭터'}에게\n${Object.entries(add).map(([k, v]) => `${k} +${v}`).join(' · ')}\n배분할까요? 확정하면 되돌릴 수 없어요`)) return;
-      try { const r = await Store.statAllocate(c.id, Object.assign({}, add)); closeModal(); toast(`배분했어요 · 남은 포인트 ${r.left}`); }
+      if (!await askConfirm(`${dat(c).name || '이 캐릭터'}에게\n${Object.entries(add).map(([k, v]) => `${k} +${v}`).join(' · ')}\n배분할까요? 확정하면 되돌릴 수 없어요`)) return;
+      try { const r = await Store.statAllocate(c.id, Object.assign({}, add)); closeModal(); toast(`배분했어요 · 남은 포인트 ${r.left}`); render(); }
       catch (ex) { $('#sp-err', box).textContent = ex.message; }
     };
   }
@@ -147,7 +148,7 @@ App.ready.then(async user => {
     try {
       if (t.matches('[data-new]')) return CharEditor.open();
       if (t.matches('[data-profile]')) return editProfile();
-      if (t.matches('[data-stat]')) return statPick();
+      if (t.dataset.stat) return statPick(t.dataset.stat);
       const mine = await Store.myCharacters();
       const row = id => mine.find(c => c.id === id);
       if (t.dataset.edit) return CharEditor.open(row(t.dataset.edit));
