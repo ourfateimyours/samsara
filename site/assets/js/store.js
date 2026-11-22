@@ -75,7 +75,7 @@
     while (set.has(d.toISOString().slice(0, 10))) { n++; d.setUTCDate(d.getUTCDate() - 1); }
     return n;
   };
-  const emptyWallet = () => ({ coin_notes: [], coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null, snack_n: 0, churu_day: null });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
+  const emptyWallet = () => ({ coin_notes: [], coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0, aff: 0, aff_day: null, aff_gain: 0, aff_drop: null, aff_gifts: [], cat_full: false, cat_secrets: [], perk_day: null, snack_n: 0, churu_day: null, stat_pts: 0 });   // perk_day: 오늘 특전을 이미 받았으면 그 날짜 (특전은 하루 하나만)
   const affToday = w => w.aff_day === kstDay() ? (w.aff_gain || 0) : 0;   // 오늘 올린 호감도
   const PROFILE_KEYS = ['nickname', 'title', 'bio', 'seal', 'role'];
 
@@ -241,6 +241,7 @@
       async giveBulk(ids, amount, note) { return ok(await sb.rpc('admin_give_bulk', { p_users: ids, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async giftBulk(ids, note) { return ok(await sb.rpc('admin_gift_bulk', { p_chars: ids, p_note: String(note || '').slice(0, 60) })); },
       async coinNotesSeen() { ok(await sb.rpc('coin_notes_seen')); },
+      async statAllocate(me, char, alloc) { return ok(await sb.rpc('stat_allocate', { p_char: char, p_alloc: alloc })); },   // 추가 스탯 배분 (확정 · 되돌릴 수 없음)
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
@@ -552,6 +553,7 @@
     titleFont: it => it && it.font === 'chosun' ? "font-family:'ChosunNm',serif;" : '',
     async saveShopItem(item) { await this.requireAdmin(); drop('shop', 'shop:all'); return B.saveShopItem(item); },
     /* 사기 · 선물하기: opt = { to: 받는 사람 id (없으면 나), char: 스탯 증가권을 쓸 캐릭터 id } → { wallet, detail } */
+    async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
     async badges() { if (!(await this.user())) return {}; if (!cachedBadges) cachedBadges = await hold('badges', 18e4, () => B.badges()).catch(() => ({})); return cachedBadges; },
