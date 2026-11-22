@@ -439,18 +439,19 @@ App.ready.then(async user => {
 
   /* ---------- 아카이브 파일 ---------- */
   const empty = '';   // 비어 있는 칸은 아무것도 안 보여요
+  const sks = (d.skills || []).filter(s => String(s.name || '').trim() || String(s.desc || '').trim());   // 이름도 설명도 없는 스킬 칸(LV 만 있는 빈 칸)은 안 세요 · 그래야 스킬 둘 + 움짤이면 두 번째가 궁극기
   const SEC = [
     { t: '성격', en: 'PERSONA', r: () => d.persona ? `<div class="text ps-out" style="${personaCSS(d.persona_style)}">${rt(d.persona, 'persona')}</div>` : empty },
     { t: '스킬', en: 'SKILL', r: () => `
       ${d.ability.name ? `<div class="skh"><div class="skh-t"><small class="skh-k">ABILITY</small><b>${esc(d.ability.name)}</b><span class="skh-line" aria-hidden="true"><i></i></span></div>
         </div>` : ''}
       ${d.ability.desc ? `<div class="text sk-text" style="margin:14px 0 10px;${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</div>` : ''}
-      ${d.skills.map((s, i) => { const u = i === Math.min(2, d.skills.length - 1) && d.ult,   /* 궁극기: 세 번째 스킬 · 스킬이 둘뿐이면 두 번째 */ dsc = `<div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${u ? '<div class="dsc-in">' : ''}${rt(s.desc || '설명이 없어요.', 'skill')}${u ? '</div>' : ''}</div>`;   // 궁극기는 한 덩어리로 감싸야 서식 태그 글이 따로 떨어지지 않아요
+      ${sks.map((s, i) => { const u = i === Math.min(2, sks.length - 1) && d.ult,   /* 궁극기: 세 번째 스킬 · 스킬이 둘뿐이면 두 번째 */ dsc = `<div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${u ? '<div class="dsc-in">' : ''}${rt(s.desc || '설명이 없어요.', 'skill')}${u ? '</div>' : ''}</div>`;   // 궁극기는 한 덩어리로 감싸야 서식 태그 글이 따로 떨어지지 않아요
         return `<div class="skr ${u ? 'ult' : ''}" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>
         ${u ? `<div class="ultwrap"><i class="ultimg" data-src="${esc(d.ult)}"></i><div class="ulthud" aria-hidden="true"><i class="ln b"></i><i class="pl c"></i><i class="pl d"></i><span class="lb l"><b>ULTIMATE</b></span><span class="lb r">SKILL ${pad2(i + 1)}<s>/</s>LV.${esc(s.lv || '-')}</span><span class="lb f">FINAL STORY</span></div>${dsc}</div>` : dsc}</div>`; }).join('')}
-      ${!d.ability.name && !d.skills.length ? empty : ''}` },
+      ${!d.ability.name && !sks.length ? empty : ''}` },
 
     { t: '소지품', en: 'BELONGINGS', r: () => d.items.length ? `<div class="items-grid">${d.items.map(itemCard).join('')}</div>` : empty }
   ];
