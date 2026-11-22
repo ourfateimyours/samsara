@@ -12,102 +12,97 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <style>
-  /* 입장 화면: 배경 그림 위에 투명한 유리 창 · 가입 신청을 받을 때만 창이 하나 더 생겨요 */
+  /* 입장 화면: 로고 없이 가운데 유리 창 하나 · 입장만 (가입 신청은 더 안 받아요) · 클래스는 gl- 로 시작 */
   .glass .gate-video { filter: brightness(.6) saturate(.95); transform: scale(1.04); animation: gDrift 30s ease-in-out infinite alternate; }
   @keyframes gDrift { to { transform: scale(1.1) translate(-1%, -1%); } }
-  .glass::after { background: radial-gradient(ellipse 70% 70% at 50% 45%, rgba(5, 6, 15, .15), rgba(5, 6, 15, .75)); }
-  .glass .gate-inner { width: min(780px, 100%); }
-  .glass .gate-head { margin-bottom: 30px; }
-  .glass .gate-head h1 { text-shadow: 0 0 30px rgba(255, 255, 255, .35), 0 4px 30px rgba(0, 0, 0, .6); }
-  .glass .gate-head p { color: rgba(255, 255, 255, .72); text-shadow: 0 1px 8px rgba(0, 0, 0, .7); }
-  .glass .gate-cards { display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
-  .glass .auth-card { width: 340px; max-width: 100%; padding: 30px 28px 24px; border: 1px solid rgba(255, 255, 255, .22); border-radius: 22px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .04)); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
-    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .25); }
-  .glass .auth-card::before { display: none; }
-  .glass #signup-card { width: 400px; }
-  .glass #signup-card[hidden] { display: none; }
-  .glass .auth-card .head { text-align: center; margin-bottom: 20px; }
-  .glass .auth-card .eyebrow { color: rgba(255, 255, 255, .6); }
-  .glass .auth-card h2 { color: #fff; }
-  .glass .field > span { color: rgba(255, 255, 255, .7); }
-  .glass .field input { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .18); border-radius: 12px !important; color: #fff; padding: 12px 14px; transition: background .25s, border-color .25s, box-shadow .25s; }
-  .glass .field input:focus { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .5); box-shadow: 0 0 0 3px rgba(255, 255, 255, .1); outline: none; }
-  .glass .field input::placeholder { color: rgba(255, 255, 255, .45); }
-  .glass #login-card .field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }   /* 입장 칸은 placeholder 만 (읽기 프로그램용 이름은 남겨요) */
-  .glass .btn { border-radius: 12px !important; }
-  .glass #login-card .btn { background: rgba(255, 255, 255, .9); color: #0b0c14; border-color: transparent; font-weight: 700; letter-spacing: .08em; }
-  .glass #login-card .btn:hover { background: #fff; }
-  .glass #signup-card .btn { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .35); color: #fff; }
-  .glass .chk { color: rgba(255, 255, 255, .7); }
-  .glass .note-text { color: rgba(255, 255, 255, .55); }
-  .glass .err-text { color: #ffb4b4; }
-  .glass .auth-card { animation: gIn .7s cubic-bezier(.2, .8, .2, 1) both; }
-  .glass #signup-card { animation-delay: .1s; }
-  @keyframes gIn { from { opacity: 0; transform: translateY(16px) scale(.98); } }
-  @media (max-width: 760px) { .glass .gate-cards { flex-direction: column; align-items: center; } .glass .auth-card, .glass #signup-card { width: 100%; max-width: 400px; } }
-  /* 낮 (06~18시): 메인과 같은 낮 그림 + 벚꽃잎 · 창은 살짝 어둡게 해서 흰 글씨가 잘 보이게 */
-  .gate-petals { position: absolute; inset: 0; z-index: 0; display: none; pointer-events: none; }   /* 배경 그림자 위 · 창 뒤 */
-  .gate-meteors { z-index: 0; }   /* 별똥별도 배경 그림자 위 · 창 뒤 */
-  .glass .gate-inner { position: relative; z-index: 1; }
+  .glass::after { background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(5, 6, 15, .2), rgba(5, 6, 15, .78)); }
+  .gate-petals { position: absolute; inset: 0; z-index: 0; display: none; pointer-events: none; }
+  .gate-meteors { z-index: 0; }
+  .glass .gate-inner { position: relative; z-index: 1; width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; }
   .glass.day .gate-petals { display: block; }
   .glass.day .gate-video { background-image: url(assets/img/lobby-day.webp); filter: brightness(.95) saturate(1.05); }
-  .glass.day::after { background: radial-gradient(ellipse 70% 70% at 50% 45%, rgba(10, 20, 45, .05), rgba(10, 20, 45, .5)); }
-  .glass.day .auth-card { background: linear-gradient(160deg, rgba(20, 26, 48, .42), rgba(20, 26, 48, .26)); }
-  .glass.day .gate-head h1 { text-shadow: 0 2px 24px rgba(10, 20, 45, .55), 0 0 2px rgba(10, 20, 45, .4); }
-  .glass.day .eyebrow, .glass.day .gate-head p, .glass.day .note-text { text-shadow: 0 1px 8px rgba(10, 20, 45, .8); }
-  @media (prefers-reduced-motion: reduce) { .glass .gate-video, .glass .auth-card { animation: none; } }
+  .glass.day::after { background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(10, 20, 45, .08), rgba(10, 20, 45, .55)); }
+
+  /* 위: 한 줄 문구 + 가는 선과 마름모 */
+  .gl-top { text-align: center; margin-bottom: 22px; animation: gIn .8s cubic-bezier(.2, .8, .2, 1) both; }
+  .gl-top .gl-motto { padding-left: .9em; font: 600 13px 'Noto Serif KR', serif; letter-spacing: .9em; color: rgba(235, 240, 255, .82); text-shadow: 0 0 12px rgba(190, 205, 255, .55), 0 1px 6px rgba(0, 0, 0, .7); }
+  .gl-top p { margin: 10px 0 0; font-size: 12.5px; letter-spacing: .04em; color: rgba(255, 255, 255, .66); text-shadow: 0 1px 8px rgba(0, 0, 0, .7); }
+  .gl-rule { display: flex; align-items: center; gap: 10px; width: 220px; margin: 14px auto 0; }
+  .gl-rule::before, .gl-rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55)); }
+  .gl-rule::after { transform: scaleX(-1); }
+  .gl-rule i { width: 6px; height: 6px; rotate: 45deg; background: #fff; box-shadow: 0 0 10px #fff, 0 0 18px rgba(190, 205, 255, .8); }
+
+  /* 유리 창 */
+  .gl-panel { position: relative; width: 100%; box-sizing: border-box; padding: 34px 34px 26px; border-radius: 20px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, .13), rgba(170, 185, 255, .05) 42%, rgba(8, 10, 24, .42));
+    -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 1px 0 rgba(255, 255, 255, .28), 0 40px 90px -30px rgba(0, 0, 0, .75);
+    animation: gIn .8s .08s cubic-bezier(.2, .8, .2, 1) both; }
+  .gl-panel::before { content: ""; position: absolute; left: 16%; right: 16%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 12px rgba(200, 212, 255, .9); }
+  .gl-cn { position: absolute; width: 12px; height: 12px; border: 0 solid rgba(255, 255, 255, .55); pointer-events: none; }
+  .gl-cn.a { left: 10px; top: 10px; border-width: 1px 0 0 1px; } .gl-cn.b { right: 10px; top: 10px; border-width: 1px 1px 0 0; }
+  .gl-cn.c { left: 10px; bottom: 10px; border-width: 0 0 1px 1px; } .gl-cn.d { right: 10px; bottom: 10px; border-width: 0 1px 1px 0; }
+  .glass.day .gl-panel { background: linear-gradient(165deg, rgba(20, 26, 48, .5), rgba(20, 26, 48, .3)); }
+
+  .gl-sec { animation: secIn .45s ease both; }
+  @keyframes secIn { from { opacity: 0; transform: translateY(6px); } }
+
+  /* 칸: 상자 없이 밑줄만 · 누르면 밑줄이 빛나요 */
+  .glass .field { margin-bottom: 18px; }
+  .glass .field > span { display: block; margin-bottom: 2px; font-size: 11px; letter-spacing: .06em; color: rgba(255, 255, 255, .6); }
+  .glass .field > span small { margin-left: 6px; color: rgba(255, 255, 255, .38); }
+  .glass .field input { width: 100%; box-sizing: border-box; padding: 9px 2px 9px !important; background: none !important; border: 0 !important; border-bottom: 1px solid rgba(255, 255, 255, .24) !important; border-radius: 0 !important; color: #fff; font-size: 15px; letter-spacing: .03em; transition: border-color .3s, box-shadow .3s; box-shadow: none; }
+  .glass .field input:focus { outline: none; border-bottom-color: #fff !important; box-shadow: 0 1px 0 0 #fff, 0 10px 16px -12px rgba(200, 212, 255, .9); background: none !important; }
+  .glass .field input::placeholder { color: rgba(255, 255, 255, .3); }
+  .glass .field input:-webkit-autofill { -webkit-text-fill-color: #fff; transition: background-color 9999s; }
+
+  /* 버튼: 하얀 빛 알약 */
+  /* 입장 버튼: 글자만 · 밑에 가는 빛 밑줄 (누를 곳 위에 올리면 밑줄이 길어지고 빛나요) */
+  .gl-go { position: relative; display: block; margin: 14px auto 0; padding: 8px 22px 12px; border: 0; background: none; cursor: pointer; color: #fff;
+    font: 600 16px 'Noto Serif KR', serif; letter-spacing: .5em; text-indent: .5em; text-shadow: 0 0 12px rgba(200, 212, 255, .55); transition: text-shadow .3s; }
+  .gl-go::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 8px rgba(200, 212, 255, .9); transition: left .35s ease, right .35s ease; }
+  .gl-go:hover { text-shadow: 0 0 16px rgba(220, 228, 255, .95); }
+  .gl-go:hover::after { left: 0; right: 0; }
+  .gl-go:disabled { opacity: .5; cursor: default; }
+
+  .glass .err-text { min-height: 0; margin: 0 0 6px; color: #ffb4b4; font-size: 12px; }
+  .glass .err-text:empty { display: none; }
+  .gl-note { margin: 18px 0 0; text-align: center; font-size: 11.5px; letter-spacing: .03em; color: rgba(255, 255, 255, .5); }
+  .gl-mode { margin-top: 14px; text-align: center; font-size: 11px; color: rgba(255, 255, 255, .5); text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+
+  @keyframes gIn { from { opacity: 0; transform: translateY(14px); } }
+  @media (max-width: 520px) { .gl-panel { padding: 24px 22px 22px; } }
+  @media (prefers-reduced-motion: reduce) { .glass .gate-video, .gl-panel, .gl-top, .gl-sec { animation: none; } }
 </style>
 </head>
 <body data-page="login" data-noheader data-nofooter class="gate-page">
 
 <main class="gate-wrap glass">
-  <div class="gate-video gate-photo" aria-hidden="true"></div><!-- 배경: 메인과 같은 그림 (밤 assets/img/lobby-bg.webp · 06~18시엔 낮 그림) -->
-  <div class="gate-petals" id="dayfx" aria-hidden="true"></div><!-- 낮에만 벚꽃잎 -->
-  <div class="gate-meteors" id="meteors" aria-hidden="true"></div><!-- 밤에만 별똥별 -->
+  <div class="gate-video gate-photo" aria-hidden="true"></div>
+  <div class="gate-petals" id="dayfx" aria-hidden="true"></div>
+  <div class="gate-meteors" id="meteors" aria-hidden="true"></div>
   <div class="gate-inner">
-    <header class="gate-head">
-      <div class="eyebrow" id="motto"></div>
-      <h1 id="gname"></h1>
-      <p>승인된 기록자만 들어올 수 있는 기록소예요.</p>
+    <header class="gl-top">
+      <div class="gl-motto">삼사라</div>
+      <div class="gl-rule" aria-hidden="true"><i></i></div>
+      <p>승인된 기록자만 들어올 수 있는 기록소예요</p>
     </header>
 
-    <div class="gate-cards">
-      <!-- 입장 -->
-      <section class="auth-card" id="login-card">
-        <div class="head"><div class="eyebrow">Enter</div><h2>입장</h2></div>
-        <form id="lf" novalidate>
-          <label class="field"><span>아이디</span><input name="id" maxlength="8" placeholder="아이디" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
-          <label class="field"><span>비밀번호</span><input name="pw" type="password" maxlength="8" placeholder="비밀번호" autocomplete="current-password"></label>
-          <p class="err-text" id="lerr" role="alert"></p>
-          <button class="btn btn-block">입장 →</button>
-        </form>
-        <p class="note-text">비밀번호를 잊었다면 관리자에게 문의해 주세요.</p>
-      </section>
+    <div class="gl-panel">
+      <i class="gl-cn a"></i><i class="gl-cn b"></i><i class="gl-cn c"></i><i class="gl-cn d"></i>
 
-      <!-- 가입 신청 -->
-      <section class="auth-card" id="signup-card" hidden><!-- 가입 신청을 받을 때만 보여요 -->
-        <div class="head"><div class="eyebrow">Join</div><h2>가입 신청</h2></div>
-        <form id="sf" novalidate>
-          <label class="field"><span>아이디 <small>영문 소문자·숫자·_ 4~8자</small></span>
-            <input name="id" maxlength="8" autocomplete="username" autocapitalize="none" spellcheck="false"><small class="idchk" id="idchk"></small></label>
-          <div class="row2">
-            <label class="field"><span>비밀번호 <small>6~8자</small></span><input name="pw" type="password" maxlength="8" autocomplete="new-password"></label>
-            <label class="field"><span>비밀번호 확인</span><input name="pw2" type="password" maxlength="8" autocomplete="new-password"></label>
-          </div>
-          <label class="field"><span>닉네임 <small>명부에 보이는 이름</small></span><input name="nickname" maxlength="20" autocomplete="nickname"></label>
-          <label class="field"><span>이메일 <small>아무거나 적어도 돼요</small></span><input name="contact" maxlength="120" autocomplete="off"></label>
-          <p class="err-text" id="serr" role="alert"></p>
-          <button class="btn ghost btn-block" id="sbtn">가입 신청하기</button>
+      <!-- 입장 -->
+      <section class="gl-sec" id="login-card">
+        <form id="lf" novalidate>
+          <label class="field"><span>아이디</span><input name="id" maxlength="8" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+          <label class="field"><span>비밀번호</span><input name="pw" type="password" maxlength="8" autocomplete="current-password"></label>
+          <p class="err-text" id="lerr" role="alert"></p>
+          <button class="gl-go">입장</button>
         </form>
-        <div class="done" id="done" hidden>
-          <div class="done-ic">✦</div>
-          <h3>가입 신청 완료!</h3>
-          <p>관리자가 승인하면 입장할 수 있어요.<br>승인 전에는 로그인이 되지 않아요.</p>
-        </div>
+        <p class="gl-note">비밀번호를 잊었다면 관리자에게 문의해 주세요</p>
       </section>
     </div>
-    <p class="note-text" id="mode-note"></p>
+    <p class="gl-mode" id="mode-note"></p>
   </div>
 </main>
 
@@ -117,16 +112,14 @@
 <script src="assets/js/common.js"></script>
 <script>
 if (isDayTime()) { $('.gate-wrap').classList.add('day'); sakura($('#dayfx'), 13); }   // 낮이면 낮 배경 + 벚꽃 (?day=1 로 미리보기)
-else { $('.gate-wrap').classList.add('night'); meteors($('#meteors')); }   // 밤이면 밤 배경 + 별똥별 (?day=0 으로 미리보기) · 배경은 지금 시간 것 하나만 받아요
+else { $('.gate-wrap').classList.add('night'); meteors($('#meteors')); }   // 밤이면 밤 배경 + 별똥별 (?day=0 으로 미리보기)
 App.ready.then(async user => {
   const next = (() => {
     const n = qs('next') || '';
     return /^[a-z]+\.html(\?[\w=&%.-]*)?$/i.test(n) && !/^login/i.test(n) ? n : 'index.html';
   })();
   if (user) { location.replace(next); return; }
-  $('#motto').textContent = SITE_CONFIG.siteMotto || '';
-  $('#gname').innerHTML = [...(SITE_CONFIG.siteName || '')].map((c, i) => `<span style="--i:${i}">${esc(c)}</span>`).join('');
-  if (Store.mode === 'demo') $('#mode-note').textContent = '지금은 데모 모드예요. 계정과 글이 이 브라우저에만 저장됩니다.';
+  if (Store.mode === 'demo') $('#mode-note').textContent = '지금은 데모 모드예요 계정과 글이 이 브라우저에만 저장됩니다';
 
   /* ---------- 입장 ---------- */
   const lf = $('#lf');
@@ -141,36 +134,6 @@ App.ready.then(async user => {
     } catch (ex) { $('#lerr').textContent = ex.message; btn.disabled = false; }
   };
 
-  /* ---------- 가입 신청 ---------- */
-  const sf = $('#sf'), chk = $('#idchk');
-  let s = {}; try { s = await Store.settings(); } catch (e) {}
-  if (s.signup_open === false) return;   // 가입 신청을 안 받을 땐 입장 창 하나만
-  $('#signup-card').hidden = false;
-  let t;
-  const checkId = async () => {
-    const v = sf.id.value.trim().toLowerCase(); sf.id.value = v;
-    if (!v) { chk.textContent = ''; chk.className = 'idchk'; return; }
-    try {
-      Store.checkId(v);
-      const ok = await Store.usernameAvailable(v);
-      chk.textContent = ok ? '✓ 사용할 수 있는 아이디예요' : '✕ 이미 있는 아이디예요';
-      chk.className = 'idchk ' + (ok ? 'ok' : 'no');
-    } catch (ex) { chk.textContent = '✕ ' + ex.message; chk.className = 'idchk no'; }
-  };
-  if (sf.id) {
-    sf.id.oninput = () => { clearTimeout(t); t = setTimeout(checkId, 350); };
-    sf.onsubmit = async e => {
-      e.preventDefault(); $('#serr').textContent = '';
-      if (sf.pw.value !== sf.pw2.value) return $('#serr').textContent = '비밀번호가 서로 달라요.';
-      const btn = $('#sbtn'); btn.disabled = true;
-      try {
-        const r = await Store.signUp(sf.id.value, sf.pw.value, sf.nickname.value, sf.contact.value);
-        if (r.user) { toast('첫 관리자 계정이에요. 바로 입장해요!'); return location.replace(next); }
-        sf.hidden = true; $('#done').hidden = false;
-      } catch (ex) { $('#serr').textContent = ex.message; btn.disabled = false; }
-    };
-  }
-  if (qs('mode') === 'signup' && sf.id) sf.id.focus();
 });
 </script>
 </body>
