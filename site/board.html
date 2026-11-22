@@ -63,6 +63,7 @@ App.ready.then(async user => {
     render();
   }
 
+  const isAdm = () => !!user && user.grade === 'admin';   // 관리자: 남의 쪽지 · 실도 떼기 (수정은 본인만)
   function noteHTML(n) {
     const ch = n.character_id && chars.find(c => c.id === n.character_id);
     const cd = (ch && ch.data) || {};
@@ -78,7 +79,7 @@ App.ready.then(async user => {
       ${n.body ? `<div class="n-body">${esc(n.body)}</div>` : ''}
       <div class="n-meta">${esc(n.author)} · ${fmtDate(n.created_at)}${ch && n.title ? ` · <a href="character.html?id=${encodeURIComponent(ch.id)}">${esc(ch.data.name)}</a>` : ''}</div>
       ${stkHTML(n, 'stk')}
-      ${mine ? `<div class="n-tools"><button data-act="edit">수정</button><button data-act="del">떼기</button></div>` : ''}
+      ${mine ? `<div class="n-tools"><button data-act="edit">수정</button><button data-act="del">떼기</button></div>` : isAdm() ? `<div class="n-tools"><button data-act="del">떼기</button></div>` : ''}
     </div>`;
   }
 
@@ -176,12 +177,10 @@ App.ready.then(async user => {
         ${n.body ? `<p class="nr-body">${esc(n.body)}</p>` : '<p class="nr-body dim">적힌 내용이 없어요.</p>'}
         <div class="nr-meta"><span class="nr-who">${esc(n.author)}</span><span>${fmtDate(n.created_at)}</span>${ch ? `<a href="character.html?id=${encodeURIComponent(ch.id)}">${esc(ch.data.name)} 프로필 ›</a>` : ''}</div>
         ${stkPanel(n, mine)}
-        ${mine ? `<div class="nr-acts"><button type="button" class="nr-btn" data-nr="del">떼기</button><button type="button" class="nr-btn go" data-nr="edit">수정</button></div>` : ''}
+        ${mine ? `<div class="nr-acts"><button type="button" class="nr-btn" data-nr="del">떼기</button><button type="button" class="nr-btn go" data-nr="edit">수정</button></div>` : isAdm() ? `<div class="nr-acts"><button type="button" class="nr-btn" data-nr="del">떼기 (관리자)</button></div>` : ''}
       </div>`, 'note-read-modal');
-    if (mine) {
-      $('[data-nr="edit"]', m).onclick = () => editNote(n);
-      $('[data-nr="del"]', m).onclick = () => delNote(n);
-    }
+    if (mine) $('[data-nr="edit"]', m).onclick = () => editNote(n);
+    if (mine || isAdm()) $('[data-nr="del"]', m).onclick = () => delNote(n);   // 관리자는 남의 쪽지도 뗄 수 있어요
     // 스티커 붙이기 · 떼기 → 쪽지를 다시 그리고 읽기 창도 새로
     const after = st => { n.stickers = st; render(); readNote(n); };
     $$('[data-stk-add]', m).forEach(b => b.onclick = async () => { b.disabled = true; try { after(await Store.noteStickerAdd(n.id, b.dataset.stkAdd)); toast('스티커를 붙였어요 ✦'); } catch (e) { toast(e.message, 'err'); b.disabled = false; } });
@@ -228,7 +227,7 @@ App.ready.then(async user => {
   svg.addEventListener('click', async e => {
     const p = e.target.closest('[data-link]'); if (!p) return;
     const l = links.find(x => x.id === p.dataset.link);
-    if (!user || user.id !== l.owner_id) return toast(`@${l.author} 님이 이은 실이에요.`);
+    if (!user || (user.id !== l.owner_id && !isAdm())) return toast(`@${l.author} 님이 이은 실이에요.`);   // 관리자는 남의 실도 끊을 수 있어요
     if (!await askConfirm('이 실을 끊을까요?')) return;
     try { await Store.remove('links', l.id); links = links.filter(x => x !== l); drawStrings(); }
     catch (ex) { toast(ex.message, 'err'); }
