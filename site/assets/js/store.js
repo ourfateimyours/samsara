@@ -101,7 +101,7 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false, stock_on: false, theater_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
@@ -241,6 +241,12 @@
       async giveBulk(ids, amount, note) { return ok(await sb.rpc('admin_give_bulk', { p_users: ids, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async giftBulk(ids, note) { return ok(await sb.rpc('admin_gift_bulk', { p_chars: ids, p_note: String(note || '').slice(0, 60) })); },
       async coinNotesSeen() { ok(await sb.rpc('coin_notes_seen')); },
+      async smsList() { return ok(await sb.rpc('sms_list')); },   // 비밀 문자: 화면을 열 때 한 번
+      async smsStart(from, to, anon, body) { return ok(await sb.rpc('sms_start', { p_from: from, p_to: to, p_anon: !!anon, p_body: String(body || '').slice(0, 300) })); },
+      async smsSend(thread, body, anon) { return ok(await sb.rpc('sms_send', { p_thread: thread, p_body: String(body || '').slice(0, 300), p_anon: anon == null ? null : !!anon })); },
+      async smsRead(thread) { ok(await sb.rpc('sms_read', { p_thread: thread })); },
+      async smsReveal(thread) { return ok(await sb.rpc('sms_reveal', { p_thread: thread })); },
+      async smsPeek() { return ok(await sb.rpc('sms_peek')) || { n: 0, last: null }; },
       async statAllocate(me, char, alloc) { return ok(await sb.rpc('stat_allocate', { p_char: char, p_alloc: alloc })); },   // 추가 스탯 배분 (확정 · 되돌릴 수 없음)
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
@@ -553,6 +559,9 @@
     titleFont: it => it && it.font === 'chosun' ? "font-family:'ChosunNm',serif;" : '',
     async saveShopItem(item) { await this.requireAdmin(); drop('shop', 'shop:all'); return B.saveShopItem(item); },
     /* 사기 · 선물하기: opt = { to: 받는 사람 id (없으면 나), char: 스탯 증가권을 쓸 캐릭터 id } → { wallet, detail } */
+    smsList() { return B.smsList(); }, smsStart(from, to, anon, body) { return B.smsStart(from, to, anon, body); }, smsSend(thread, body, anon) { return B.smsSend(thread, body, anon); },
+    smsRead(thread) { drop('smspeek'); return B.smsRead(thread); }, smsReveal(thread) { return B.smsReveal(thread); },
+    async smsPeek(fresh) { const u = await this.user(); if (!u) return { n: 0, last: null }; if (fresh) drop('smspeek'); return hold('smspeek', 24e4, () => B.smsPeek()); },   // 새 문자 알림: 4분 동안은 다시 안 물어봐요
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */

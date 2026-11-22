@@ -63,6 +63,14 @@
       <path d="M32 44V51" stroke="#fff" stroke-width="3"/><path d="M22 52H42" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>`),
     stock: svg(id => `<rect x="12" y="37" width="8" height="15" rx="1.4" ${F(id)} opacity=".6"/><rect x="25" y="30" width="8" height="22" rx="1.4" ${F(id)} opacity=".8"/><rect x="38" y="23" width="8" height="29" rx="1.4" ${F(id)}/>
       <path d="M10 29L23 18L32 24L50 10" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 9H51V19" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`),
+    /* 문자: 말풍선 두 개 (비밀 문자) */
+    sms: svg(id => `<path d="M10 14H40A5 5 0 0 1 45 19V34A5 5 0 0 1 40 39H22L13 46V39H10A5 5 0 0 1 5 34V19A5 5 0 0 1 10 14Z" ${F(id)}/>
+      <path d="M48 24H54A5 5 0 0 1 59 29V42A5 5 0 0 1 54 47H52V53L45 47H34A5 5 0 0 1 29 42V41H40A7 7 0 0 0 47 34V24Z" ${F(id)} opacity=".55"/>
+      <circle cx="16" cy="26.5" r="2.6" fill="${INK}"/><circle cx="25" cy="26.5" r="2.6" fill="${INK}"/><circle cx="34" cy="26.5" r="2.6" fill="${INK}"/>`),
+    /* 스토리: 펼친 책 위로 떠오르는 십자 빛 */
+    story: svg(id => `<path d="M8 22C15 19 23 19.5 31 24V52C23 47.5 15 47 8 50Z" ${F(id)}/><path d="M56 22C49 19 41 19.5 33 24V52C41 47.5 49 47 56 50Z" ${F(id)} opacity=".7"/>
+      <path d="M14 30C18 29 22 29.5 26 31.5M14 37C18 36 22 36.5 26 38.5" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M32 4L34 13L43 15L34 17L32 26L30 17L21 15L30 13Z" fill="#fff"/>`),
     new: svg(id => `<path d="M16 9H36L46 19V54H16Z" ${F(id)}/><path d="M22 28H40M22 35H36M22 42H31" stroke="${INK}" stroke-width="1.7" stroke-linecap="round"/>`, spark(50, 12, 3))
   };
 })();
