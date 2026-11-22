@@ -445,7 +445,7 @@ App.ready.then(async user => {
       ${d.ability.name ? `<div class="skh"><div class="skh-t"><small class="skh-k">ABILITY</small><b>${esc(d.ability.name)}</b><span class="skh-line" aria-hidden="true"><i></i></span></div>
         </div>` : ''}
       ${d.ability.desc ? `<div class="text sk-text" style="margin:14px 0 10px;${personaCSS(d.ability.style, ASTYLE_DEF)}">${esc(d.ability.desc)}</div>` : ''}
-      ${d.skills.map((s, i) => { const u = i === 2 && d.ult, dsc = `<div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${rt(s.desc || '설명이 없어요.', 'skill')}</div>`;
+      ${d.skills.map((s, i) => { const u = i === Math.min(2, d.skills.length - 1) && d.ult,   /* 궁극기: 세 번째 스킬 · 스킬이 둘뿐이면 두 번째 */ dsc = `<div class="dsc" style="${personaCSS(d.ability.style, ASTYLE_DEF)}">${u ? '<div class="dsc-in">' : ''}${rt(s.desc || '설명이 없어요.', 'skill')}${u ? '</div>' : ''}</div>`;   // 궁극기는 한 덩어리로 감싸야 서식 태그 글이 따로 떨어지지 않아요
         return `<div class="skr ${u ? 'ult' : ''}" data-sk="${i}"><button><span class="no">${pad2(i + 1)}</span><span class="sk-dm" aria-hidden="true"><i class="dm lg"></i></span>
         <span class="t"><small>SKILL ${pad2(i + 1)}</small><b>${esc(s.name)}</b></span>
         <span class="lvb"><i style="--w:${lv(s.lv)}%"></i>LV.${esc(s.lv || '-')}</span></button>
@@ -482,7 +482,7 @@ App.ready.then(async user => {
     $$('[data-go]', arc).forEach(b => b.classList.toggle('on', +b.dataset.go === cur));
     if (opt.skill != null) { const r = $(`.skr[data-sk="${opt.skill}"]`, arc); if (r) { r.classList.add('open'); r.scrollIntoView({ block: 'center' }); ultShow(r); } }
   }
-  // 궁극기(세 번째 스킬): 열 때 움짤을 처음 불러오고 선 · 글씨를 다시 그어요
+  // 궁극기(세 번째 스킬 · 둘뿐이면 두 번째): 열 때 움짤을 처음 불러오고 선 · 글씨를 다시 그어요
   function ultShow(r) {
     if (!r.classList.contains('ult')) return;
     const img = $('.ultimg', r), w = $('.ultwrap', r);
