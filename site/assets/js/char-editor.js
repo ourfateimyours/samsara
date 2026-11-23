@@ -72,7 +72,7 @@ window.normChar = (d = {}) => {
     prompts: d.prompts || [], custom: d.custom || [], related: d.related || [], sections: d.sections || [],
     tags: d.tags || [], 
       keyring: Object.assign({ type: 'none', text: '', img: '' }, d.keyring || (d.charmImg ? { type: 'acrylic', img: d.charmImg } : {})), silhouette: false, card: false,   // 검은 실루엣 · 카드 액자 표시는 없앴어요 (예전 기록에 켜져 있어도 꺼진 채로)
-    items: (d.items || []).slice(0, 6),
+    items: (d.items || []).slice(0, 8),
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
     ult: safeUrl(d.ult) ? d.ult : '',   // 궁극기 움짤: 세 번째 스킬(둘뿐이면 두 번째)을 열면 설명 뒤에 깔려요
     phoneBg: d.phoneBg === 'moon' ? 'moon' : 'earth',   // 관계 휴대폰 배경: 지구 / 달
@@ -264,7 +264,7 @@ window.CharEditor = {
           <p class="hint-text">숫자로 적어 주세요. ${statLocked ? '<b style="color:#ffcf6b">🔒 스탯은 처음 등록한 뒤로는 관리자만 고칠 수 있어요.</b>' : '처음 등록한 뒤로는 <b>관리자만</b> 고칠 수 있으니 신중하게 적어 주세요.'}</p>
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
-        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 6개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
+        <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 8개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
         <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
 
 
@@ -296,7 +296,7 @@ window.CharEditor = {
       { k: 'name', ph: '소지품 이름', max: 30 },
       { k: 'rel', type: 'select', options: () => [['', '— 선물한 · 관련 캐릭터 (선택) —']].concat(others.map(c => [c.id, (c.data && c.data.name) || '?'])) },
       { k: 'img', type: 'img', full: true },
-      { k: 'desc', type: 'textarea', ph: '소개 / 이야기', rows: 4, full: true }], '소지품 추가', false, 6);
+      { k: 'desc', type: 'textarea', ph: '소개 / 이야기', rows: 4, full: true }], '소지품 추가', false, 8);
     // 관계란: 캐릭터 · 상대 휴대폰 알림 (아이메시지 · 문자 → 메시지 칸 / 부재중 전화 → 표시 시각 · 횟수 칸)
     const isMsg = v => v.msgType === 'imessage' || v.msgType === 'sms', isCall = v => v.msgType === 'missed';
     const getRel = listEditor($('#e-rel', m), d.related.map(r => r.msgType === 'sms' ? Object.assign({}, r, { msgType: 'imessage' }) : r), [   // 예전 '문자' 는 메시지로 합쳐요
