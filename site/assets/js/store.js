@@ -101,7 +101,7 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false, mj_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
@@ -249,6 +249,34 @@
       async smsPeek() { return ok(await sb.rpc('sms_peek')) || { n: 0, last: null }; },
       async smsTargets() { return ok(await sb.rpc('sms_targets')) || []; },   // 받는 캐릭터 (게시 안 된 캐릭터도 · 이름만)
       async smsMore(char) { return ok(await sb.rpc('sms_more', { p_char: char })); },   // 15통 추가 (이성 1)
+      // 말장난: 돈 · 단서 · 귓속말 횟수 · 마권은 서버 함수 · 대화와 움직임은 실시간 신호로만 (저장 안 함 · 주기적 요청 없음)
+      async mjRpc(fn, args) { return ok(await sb.rpc('mj_' + fn, args || {})); },
+      async mjSub(uid, h) {
+        const { data } = await sb.auth.getSession();
+        if (data.session) sb.realtime.setAuth(data.session.access_token);
+        const all = sb.channel('mj', { config: { broadcast: { self: false } } });
+        all.on('broadcast', { event: 'ping' }, m => h.ping && h.ping((m.payload || {}).t || '')).subscribe();
+        const mine = sb.channel('mjw:' + uid, { config: { private: true } });
+        ['w', 'p', 'pinv', 'pup', 'off', 'offd'].forEach(ev => mine.on('broadcast', { event: ev }, m => h.mine && h.mine(ev, m.payload || {})));
+        mine.subscribe();
+        let room = null, place = '', me = null;
+        const enter = (p, info) => {
+          if (room) sb.removeChannel(room);
+          place = p; me = info;
+          room = sb.channel('mjp:' + p, { config: { private: true, broadcast: { self: false }, presence: { key: uid } } });   // 참가자만 (서버 규칙)
+          room.on('presence', { event: 'sync' }, () => { const st = room.presenceState(); h.people && h.people(p, Object.keys(st).map(k => Object.assign({ u: k }, (st[k] || [])[0] || {}))); })
+            .on('presence', { event: 'join' }, ({ key }) => { if (key !== uid && me) room.track(me); })   // 새로 온 사람에게 지금 자리를 알려 줘요
+            .on('broadcast', { event: 'ev' }, m => h.ev && h.ev(p, m.payload || {}))
+            .subscribe(s => { if (s === 'SUBSCRIBED') room.track(me); });
+        };
+        return {
+          enter,
+          send: x => room && room.send({ type: 'broadcast', event: 'ev', payload: Object.assign({}, x, { from: uid }) }).catch(() => {}),
+          spot: info => { me = info; },   // 내 자리 기억 (새로 온 사람에게만 다시 알려요)
+          ping: t => all.send({ type: 'broadcast', event: 'ping', payload: { t: t || '' } }).catch(() => {}),
+          stop() { [all, mine, room].forEach(c => c && sb.removeChannel(c)); }
+        };
+      },
       async statAllocate(me, char, alloc) { return ok(await sb.rpc('stat_allocate', { p_char: char, p_alloc: alloc })); },   // 추가 스탯 배분 (확정 · 되돌릴 수 없음)
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
@@ -566,6 +594,8 @@
     async smsPeek(fresh) { const u = await this.user(); if (!u) return { n: 0, last: null }; if (fresh) drop('smspeek'); return hold('smspeek', 24e4, () => B.smsPeek()); },   // 새 문자 알림: 4분 동안은 다시 안 물어봐요
     smsTargets() { return hold('smstg', 3e5, () => B.smsTargets()); },   // 새 문자 창을 열 때 · 5분 동안은 다시 안 물어봐요
     async smsMore(char) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.smsMore(char); },
+    mj(fn, args) { return B.mjRpc(fn, args); },
+    mjSub(uid, h) { return B.mjSub(uid, h); },
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
