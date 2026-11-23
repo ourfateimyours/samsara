@@ -282,7 +282,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05070c;color:#fff;fon
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js?v=1123m"></script>
+<script src="assets/js/store.js?v=1123n"></script>
 <script src="assets/js/common.js"></script>
 <script>
 (async () => {
@@ -406,7 +406,7 @@ function goPlace(p, partner) {
     Object.keys(ppl).forEach(k => { if (ppl[k].el) ppl[k].el.remove(); delete ppl[k]; });
     Object.keys(holds).forEach(k => delete holds[k]);
     kissTo = null; here = p;
-    me = { u: user.id, n: S.me.n, img: S.me.img, x: 30 + Math.random() * 40, y: 80 + Math.random() * 8 };
+    me = { u: user.id, n: S.me.n, img: S.me.img, x: 42 + Math.random() * 50, y: 74 + Math.random() * 16 };   // 왼쪽 아래 대화창에 안 가리게 오른쪽에 흩어져 서요
     ppl[user.id] = me;
     st.style.backgroundImage = `url(https://i.imgur.com/${BG[here]}.png)`;
     sys(`${here}에 들어왔어요`);
