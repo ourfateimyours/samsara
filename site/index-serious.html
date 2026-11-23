@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>三娑罗 — 삼사라</title>
@@ -179,6 +179,7 @@
   <nav class="lb-side" aria-label="바로가기">
     <a class="rb" href="attendance.html" id="sb-att"><span class="ci" data-emb="attend"></span><b>출석</b></a>
     <button type="button" class="rb" data-music><span class="ci" data-emb="music"></span><b>음악</b></button>
+    <a class="rb" href="sms.html" id="sb-sms" hidden><span class="ci" data-emb="sms"></span><b>문자</b><em class="cnt" id="n-sms"></em></a>
     <a class="rb" href="theater.html" id="sb-theater" hidden><span class="ci" data-emb="theater"></span><b>상영관</b></a>
     <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci" data-emb="stock"></span><b>주식</b></a>
   </nav>
@@ -370,7 +371,8 @@ App.ready.then(async user => {
   let all = [], teles = [], s = {}, wal = { coins: 0, items: [], equip: {}, snacks: 0 }, att = [], shop = [];
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.charCards(), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
   if (s && s.stock_on) $('#sb-stock').hidden = false;
-  if ((s && s.theater_on) || user.grade === 'admin') $('#sb-theater').hidden = false;   // 상영관이 열려 있을 때만 (관리자는 늘)   // 빼빼로 증권이 열려 있을 때만
+  if ((s && s.sms_on) || user.grade === 'admin') $('#sb-sms').hidden = false;   // 비밀 문자: 열려 있을 때만 · 안 읽은 수와 알림은 sms-notify.js 가 (누르면 유리 창으로 열려요)
+  if (s && s.theater_on) $('#sb-theater').hidden = false;   // 상영관이 열려 있을 때만 (관리자도 똑같이 · 관리 화면에서 끄면 메인 버튼도 사라져요)   // 빼빼로 증권이 열려 있을 때만
   const pub = all.filter(c => c.published_at);   // 게시된 캐릭터 (수정본을 심사받는 중이어도 게시된 상태)
   const mine = all.filter(c => c.owner_id === user.id);
 
