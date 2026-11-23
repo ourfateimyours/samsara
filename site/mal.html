@@ -297,10 +297,11 @@ const user = await App.ready;
 if (!user) return;
 
 /* ── 서버 상태 ── */
-let S = null, off = 0;
+let S = null, off = 0, entered = false;
 async function load() {
   S = await Store.mj('state');
   off = Date.parse(S.now) - Date.now();
+  if (entered && !S.me) { alert('서버 참가자 명단에 없어요 · 다시 입장해 주세요'); location.reload(); }   // 리셋 · 빼기로 명단에서 빠졌으면 입장 화면으로
   return S;
 }
 try { await load(); } catch (e) { $('#mp-closedtx').textContent = e.message; $('#mp-closed').hidden = false; return; }
@@ -733,6 +734,7 @@ async function finish() {
 
 /* ── 들어가기 ── */
 function enterWorld() {
+  entered = true;
   $('#mp-enter').hidden = true;
   goPlace('거실', null);
   const r = rounds(); lastDone = r.d; raceShown = r.d;
