@@ -119,7 +119,7 @@ App.ready.then(async user => {
   try {
     [wal, items, members, mine, allChars] = await Promise.all([Store.wallet(), Store.shopItems(), Store.profiles(), Store.myCharacters(), Store.charNames()]);
   } catch (e) { toast(e.message, 'err'); wal = wal || { coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0 }; }
-  try { const st = await Store.settings(); smsOn = !!st.sms_on || user.grade === 'admin'; } catch (e) {}   // 설정은 다른 화면과 같은 캐시
+  try { const st = await Store.settings(); smsOn = !!st.sms_on; } catch (e) {}   // 15통 추가 칸: 비밀 문자 스위치가 켜져 있을 때만 (관리자도 똑같이 · 기능을 지운 뒤 빈 칸이 안 보이게) · 설정은 다른 화면과 같은 캐시
   renderAll();
 
   /* 비밀 문자 15통 추가: 캐릭터 고르고 → 이성 1 내기 */
