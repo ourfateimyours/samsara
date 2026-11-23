@@ -263,11 +263,15 @@
         const enter = (p, info) => {
           if (room) sb.removeChannel(room);
           place = p; me = info;
-          room = sb.channel('mjp:' + p, { config: { private: true, broadcast: { self: false }, presence: { key: uid } } });   // 참가자만 (서버 규칙)
+          const known = new Set();
+          const topic = 'mjp:' + [...p].map(c => c.charCodeAt(0).toString(36)).join('');   // 장소 이름을 영문 숫자로 (채널 이름에 한글을 안 써요)
+          room = sb.channel(topic, { config: { private: true, broadcast: { self: false }, presence: { key: uid } } });   // 참가자만 (서버 규칙)
           room.on('presence', { event: 'sync' }, () => { const st = room.presenceState(); h.people && h.people(p, Object.keys(st).map(k => Object.assign({ u: k }, (st[k] || [])[0] || {}))); })
-            .on('presence', { event: 'join' }, ({ key }) => { if (key !== uid && me) room.track(me); })   // 새로 온 사람에게 지금 자리를 알려 줘요
+            // 처음 보는 사람이 들어왔을 때만 내 지금 자리를 한 번 알려 줘요 (자리 알림은 presence 를 다시 보내지 않아요 · 서로 주고받는 반복이 생기지 않게)
+            .on('presence', { event: 'join' }, ({ key }) => { if (key === uid || known.has(key)) return; known.add(key); if (me) room.send({ type: 'broadcast', event: 'ev', payload: { k: 'mv', x: me.x, y: me.y, from: uid } }).catch(() => {}); })
+            .on('presence', { event: 'leave' }, ({ key }) => { known.delete(key); })
             .on('broadcast', { event: 'ev' }, m => h.ev && h.ev(p, m.payload || {}))
-            .subscribe(s => { if (s === 'SUBSCRIBED') room.track(me); });
+            .subscribe((s, err) => { if (s === 'SUBSCRIBED') room.track(me); else if (s !== 'CLOSED') console.warn('말장난 연결:', s, err || ''); });
         };
         return {
           enter,
