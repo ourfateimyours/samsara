@@ -200,6 +200,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05070c;color:#fff;fon
       <label>캐릭터 그림 링크 (배경이 투명한 PNG · imgur 등)</label>
       <input id="mp-url" placeholder="https://i.imgur.com/....png">
       <div class="mp-pv" id="mp-pv"><span>그림이 여기 보여요</span></div>
+      <div id="mp-pwbox" hidden><label>방 비밀번호</label><input id="mp-pw" type="password" autocomplete="off" maxlength="40"></div>
       <div class="mp-note" id="mp-err"></div>
     </div>
     <div class="mp-btns"><a class="mp-back" href="index.html" style="margin-right:auto;align-self:center;font-size:12px;color:#5a6680">메인으로</a><button class="mp-go" id="mp-go">입장</button></div>
@@ -765,10 +766,11 @@ $('#mp-go').onclick = async () => {
   if (!$('#mp-char').value) { $('#mp-err').textContent = '캐릭터가 있어야 들어올 수 있어요'; return; }
   if (!url) { $('#mp-err').textContent = '그림을 먼저 넣어 주세요'; return; }
   const b = $('#mp-go'); b.disabled = true;
-  try { S = await Store.mj('join', { p_char: $('#mp-char').value, p_img: url }); off = Date.parse(S.now) - Date.now(); sub.ping('join'); enterWorld(); }
+  try { S = await Store.mj('join', { p_char: $('#mp-char').value, p_img: url, p_pw: $('#mp-pw').value }); off = Date.parse(S.now) - Date.now(); sub.ping('join'); enterWorld(); }
   catch (e) { $('#mp-err').textContent = e.message; }
   b.disabled = false;
 };
+$('#mp-pwbox').hidden = !S.locked;
 $('#mp-enter').hidden = false;
 })();
 </script>
