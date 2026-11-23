@@ -117,12 +117,12 @@ html.im-day .im-new-h select option { background: #fff; color: #111; }
 <div class="im-app" id="app"><button class="im-x" id="x" type="button" aria-label="닫기" hidden>✕</button>
   <aside class="im-side">
     <div class="im-sh"><div class="im-row"><a href="index.html" id="home">‹ 홈</a><span><button class="im-ic" id="refresh" type="button" title="새로고침">↻</button> <button class="im-ic" id="compose" type="button" title="새 문자">✎</button></span></div>
-      <h1>메시지</h1><div class="im-left">비밀 문자 · 남은 <b id="left">-</b> / 15통 · 돋보기 <b id="glass">0</b></div></div>
+      <h1>메시지</h1><div class="im-left">비밀 문자 · 남은 <b id="left">-</b> / <span id="cap">15</span>통 · 돋보기 <b id="glass">0</b></div></div>
     <div class="im-closed" id="closed" hidden>지금은 비밀 문자를 보낼 수 없어요 · 받은 문자는 읽을 수 있어요</div>
     <div class="im-list" id="list"><div class="im-empty">불러오는 중…</div></div>
   </aside>
   <main class="im-main" id="main">
-    <div class="im-start" id="start">대화를 고르거나 ✎ 로 새 문자를 보내 보세요<br>익명으로도 보낼 수 있어요 · 한 사람당 15통까지</div>
+    <div class="im-start" id="start">대화를 고르거나 ✎ 로 새 문자를 보내 보세요<br>익명으로도 보낼 수 있어요 · 한 사람당 15통 · 상점에서 이성 1 로 15통 추가</div>
   </main>
 </div>
 
@@ -144,18 +144,13 @@ App.ready.then(async user => {
   let data = { on: false, left: 0, glass: 0, threads: [] }, cur = null, mine = [], others = [];
   const canSendNow = () => (data.on || user.grade === 'admin') && data.left > 0;
 
-  // 캐릭터 목록: 멤버란과 같은 캐시 (요청 안 늘어요)
-  try {
-    const [all, my] = await Promise.all([Store.charCards(), Store.myCharacters()]);
-    mine = my.filter(c => c.published_at).map(c => ({ id: c.id, name: (c.data || {}).name || '이름 없음' }));
-    const mineIds = new Set(my.map(c => c.id));
-    others = all.filter(c => !mineIds.has(c.id)).map(c => ({ id: c.id, name: normChar(c.data).name || '이름 없음' })).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-  } catch (e) {}
+  // 내 캐릭터: 게시 안 된 것도 (작성본 이름) · 받는 캐릭터는 새 문자 창을 열 때 한 번 받아요
+  try { mine = (await Store.myCharacters()).map(c => ({ id: c.id, name: ((c.data || {}).name || (c.draft || {}).name || '').trim() || '이름 없음' })); } catch (e) {}
 
   const lastAt = t => (t.msgs[t.msgs.length - 1] || {}).at || '';
   const sorted = () => data.threads.filter(t => t.msgs.length).sort((a, b) => lastAt(b).localeCompare(lastAt(a)));
   function drawList() {
-    $('#left').textContent = data.left; $('#glass').textContent = data.glass || 0; $('#closed').hidden = data.on || user.grade === 'admin';
+    $('#left').textContent = data.left; $('#cap').textContent = data.cap || 15; $('#glass').textContent = data.glass || 0; $('#closed').hidden = data.on || user.grade === 'admin';
     const ts = sorted();
     $('#list').innerHTML = ts.length ? ts.map(t => { const last = t.msgs[t.msgs.length - 1], unread = t.msgs.some(m => !m.mine && !m.read);
       return `<button class="im-th ${cur && cur.id === t.id ? 'im-on' : ''}" type="button" data-t="${esc(t.id)}">${unread ? '<i class="im-dot"></i>' : ''}
@@ -194,7 +189,7 @@ App.ready.then(async user => {
         <div class="im-who"><b class="${t.other && !t.other.name ? 'im-anon' : ''}">${esc(title)}</b><small>${esc(t.my_name || t.fromName)}${(t.my_anon || t.anon) ? ' · 익명으로 보내는 중' : ''}</small>${glassBtn}</div><span></span></div>
       <div class="im-msgs" id="msgs">${html || '<div class="im-start">첫 문자를 보내 보세요</div>'}</div>
       ${firstReply ? `<div class="im-note"><span>나도 익명으로 답하기 <small style="opacity:.7">(한 번 정하면 이 대화에선 그대로예요)</small></span><label class="im-sw"><input type="checkbox" id="replyAnon"><i></i></label></div>` : ''}
-      <form class="im-comp" id="comp"><textarea id="body" rows="1" maxlength="300" placeholder="${canSend ? 'iMessage' : data.left <= 0 ? '15통을 다 보냈어요' : '지금은 보낼 수 없어요'}" ${canSend ? '' : 'disabled'}></textarea><span class="im-cnt" id="cnt"></span><button class="im-send" id="send" type="submit" disabled aria-label="보내기">↑</button></form>`;
+      <form class="im-comp" id="comp"><textarea id="body" rows="1" maxlength="300" placeholder="${canSend ? 'iMessage' : data.left <= 0 ? '다 보냈어요 · 상점에서 15통 추가' : '지금은 보낼 수 없어요'}" ${canSend ? '' : 'disabled'}></textarea><span class="im-cnt" id="cnt"></span><button class="im-send" id="send" type="submit" disabled aria-label="보내기">↑</button></form>`;
     const box = $('#msgs'); box.scrollTop = box.scrollHeight;
     $('#back').onclick = () => { app.classList.remove('im-chat'); cur = null; drawList(); };
     if ($('#reveal')) $('#reveal').onclick = async () => {
@@ -229,10 +224,11 @@ App.ready.then(async user => {
   }
 
   /* 새 문자: 보내는 캐릭터 · 익명 여부 · 받는 캐릭터 */
-  $('#compose').onclick = () => {
-    if (!mine.length) return toast('게시된 내 캐릭터가 있어야 보낼 수 있어요', 'err');
+  $('#compose').onclick = async () => {
+    if (!mine.length) return toast('내 캐릭터가 있어야 보낼 수 있어요', 'err');
     if (!(data.on || user.grade === 'admin')) return toast('지금은 비밀 문자를 보낼 수 없어요', 'err');
-    if (data.left <= 0) return toast('15통을 다 보냈어요', 'err');
+    if (data.left <= 0) return toast('보낼 문자를 다 썼어요 상점에서 15통을 더 살 수 있어요', 'err');
+    try { others = await Store.smsTargets(); } catch (e) { return toast(e.message, 'err'); }
     cur = null; app.classList.add('im-chat'); drawList();
     main.innerHTML = `<div class="im-mh"><button class="im-ic im-back" type="button" id="back">‹ 목록</button><div class="im-who"><b>새로운 메시지</b></div><span></span></div>
       <label class="im-new-h"><span>보내는 이:</span><select id="from">${mine.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
