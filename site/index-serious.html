@@ -16,6 +16,8 @@
 <link rel="stylesheet" href="assets/css/banner.css">
 <link rel="stylesheet" href="assets/css/serious.css">
 <style id="gx-style">
+/* 메인 옆 버튼: hidden 이면 진짜로 숨겨요 (버튼 모양 display:flex 가 hidden 을 덮어써서 꺼도 보였어요) */
+.rb[hidden] { display: none !important; }
 /* ═══ 2기 홈 시안 · 레퍼런스 구성 (왼쪽 위 이름 + 아이콘 · 카운트다운 티켓 · 오른쪽 큰 화면 + 챕터 카드) ═══ */
 .lobby { --gx-ink: #f3f5ff; --gx-dim: rgba(220,226,255,.62); --gx-line: rgba(240,244,255,.85); --gx-glow: rgba(140,158,255,.7); --gx-navy: #1b2052;
   --gx-panel: linear-gradient(115deg, rgba(150,160,255,.32), rgba(66,76,176,.34) 45%, rgba(22,26,74,.62));
