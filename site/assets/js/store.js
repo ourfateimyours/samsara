@@ -247,6 +247,8 @@
       async smsRead(thread) { ok(await sb.rpc('sms_read', { p_thread: thread })); },
       async smsReveal(thread) { return ok(await sb.rpc('sms_reveal', { p_thread: thread })); },
       async smsPeek() { return ok(await sb.rpc('sms_peek')) || { n: 0, last: null }; },
+      async smsTargets() { return ok(await sb.rpc('sms_targets')) || []; },   // 받는 캐릭터 (게시 안 된 캐릭터도 · 이름만)
+      async smsMore(char) { return ok(await sb.rpc('sms_more', { p_char: char })); },   // 15통 추가 (이성 1)
       async statAllocate(me, char, alloc) { return ok(await sb.rpc('stat_allocate', { p_char: char, p_alloc: alloc })); },   // 추가 스탯 배분 (확정 · 되돌릴 수 없음)
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
@@ -562,6 +564,8 @@
     smsList() { return B.smsList(); }, smsStart(from, to, anon, body) { return B.smsStart(from, to, anon, body); }, smsSend(thread, body, anon) { return B.smsSend(thread, body, anon); },
     smsRead(thread) { drop('smspeek'); return B.smsRead(thread); }, smsReveal(thread) { return B.smsReveal(thread); },
     async smsPeek(fresh) { const u = await this.user(); if (!u) return { n: 0, last: null }; if (fresh) drop('smspeek'); return hold('smspeek', 24e4, () => B.smsPeek()); },   // 새 문자 알림: 4분 동안은 다시 안 물어봐요
+    smsTargets() { return hold('smstg', 3e5, () => B.smsTargets()); },   // 새 문자 창을 열 때 · 5분 동안은 다시 안 물어봐요
+    async smsMore(char) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.smsMore(char); },
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
