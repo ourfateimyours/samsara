@@ -181,7 +181,6 @@
   <nav class="lb-side" aria-label="바로가기">
     <a class="rb" href="attendance.html" id="sb-att"><span class="ci" data-emb="attend"></span><b>출석</b></a>
     <button type="button" class="rb" data-music><span class="ci" data-emb="music"></span><b>음악</b></button>
-    <a class="rb" href="sms.html" id="sb-sms" hidden><span class="ci" data-emb="sms"></span><b>문자</b><em class="cnt" id="n-sms"></em></a>
     <a class="rb" href="theater.html" id="sb-theater" hidden><span class="ci" data-emb="theater"></span><b>상영관</b></a>
     <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci" data-emb="stock"></span><b>주식</b></a>
     <a class="rb" href="mal.html" id="sb-mal" hidden><span class="ci" data-emb="story"></span><b>말장난</b></a>
@@ -375,7 +374,6 @@ App.ready.then(async user => {
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.charCards(), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
   if (s && s.stock_on) $('#sb-stock').hidden = false;
       if (s && s.mj_on) $('#sb-mal').hidden = false;   // 말장난 테스트 (SQL 로 켜고 꺼요)
-  if ((s && s.sms_on) || user.grade === 'admin') $('#sb-sms').hidden = false;   // 비밀 문자: 열려 있을 때만 · 안 읽은 수와 알림은 sms-notify.js 가 (누르면 유리 창으로 열려요)
   if (s && s.theater_on) $('#sb-theater').hidden = false;   // 상영관이 열려 있을 때만 (관리자도 똑같이 · 관리 화면에서 끄면 메인 버튼도 사라져요)   // 빼빼로 증권이 열려 있을 때만
   const pub = all.filter(c => c.published_at);   // 게시된 캐릭터 (수정본을 심사받는 중이어도 게시된 상태)
   const mine = all.filter(c => c.owner_id === user.id);

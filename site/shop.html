@@ -35,7 +35,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js"></script>
+<script src="assets/js/store.js?v=1124a"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/char-editor.js"></script>
 <script>
@@ -58,11 +58,6 @@ App.ready.then(async user => {
   const CHEERSVG = { pencil: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="16" y="18" width="48" height="44" rx="2" fill="#fbf8ee"/><path d="M16 30h48M16 40h48M16 50h48" stroke="#9fb4d8" stroke-width="1"/><path d="M26 18v44" stroke="#e08a8a" stroke-width="1"/><path d="M52 58l10-26 4 2-10 26-5 2z" fill="#f2c14e"/><path d="M51 62l1-4 4 2z" fill="#333"/></svg>`,
     sharp: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="16" y="18" width="48" height="44" rx="2" fill="#fdfdff"/><path d="M16 25h48M16 32h48M16 39h48M16 46h48M16 53h48M23 18v44M30 18v44M37 18v44M44 18v44M51 18v44M58 18v44" stroke="#bcd0ee" stroke-width=".6"/><rect x="31" y="13" width="18" height="8" fill="#bedcff" opacity=".8"/><path d="M50 60l12-28" stroke="#34406a" stroke-width="3" stroke-linecap="round"/></svg>`,
     eraser: `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="14" y="24" width="52" height="32" rx="8" fill="#fff"/><path d="M14 32a8 8 0 0 1 8-8h22v32H22a8 8 0 0 1-8-8z" fill="#9fb2ff"/><text x="29" y="44" font-size="7" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">ERASE</text><path d="M54 36c2-3 6-1 4 2l-4 4-4-4c-2-3 2-5 4-2z" fill="#ff7aa8"/></svg>` };
-  const GLASS = `<svg viewBox="0 0 80 80" aria-hidden="true" fill="none" stroke="#f1efe9" stroke-linecap="round"><circle cx="35" cy="35" r="16" stroke-width="3.2"/><circle cx="35" cy="35" r="11" fill="#9fc6ff" fill-opacity=".18" stroke="none"/>
-    <path d="M28 29a9 9 0 0 1 8-5" stroke-width="2" opacity=".7"/><path d="M47 47l14 14" stroke-width="6"/></svg>`;   // 돋보기 (비밀 문자 익명 확인)
-  const SMSSVG = `<svg viewBox="0 0 80 80" aria-hidden="true" fill="none" stroke="#f1efe9" stroke-width="2.4" stroke-linejoin="round"><path d="M14 22h40v26H32l-10 8v-8h-8z"/><path d="M60 30h6v22h-6v7l-8-7H38" stroke-width="1.8" opacity=".7"/>
-    <text x="34" y="40" font-size="13" text-anchor="middle" fill="#f1efe9" stroke="none" font-family="monospace" font-weight="700">+15</text></svg>`;
-  let smsOn = false;
   let wal, items = [], kind = '', members = [], mine = [], allChars = [];
 
   const item = id => items.find(i => i.id === id);
@@ -73,23 +68,17 @@ App.ready.then(async user => {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
       <div class="w-i">칭호 <b style="color:${t ? esc(myColor()) : 'inherit'};${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div>
-      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div>${item('k_glass') || (wal.tickets || {}).k_glass ? `<div class="w-i">돋보기 <b>${(wal.tickets || {}).k_glass || 0}</b>개</div>` : ''}<div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
+      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div><div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
       <a class="btn ghost sm w-go" href="attendance.html">출석하고 영전 받기 →</a>`;
   }
   /* 칭호 미리보기: 가진 칭호는 내 글자 그대로, 선물 전용 칭호는 "내가 선물하면" 들어갈 내 닉네임으로 */
   const ttlPv = it => Store.titleText(it, wal.items.includes(it.id) ? wal.equip : { from: { [it.id]: user.nickname } });
   const preview = it => it.kind === 'title' ? `<span class="ttl-chip big" style="--tc:${esc(myColor())};${Store.titleFont(it)}">${esc(ttlPv(it))}</span>`
     : it.kind === 'tag' ? `<span class="tagpv" style="color:${esc(it.value)}">${esc(user.nickname)}</span><span class="sw" style="background:${esc(it.value)}"></span>`
-    : it.kind === 'snack' ? CHURU : it.id === 'k_glass' ? GLASS : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
+    : it.kind === 'snack' ? CHURU : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
   function renderGoods() {
     const list = items.filter(i => !kind || i.kind === kind || (kind === 'ticket' && ['boost', 'curse', 'pouch', 'cheer'].includes(i.kind)));
-    /* 비밀 문자 15통 추가: 영전이 아니라 내 캐릭터 이성 1 을 내요 (상점 물건 표에 없는 특별 칸 · 문자 기간에만) */
-    const got = ((wal.tickets || {}).k_sms15 || 0) >= 1;   // 한 번만 살 수 있어요 (최대 30통)
-    const more = smsOn && (!kind || kind === 'ticket') ? `<article class="mk-panel good">
-        <div class="pv"><span class="gh">券</span>${SMSSVG}</div>${got ? '<span class="own">OWNED</span>' : ''}
-        <div class="kd">이벤트 · 비밀 문자</div><h3>비밀 문자 15통 추가</h3><p>내 캐릭터 하나의 이성 스탯 1 을 내면 비밀 문자를 15통 더 보낼 수 있어요 한 번만 살 수 있어요 (최대 30통)</p>
-        <div class="ft"><span class="pr">이성 −1</span><span class="bt">${got ? '<span class="so-btn">샀어요</span>' : '<button class="btn sm" data-smsmore>사기</button>'}</span></div></article>` : '';
-    $('#goods').innerHTML = more + list.map(it => {
+    $('#goods').innerHTML = list.map(it => {
       const wear = it.kind === 'title' || it.kind === 'tag';
       const owned = wear && wal.items.includes(it.id), eq = owned && wal.equip[it.kind] === it.id, k = KIND[it.kind] || ['', '', ''];
       const full = it.kind === 'boost' && it.max_per && wal.boost_n >= it.max_per;
@@ -119,23 +108,7 @@ App.ready.then(async user => {
   try {
     [wal, items, members, mine, allChars] = await Promise.all([Store.wallet(), Store.shopItems(), Store.profiles(), Store.myCharacters(), Store.charNames()]);
   } catch (e) { toast(e.message, 'err'); wal = wal || { coins: 0, items: [], equip: {}, snacks: 0, tickets: {}, boosts: {}, boost_n: 0 }; }
-  try { const st = await Store.settings(); smsOn = !!st.sms_on; } catch (e) {}   // 15통 추가 칸: 비밀 문자 스위치가 켜져 있을 때만 (관리자도 똑같이 · 기능을 지운 뒤 빈 칸이 안 보이게) · 설정은 다른 화면과 같은 캐시
   renderAll();
-
-  /* 비밀 문자 15통 추가: 캐릭터 고르고 → 이성 1 내기 */
-  function smsMoreBox() {
-    if (!mine.length) return toast('내 캐릭터가 있어야 살 수 있어요', 'err');
-    const m = openModal(`<div class="buy-ask"><div class="eyebrow">Purchase</div><h3>비밀 문자 15통 추가</h3>
-      <label class="field"><span>이성을 낼 캐릭터</span><select class="input" id="sm-ch">${mine.map(c => `<option value="${esc(c.id)}">${esc(normChar(c.data || c.draft).name || '이름 없음')}</option>`).join('')}</select></label>
-      <p>고른 캐릭터의 이성 스탯이 1 줄어들어요 되돌릴 수 없어요<br>비밀 문자를 15통 더 보낼 수 있어요 (한 번만 · 최대 30통)</p>
-      <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>사기</button></div></div>`);
-    m.querySelector('[data-no]').onclick = closeModal;
-    m.querySelector('[data-yes]').onclick = async e => {
-      e.currentTarget.disabled = true;
-      try { const r = await Store.smsMore(m.querySelector('#sm-ch').value); wal = await Store.wallet().catch(() => wal); closeModal(); renderAll(); toast(`15통 추가! 이제 ${r.left}통 더 보낼 수 있어요 (이성 ${r.rea})`); }
-      catch (err) { e.currentTarget.disabled = false; toast(err.message, 'err'); }
-    };
-  }
 
   /* 사기 · 선물하기 창 */
   async function buyBox(it, gift) {
@@ -154,7 +127,7 @@ App.ready.then(async user => {
       ${it.kind === 'cheer' ? `<label class="field"><span>응원 한마디 <small>40자 · 보낸 사람은 안 알려 줘요</small></span><input class="input" id="bx-msg" maxlength="40" placeholder="예) 오늘 수업 甲 받자!"></label>` : ''}
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
-        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.id === 'k_glass' ? '비밀 문자 대화방 위 🔍 버튼으로 익명 상대를 한 번 확인할 수 있어요 서로 한 통 이상씩 주고받아야 써져요' : it.id === 'k_room' ? '지정권은 사용할 때 관리자에게 알려 주세요.' : it.kind === 'ticket' ? '가방에 쌓여요'
+        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.id === 'k_room' ? '지정권은 사용할 때 관리자에게 알려 주세요.' : it.kind === 'ticket' ? '가방에 쌓여요'
         : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
@@ -193,7 +166,6 @@ App.ready.then(async user => {
   }  $('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; kind = b.dataset.k; $$('#tabs button').forEach(x => x.classList.toggle('on', x === b)); renderGoods(); };
   $('#goods').onclick = async e => {
     const buy = e.target.closest('[data-buy]'), gift = e.target.closest('[data-gift]'), on = e.target.closest('[data-eq]'), off = e.target.closest('[data-off]');
-    if (e.target.closest('[data-smsmore]')) return smsMoreBox();
     if (buy) return buyBox(item(buy.dataset.buy), false);
     if (gift) return buyBox(item(gift.dataset.gift), true);
     try {
