@@ -465,9 +465,7 @@
       document.body.appendChild(f);
     }
     if (user) { // 텔레파시 팝업 불러오기
-      const s = document.createElement('script'); s.src = 'assets/js/tele.js'; document.body.appendChild(s);
-      if (window === window.top) { const m = document.createElement('script'); m.src = 'assets/js/sms-notify.js'; document.body.appendChild(m); }   // 비밀 문자 알림 (열려 있을 때만 움직여요)
-    }
+      const s = document.createElement('script'); s.src = 'assets/js/tele.js'; document.body.appendChild(s);    }
     if (user) checkNews(user);
     // 사이트 BGM (관리자 페이지에서 설정)
     if (window === window.top) { const bg = document.createElement('script'); bg.src = 'assets/js/bgm.js'; document.body.appendChild(bg); }   // 문자 창(겹친 화면) 안에서는 BGM 을 또 틀지 않아요
