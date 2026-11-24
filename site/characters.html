@@ -117,8 +117,9 @@ App.ready.then(async user => {
     st.innerHTML = g.list.slice(page * pp, page * pp + pp).map((c, i) => {
       const d = normChar(c.data), no = g.list.indexOf(c) + 1, el = ELEMENTS[d.element];
       const src = d.head || charImage(c.data, c.id), fallback = !d.head;
+    const headPos = x => { const n = +(x || {}).headX; return n === 25 || n === 75 ? ` style="object-position:${n}% 18%"` : ''; };   // 캐릭터 편집의 두상 가로 위치
       return `<button class="r-fig pcard ${fallback ? 'nohead' : ''} ${fallback && !d.images.length ? 'dummy' : ''}" data-id="${esc(c.id)}" style="--i:${i};--fc:${d.color}" aria-label="${esc(d.name)}">
-        <span class="pc-fs"><span class="pc-f"><img class="${fallback ? silClass(c.data) : 'head'}" src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span></span>
+        <span class="pc-fs"><span class="pc-f"><img class="${fallback ? silClass(c.data) : 'head'}"${fallback ? '' : headPos(c.data)} src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span></span>
         <span class="pc-t"><span class="pc-no"><b>${pad2(no)}</b><i>PROFILE</i></span>
           <span class="pc-dd"><b>${esc(d.rank || '—')}</b><i>${el ? `${esc(el.han)} · ${esc(el.en)}` : 'UNCLASSED'}</i></span></span>
         <span class="pc-b"><em>${esc(d.team || '未定')} · ${esc(FIXED.codename)}</em><b>${esc(d.name)}</b>
