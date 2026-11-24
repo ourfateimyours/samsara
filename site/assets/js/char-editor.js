@@ -73,6 +73,7 @@ window.normChar = (d = {}) => {
     tags: d.tags || [], 
       keyring: Object.assign({ type: 'none', text: '', img: '' }, d.keyring || (d.charmImg ? { type: 'acrylic', img: d.charmImg } : {})), silhouette: false, card: false,   // 검은 실루엣 · 카드 액자 표시는 없앴어요 (예전 기록에 켜져 있어도 꺼진 채로)
     items: (d.items || []).slice(0, 8),
+    headX: [25, 50, 75].includes(+d.headX) ? +d.headX : 50,   // 멤버란 두상 가로 위치 (25 왼쪽 · 50 가운데 · 75 오른쪽)
     head: safeUrl(d.head) ? d.head : '',   // 두상 · 움짤 (멤버란 전용)
     ult: safeUrl(d.ult) ? d.ult : '',   // 궁극기 움짤: 세 번째 스킬(둘뿐이면 두 번째)을 열면 설명 뒤에 깔려요
     phoneBg: d.phoneBg === 'moon' ? 'moon' : 'earth',   // 관계 휴대폰 배경: 지구 / 달
@@ -223,6 +224,8 @@ window.CharEditor = {
             <div class="img-pick"><div class="thumb head" id="hd-th" style="background-image:${cssUrl(d.head)}"></div>
               <div class="ctrl"><input name="head" type="url" inputmode="url" placeholder="움짤 / 이미지 외부 링크 https://…" value="${esc(d.head)}">
               <small class="hint-text" style="margin:0">비워 두면 멤버란 카드에 전신 그림이 대신 들어가요.</small></div></div></div>
+          <div class="field head-pos"><span>두상 위치 <small>멤버란 카드에서 얼굴이 잘 보이는 쪽을 골라 주세요</small></span>
+            <div class="hp-opts" style="display:flex;gap:12px">${[[25, '왼쪽'], [50, '가운데'], [75, '오른쪽']].map(([x, t]) => `<label style="text-align:center;cursor:pointer;font-size:12px"><span style="display:block;width:76px;aspect-ratio:5/8;overflow:hidden;border-radius:6px;background:#07090b;margin-bottom:5px;outline:2px solid transparent;outline-offset:2px" class="hp-box"><img class="hp-img" src="${esc(d.head)}" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;object-position:${x}% 18%;${d.head ? '' : 'display:none'}"></span><input type="radio" name="head_x" value="${x}" ${d.headX === x ? 'checked' : ''}> ${t}</label>`).join('')}</div></div>
           <p class="hint-text" style="margin-top:18px"><b>전신</b> · 인트로와 프로필에 보여요. <b>한 장</b>만 넣을 수 있어요. 투명 배경 전신 그림을 추천해요.<br>그림을 비워 두면 기본 실루엣이 들어가요.</p>
           <div class="fig-set"><div class="fs-head"><b>전신 그림 배치</b><small>그림 끝이 잘려 있으면 그쪽 화면 끝에 붙여 보세요</small></div>
             ${[['fig_al', '컴퓨터', d.figAlign], ['fig_alm', '휴대폰', d.figAlignM || d.figAlign]].map(([nm, lb, v]) => `<div class="fs-row"><span class="fs-k">${lb}</span><div class="seg">${[['center', '가운데'], ['left', '왼쪽 끝'], ['right', '오른쪽 끝']].map(([k, n]) => `<label><input type="radio" name="${nm}" value="${k}" ${k === v ? 'checked' : ''}><span>${n}</span></label>`).join('')}</div></div>`).join('')}
@@ -390,7 +393,7 @@ window.CharEditor = {
     });
     f.color.addEventListener('input', () => $$('.fmt-guide.open', m).forEach(fgDraw));
     f.name.addEventListener('change', () => $$('.fmt-guide.open', m).forEach(fgDraw));
-    f.head.oninput = () => { $('#hd-th', m).style.backgroundImage = cssUrl(safeUrl(f.head.value.trim())); };
+    f.head.oninput = () => { $('#hd-th', m).style.backgroundImage = cssUrl(safeUrl(f.head.value.trim())); const u = safeUrl(f.head.value.trim()); $$('.hp-img', m).forEach(hp => { hp.style.display = u ? '' : 'none'; if (u) hp.src = u; }); };
     f.fx_url.oninput = () => { $('#fx-th', m).style.backgroundImage = cssUrl(safeUrl(f.fx_url.value.trim())); };
     f.fx_op.oninput = () => { $('[data-fxv]', m).textContent = Math.round(f.fx_op.value * 100) + '%'; };
     $('[data-cancel]', m).onclick = closeModal;
@@ -410,7 +413,7 @@ window.CharEditor = {
       const list = s => s.split(/[,，]/).map(x => x.trim()).filter(Boolean).slice(0, 16);
       const data = {
         name: v('name'), name_en: v('name_en'), org: v('org'), team: f.team.value, rank: f.rank.value, quote: v('quote'),
-        color: f.color.value, head, tags: [],   // 태그 칸은 없앴어요
+        color: f.color.value, head, headX: +((f.querySelector('[name=head_x]:checked') || {}).value || 50), tags: [],   // 태그 칸은 없앴어요
         keyring: { type: (f.querySelector('[name=kr_type]:checked') || {}).value || 'none', text: v('kr_text').toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10), img: /^https?:\/\//i.test(v('kr_img')) ? v('kr_img') : '' },
         silhouette: false, card: false,
         figAlign: (f.querySelector('[name=fig_al]:checked') || {}).value || 'center', figAlignM: (f.querySelector('[name=fig_alm]:checked') || {}).value || '', figFade: f.fig_fade.checked, figMobileBig: f.fig_mbig.checked,

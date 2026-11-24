@@ -101,7 +101,7 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false, mj_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false, mj_on: false, bj_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
@@ -251,27 +251,29 @@
       async smsMore(char) { return ok(await sb.rpc('sms_more', { p_char: char })); },   // 15통 추가 (이성 1)
       // 말장난: 돈 · 단서 · 귓속말 횟수 · 마권은 서버 함수 · 대화와 움직임은 실시간 신호로만 (저장 안 함 · 주기적 요청 없음)
       async mjRpc(fn, args) { return ok(await sb.rpc('mj_' + fn, args || {})); },
-      async mjSub(uid, h) {
+      async gameRpc(pre, fn, args) { return ok(await sb.rpc(pre + '_' + fn, args || {})); },   // 빚잔치 (bj_)
+      async mjSub(uid, h, pre) {
+        pre = pre || 'mj';
         const { data } = await sb.auth.getSession();
         if (data.session) sb.realtime.setAuth(data.session.access_token);
-        const all = sb.channel('mj', { config: { broadcast: { self: false } } });
+        const all = sb.channel(pre, { config: { broadcast: { self: false } } });
         all.on('broadcast', { event: 'ping' }, m => h.ping && h.ping((m.payload || {}).t || '')).subscribe();
-        const mine = sb.channel('mjw:' + uid, { config: { private: true } });
+        const mine = sb.channel(pre + 'w:' + uid, { config: { private: true } });
         ['w', 'p', 'pinv', 'pup', 'off', 'offd'].forEach(ev => mine.on('broadcast', { event: ev }, m => h.mine && h.mine(ev, m.payload || {})));
         mine.subscribe();
-        let room = null, place = '', me = null;
+        let room = null, place = '', me = null, board = null;
         const enter = (p, info) => {
           if (room) sb.removeChannel(room);
           place = p; me = info;
           const known = new Set();
-          const topic = 'mjp:' + [...p].map(c => c.charCodeAt(0).toString(36)).join('');   // 장소 이름을 영문 숫자로 (채널 이름에 한글을 안 써요)
+          const topic = pre + 'p:' + [...p].map(c => c.charCodeAt(0).toString(36)).join('');   // 장소 이름을 영문 숫자로 (채널 이름에 한글을 안 써요)
           room = sb.channel(topic, { config: { private: true, broadcast: { self: false }, presence: { key: uid } } });   // 참가자만 (서버 규칙)
           room.on('presence', { event: 'sync' }, () => { const st = room.presenceState(); h.people && h.people(p, Object.keys(st).map(k => Object.assign({ u: k }, (st[k] || [])[0] || {}))); })
             // 처음 보는 사람이 들어왔을 때만 내 지금 자리를 한 번 알려 줘요 (자리 알림은 presence 를 다시 보내지 않아요 · 서로 주고받는 반복이 생기지 않게)
             .on('presence', { event: 'join' }, ({ key }) => { if (key === uid || known.has(key)) return; known.add(key); if (me) room.send({ type: 'broadcast', event: 'ev', payload: { k: 'mv', x: me.x, y: me.y, from: uid } }).catch(() => {}); })
             .on('presence', { event: 'leave' }, ({ key }) => { known.delete(key); })
             .on('broadcast', { event: 'ev' }, m => h.ev && h.ev(p, m.payload || {}))
-            .subscribe((s, err) => { if (s === 'SUBSCRIBED') room.track(me); else if (s !== 'CLOSED') console.warn('말장난 연결:', s, err || ''); });
+            .subscribe((s, err) => { if (s === 'SUBSCRIBED') room.track(me); else if (s !== 'CLOSED') console.warn('게임 연결:', s, err || ''); });
         };
         return {
           enter,
@@ -397,7 +399,7 @@
       async charNames() { return ok(await sb.from('characters_view').select('id,owner_id,author,published_at,name:data->>name,color:data->>color').order('created_at', { ascending: true })).map(c => ({ id: c.id, owner_id: c.owner_id, author: c.author, published_at: c.published_at, data: { name: c.name || '', color: c.color || '' } })); },
       // 목록 화면은 긴 본문·스킬·작성본 대신 카드에 쓰는 JSON 필드만 받아요.
       async charCards() {
-        const fields = ['name', 'name_en', 'team', 'org', 'affiliation', 'rank', 'danger', 'element', 'color', 'head', 'images', 'image', 'silhouette', 'stats', 'phoneBg'];
+        const fields = ['name', 'name_en', 'team', 'org', 'affiliation', 'rank', 'danger', 'element', 'color', 'head', 'headX', 'images', 'image', 'silhouette', 'stats', 'phoneBg'];
         const columns = ['id', 'owner_id', 'author', 'created_at', 'published_at'].concat(fields.map(k => `${k}:data->${k}`)).join(',');
         const rows = ok(await sb.from('characters_view').select(columns).not('published_at', 'is', null).order('created_at', { ascending: true }));
         return rows.map(row => {
@@ -600,6 +602,8 @@
     async smsMore(char) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.smsMore(char); },
     mj(fn, args) { return B.mjRpc(fn, args); },
     mjSub(uid, h) { return B.mjSub(uid, h); },
+    bj(fn, args) { return B.gameRpc('bj', fn, args); },
+    bjSub(uid, h) { return B.mjSub(uid, h, 'bj'); },
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
