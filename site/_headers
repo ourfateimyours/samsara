@@ -1,0 +1,11 @@
+/assets/img/*
+  Cache-Control: public, max-age=604800
+
+/assets/sound/*
+  Cache-Control: public, max-age=604800
+
+/assets/js/*
+  Cache-Control: public, max-age=600
+
+/assets/css/*
+  Cache-Control: public, max-age=600
