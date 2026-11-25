@@ -1,0 +1,8 @@
+{
+  // Cloudflare Workers 설정: 저장소의 site 폴더를 그대로 사이트로 보여 줘요
+  "name": "samsara",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./site"
+  }
+}
