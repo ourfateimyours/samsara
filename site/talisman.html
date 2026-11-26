@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https: wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>부적 수련 — 三娑罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Song+Myung&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+@font-face { font-family: 'ChosunilboNM'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Chosunilbo_myungjo.woff') format('woff'); font-display: swap; }
+/* ═══ 부적 수련 시안: 네 막 (두 손 · 술력의 방출 · 부적의 쓰임 · 수업 끝) · 결계 수련과 같은 틀 · 글은 아래 대사 한 곳에서만 · 클래스는 bx- 로 시작 ═══ */
+body.bx { margin: 0; height: 100dvh; overflow: hidden; background: #000; color: #fff; font-family: 'IBM Plex Sans KR', sans-serif; --c: #9aa6ff; }
+.bx-stage { position: fixed; inset: 0; overflow: hidden; }
+.bx-stage.talk { cursor: pointer; }
+/* 그림 상자 (그림 비율 그대로) · 안의 위치는 모두 그림 기준 % */
+.bx-box { position: absolute; transition: filter .8s ease; --u: 10px; }
+.bx-stage.dim .bx-box { filter: brightness(.36) saturate(.8); }
+.bx-bg { position: absolute; inset: 0; background: center / 100% 100% no-repeat; opacity: 0; }
+.bx-bg.on { opacity: 1; }
+.bx-bg.wipe { -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent 60%); mask-image: linear-gradient(90deg, #000 40%, transparent 60%); -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; animation: wipe 1.5s cubic-bezier(.45,.05,.35,1) both; }
+@keyframes wipe { from { -webkit-mask-position: 100% 0; mask-position: 100% 0; } to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+.bx-shade { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,.4), transparent 15%, transparent 58%, rgba(0,0,0,.55) 75%, rgba(0,0,0,.9) 100%); }
+.bx-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; z-index: 2; pointer-events: none; background: radial-gradient(circle, rgba(255,255,255,.22) 0 .7px, transparent 1.2px) 0 0 / 5px 5px, linear-gradient(180deg, transparent, rgba(0,0,0,.5) 55%, rgba(0,0,0,.85)); -webkit-mask-image: linear-gradient(180deg, transparent, #000 45%); mask-image: linear-gradient(180deg, transparent, #000 45%); }
+.bx-flash { position: fixed; inset: 0; z-index: 30; pointer-events: none; background: #fff; opacity: 0; }
+.bx-flash.go { animation: fl 1.1s ease-out; }
+@keyframes fl { 0% { opacity: 0; } 14% { opacity: .85; } 100% { opacity: 0; } }
+
+/* 망량의 공격: 가운데 위에서 아래로 붉은 빛이 쏘아져요 */
+.bx-beam { position: fixed; z-index: 29; left: 50%; top: 0; width: 6px; height: 100vh; translate: -50% 0; pointer-events: none; opacity: 0; transform-origin: 50% 0;
+  background: linear-gradient(180deg, #fff, #ff5a4a 18%, #d8121c 70%, rgba(216,18,28,.2)); box-shadow: 0 0 12px #fff, 0 0 30px #ff2a2a, 0 0 70px #d8121c, 0 0 140px rgba(216,18,28,.8); }
+.bx-beam::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 60vw; height: 40vh; translate: -50% 50%; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,80,70,.65), rgba(216,18,28,.25) 40%, transparent 70%); opacity: 0; }
+/* 단계: shoot (위에서 아래로 뻗어요) → hit (굵어지고 바닥이 붉게 번져요) → out (사라져요) */
+.bx-beam { transform: scaleY(0); transition: transform .13s cubic-bezier(.9,0,1,1), width .08s ease-out, opacity .35s ease-in; }
+.bx-beam.shoot { opacity: 1; transform: scaleY(1); }
+.bx-beam.hit { width: 28px; }
+.bx-beam.hit::after { opacity: 1; transition: opacity .2s; }
+.bx-beam.out { opacity: 0; width: 2px; }
+.bx-beam::after { transition: opacity .7s; }
+.bx-flash.red { background: #ff3a30; }
+
+/* 빛줄기 · 획 (그림 위에 그려져요) */
+.bx-svg { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; overflow: visible; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--c)); }
+.bx-svg path { fill: none; stroke: #fff; stroke-linecap: round; stroke-width: 3; }
+.bx-svg path.draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw var(--dur, 1s) cubic-bezier(.5,0,.2,1) forwards; }
+.bx-svg path.dome { stroke-width: 2.2; opacity: .9; }
+.bx-svg path.stroke { stroke-width: 7; stroke: #fff; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.bx-glow { position: absolute; z-index: 3; width: calc(var(--u) * 36); height: calc(var(--u) * 36); translate: -50% -50%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,255,255,.55), color-mix(in srgb, var(--c) 30%, transparent) 40%, transparent 70%); mix-blend-mode: screen; opacity: 0; animation: glow 2.4s ease both; }
+@keyframes glow { 30% { opacity: 1; } 100% { opacity: .55; } }
+
+/* 마름모: 할 일이 있을 때만 · 작고 얇게 · 순서 숫자 */
+.bx-spots { position: absolute; inset: 0; z-index: 4; }
+.bx-hs { position: absolute; width: 44px; height: 44px; translate: -50% -50%; padding: 0; border: 0; background: none; cursor: pointer; animation: hsIn .7s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i) * .15s); }
+.bx-hs i { position: absolute; inset: 15px; rotate: 45deg; border: 1.2px solid #fff; background: rgba(255,255,255,.18); box-shadow: 0 0 8px #fff, 0 0 18px var(--c); transition: scale .25s, background .25s; }
+.bx-hs b { position: absolute; inset: 15px; rotate: 45deg; border: 1px solid rgba(255,255,255,.85); animation: ring 2.4s ease-out infinite; pointer-events: none; }
+.bx-hs em { position: absolute; left: 50%; bottom: calc(100% - 4px); translate: -50% 0; font: 400 13px 'ChosunilboNM', 'Song Myung', serif; font-style: normal; color: #fff; text-shadow: 0 0 8px #fff, 0 1px 3px #000; pointer-events: none; }
+.bx-hs:hover i { scale: 1.25; background: rgba(255,255,255,.5); }
+.bx-hs.got { pointer-events: none; }
+.bx-hs.got i { background: #fff; scale: .7; }
+.bx-hs.got b, .bx-hs.got em { display: none; }
+.bx-hs.off i { background: none; border-color: rgba(255,255,255,.3); box-shadow: none; }   /* 아니었던 곳 */
+.bx-hs em { white-space: nowrap; font-size: 12px; letter-spacing: .08em; }
+.bx-hs.no { animation: shake .4s ease; }
+@keyframes shake { 25% { translate: calc(-50% - 5px) -50%; } 75% { translate: calc(-50% + 5px) -50%; } }
+@keyframes ring { 0% { scale: 1; opacity: .9; } 100% { scale: 2.8; opacity: 0; } }
+@keyframes hsIn { from { opacity: 0; scale: .3; } }
+.bx-spots.hint .bx-hs:not(.got) i { animation: shim 1.2s ease-in-out infinite; }
+@keyframes shim { 50% { scale: 1.4; box-shadow: 0 0 16px #fff, 0 0 36px var(--c); } }
+
+/* 하늘에 새기는 조건 글자 */
+.bx-rune { position: absolute; z-index: 3; left: 49.6%; top: 15%; translate: -50% -50%; white-space: nowrap; pointer-events: none; font: 400 calc(var(--u) * 2.6) 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .3em; text-indent: .3em; color: #fff; text-shadow: 0 0 6px #fff, 0 0 18px var(--c), 0 0 40px var(--c); }
+.bx-rune span { opacity: 0; display: inline-block; animation: rune .7s ease forwards; animation-delay: calc(var(--i) * .09s); }
+@keyframes rune { from { opacity: 0; filter: blur(6px); transform: translateY(6px); } to { opacity: 1; filter: none; transform: none; } }
+
+/* 위: 네 막 */
+.bx-ui { transition: opacity .35s; }
+.bx-acts { position: fixed; z-index: 8; left: clamp(18px, 6vw, 96px); top: 22px; display: flex; gap: 16px; pointer-events: none; }
+.bx-acts span { display: flex; flex-direction: column; align-items: center; gap: 7px; font: 400 12px 'ChosunilboNM', 'Song Myung', serif; color: rgba(255,255,255,.4); text-shadow: 0 1px 4px #000; transition: color .4s; }
+.bx-acts span::before { content: ""; width: 8px; height: 8px; rotate: 45deg; border: 1px solid rgba(255,255,255,.5); transition: all .4s; }
+.bx-acts span.on { color: #fff; } .bx-acts span.on::before { background: #fff; border-color: #fff; box-shadow: 0 0 8px #fff, 0 0 16px var(--c); }
+.bx-acts span.bx-past::before { background: rgba(255,255,255,.45); }
+.bx-tools { position: fixed; z-index: 8; right: clamp(18px, 6vw, 96px); top: 20px; display: flex; gap: 12px; }
+.bx-tools button, .bx-tools a { position: relative; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 1.6px solid rgba(255,255,255,.9); border-radius: 50%; cursor: pointer; color: #fff; background: rgba(0,0,0,.25); box-shadow: 0 1px 6px rgba(0,0,0,.5); transition: background .2s, color .2s; }
+.bx-tools svg { width: 14px; height: 14px; }
+.bx-tools button:hover, .bx-tools a:hover { background: #fff; color: #000; }
+
+/* 대사: 미연시처럼 화면 아래 넓은 띠 (위는 투명 · 아래로 짙게 · 선 없음) · 이름은 가운데 + 밑 장식 · 대사는 가운데 칸 안에서 왼쪽부터 한 줄로 · 오른쪽 아래 자동 · 기록 · 숨기기 */
+.bx-talk { position: fixed; z-index: 6; left: 0; right: 0; bottom: 0; min-height: 30vh; box-sizing: border-box; padding: 54px max(24px, calc(50% - 390px)) 52px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; text-align: left; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(4,5,14,.5) 30%, rgba(4,5,14,.82) 70%, rgba(4,5,14,.92)); }
+.bx-talk.mid { align-items: center; text-align: center; }
+.bx-name { display: flex; flex-direction: column; align-items: center; align-self: center; margin-bottom: 14px; }
+.bx-name b { font: 400 24px/1.2 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .12em; text-shadow: 0 0 3px var(--c), 0 0 10px var(--c), 0 0 22px color-mix(in srgb, var(--c) 75%, transparent), 0 0 40px color-mix(in srgb, var(--c) 45%, transparent); }
+.bx-name i { margin-top: 7px; width: 90px; height: 7px; position: relative; background: linear-gradient(90deg, transparent, rgba(255,255,255,.7) 40%, transparent 46%, transparent 54%, rgba(255,255,255,.7) 60%, transparent) 50% 50% / 100% 1px no-repeat; }
+.bx-name i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; translate: -50% -50%; rotate: 45deg; background: #fff; box-shadow: 0 0 6px #fff; }
+.bx-name.narr { display: none; }
+.bx-text { width: 100%; font: 400 17.5px/1.9 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; white-space: pre-wrap; word-break: keep-all; min-height: 34px; text-shadow: 0 1px 3px rgba(0,0,0,.95); }
+.bx-text span { visibility: hidden; } .bx-text span.v { visibility: visible; }
+.bx-text.narr { color: rgba(255,255,255,.78); font-style: italic; }
+.bx-text.task { font: 400 15px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .16em; color: #fff; text-shadow: 0 0 10px var(--c), 0 1px 3px #000; }
+.bx-text.task::before, .bx-text.task::after { content: "◇"; margin: 0 12px; font-size: 10px; opacity: .7; }
+/* 다음: 작은 마름모가 숨 쉬어요 */
+.bx-next { position: absolute; right: max(24px, calc(50% - 390px)); bottom: 30px; width: 8px; height: 8px; rotate: 45deg; background: #fff; box-shadow: 0 0 8px #fff, 0 0 16px var(--c); visibility: hidden; }
+.bx-talk.bx-ready .bx-next { visibility: visible; animation: nx 1.1s ease-in-out infinite; }
+@keyframes nx { 50% { translate: 0 4px; opacity: .45; } }
+/* 빠른 메뉴 (미연시처럼) */
+.bx-quick { position: fixed; z-index: 8; right: clamp(18px, 4vw, 56px); bottom: 14px; display: flex; gap: 18px; }
+.bx-quick button { padding: 4px 0; border: 0; background: none; cursor: pointer; color: rgba(255,255,255,.55); font: 400 12px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .2em; text-shadow: 0 1px 3px #000; transition: color .2s, text-shadow .2s; }
+.bx-quick button:hover, .bx-quick button.on { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,.8); }
+body.hideui .bx-ui, body.hideui .bx-quick { opacity: 0; pointer-events: none; }
+body.hideui .bx-stage { cursor: pointer; }
+/* 막 제목 */
+.bx-cap { position: fixed; z-index: 7; left: 0; right: 0; top: 15vh; text-align: center; pointer-events: none; opacity: 0; }
+.bx-cap.go { animation: cap 3.6s ease both; }
+.bx-cap small { display: block; font: 400 13px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .6em; text-indent: .6em; color: rgba(255,255,255,.8); }
+.bx-cap b { display: block; margin-top: 8px; padding: 0 20px; font: 400 30px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .2em; text-indent: .2em; text-shadow: 0 0 14px rgba(0,0,0,.95), 0 1px 3px #000, 0 0 30px rgba(0,0,0,.7); }
+@keyframes cap { 0% { opacity: 0; translate: 0 6px; } 18%, 72% { opacity: 1; translate: 0 0; } 100% { opacity: 0; } }
+
+/* 수첩에 적었어요 (잠깐) */
+.bx-toast { position: fixed; z-index: 9; right: clamp(18px, 6vw, 96px); top: 64px; display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 12px; pointer-events: none; font-size: 12.5px; letter-spacing: .04em; color: #fff; text-shadow: 0 1px 3px #000;
+  background: linear-gradient(270deg, rgba(10,12,24,.75), rgba(10,12,24,.4) 70%, transparent); border-right: 1px solid rgba(255,255,255,.6); opacity: 0; }
+.bx-toast::before { content: ""; width: 6px; height: 6px; rotate: 45deg; background: #fff; box-shadow: 0 0 8px #fff; }
+.bx-toast b { font: 400 13px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .06em; }
+.bx-toast.go { animation: toast 2.8s ease both; }
+@keyframes toast { 0% { opacity: 0; translate: 10px 0; } 12%, 80% { opacity: 1; translate: 0 0; } 100% { opacity: 0; } }
+
+/* 선택지: 오른쪽 · 오른쪽이 녹아요 */
+.bx-ch { position: fixed; z-index: 9; right: clamp(20px, 13vw, 210px); top: 50%; translate: 0 -50%; display: none; flex-direction: column; gap: 12px; max-height: 62vh; overflow-y: auto; scrollbar-width: none; padding: 30px 4px;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); }
+.bx-ch::-webkit-scrollbar { display: none; }
+.bx-ch.on { display: flex; }
+.bx-ch button { position: relative; isolation: isolate; display: flex; align-items: center; width: min(400px, calc(100vw - 40px)); min-height: 36px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff; text-align: left; font: 500 15px 'IBM Plex Sans KR', sans-serif; letter-spacing: .03em; text-shadow: 0 1px 3px rgba(0,0,0,.8); flex: none;
+  animation: chIn .45s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(.05s + var(--i) * .06s); }
+.bx-ch button::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 6px; border: 1px solid rgba(255,255,255,.42); background: linear-gradient(90deg, rgba(26,26,30,.9), rgba(40,40,46,.7) 45%, rgba(40,40,46,.25) 80%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, rgba(0,0,0,.35) 78%, transparent); mask-image: linear-gradient(90deg, #000 40%, rgba(0,0,0,.35) 78%, transparent); transition: border-color .2s, background .2s; }
+.bx-ch button .ic { width: 36px; align-self: stretch; display: grid; place-items: center; border-right: 1px solid rgba(255,255,255,.25); flex: none; }
+.bx-ch button .ic::before { content: ""; width: 7px; height: 7px; rotate: 45deg; border: 1px solid #fff; transition: background .2s, box-shadow .2s; }
+.bx-ch button span { padding: 8px 16px; }
+.bx-ch.rune button { font: 400 16px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .14em; }
+.bx-ch button:hover::before { border-color: rgba(255,255,255,.95); background: linear-gradient(90deg, rgba(62,62,70,.94), rgba(70,70,78,.75) 45%, rgba(70,70,78,.3) 80%, transparent); }
+.bx-ch button:hover .ic::before { background: #fff; box-shadow: 0 0 8px #fff; }
+.bx-ch button:hover { text-shadow: 0 0 8px rgba(255,255,255,.6), 0 1px 3px rgba(0,0,0,.8); }
+@keyframes chIn { from { opacity: 0; transform: translateX(14px); } }
+
+/* 다른 부적들: 세 장이 매달려 흔들리는 팝업 · 누르면 크게 + 설명 */
+.tm-pop { position: fixed; inset: 0; z-index: 21; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: radial-gradient(ellipse at 50% 45%, rgba(10,12,30,.72), rgba(0,0,0,.9)); }
+.tm-pop.on { display: flex; animation: stIn .45s ease both; }
+.tm-pop > small { font: 400 13px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .5em; text-indent: .5em; color: rgba(255,255,255,.75); }
+.tm-row { display: flex; align-items: flex-start; justify-content: center; gap: clamp(18px, 5vw, 70px); }
+.tm-c { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff; animation: tmIn .7s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i) * .12s); }   /* 흔들림은 뺐어요 (어지러움) · 처음 한 번 떠오르기만 */
+@keyframes tmIn { from { opacity: 0; transform: translateY(16px); } }
+.tm-c img { height: min(52vh, 440px); width: auto; filter: drop-shadow(0 10px 24px rgba(0,0,0,.6)); transition: filter .3s, transform .3s; }
+.tm-c:hover img { filter: drop-shadow(0 0 18px rgba(255,255,255,.55)) drop-shadow(0 10px 24px rgba(0,0,0,.6)); transform: translateY(-6px); }
+.tm-c span { display: flex; align-items: center; gap: 9px; font: 400 16px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .14em; text-shadow: 0 0 10px rgba(200,212,255,.5); }
+.tm-c span::before { content: ""; width: 6px; height: 6px; rotate: 45deg; border: 1px solid #fff; }
+.tm-c.seen span::before { background: #fff; box-shadow: 0 0 8px #fff; }
+@keyframes sway { 50% { rotate: 1.6deg; } 0%, 100% { rotate: -1.6deg; } }
+.tm-done { visibility: hidden; }
+.tm-done.on { visibility: visible; }
+/* 크게 보기 */
+.tm-big { position: fixed; inset: 0; z-index: 23; display: none; align-items: center; justify-content: center; gap: clamp(20px, 5vw, 70px); padding: 24px; background: rgba(0,0,0,.78); }
+.tm-big.on { display: flex; animation: stIn .35s ease both; }
+.tm-big img { height: min(78vh, 640px); width: auto; filter: drop-shadow(0 0 30px rgba(255,255,255,.25)); animation: bigIn .6s cubic-bezier(.16,1,.3,1) both; }
+@keyframes bigIn { from { opacity: 0; transform: translateY(16px) scale(.94); } }
+.tm-big .tx { width: min(380px, 44vw); animation: bigIn .6s .1s cubic-bezier(.16,1,.3,1) both; }
+.tm-big .tx small { font: 400 12px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .4em; color: rgba(255,255,255,.6); }
+.tm-big .tx h3 { margin: 8px 0 6px; font: 400 30px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .14em; text-shadow: 0 0 8px var(--c), 0 0 22px color-mix(in srgb, var(--c) 60%, transparent); }
+.tm-big .tx i { display: block; width: 90px; height: 7px; margin-bottom: 18px; position: relative; background: linear-gradient(90deg, rgba(255,255,255,.7), transparent) 0 50% / 100% 1px no-repeat; }
+.tm-big .tx i::before { content: ""; position: absolute; left: 0; top: 50%; width: 5px; height: 5px; translate: 0 -50%; rotate: 45deg; background: #fff; box-shadow: 0 0 6px #fff; }
+.tm-big .tx p { margin: 0; font-size: 15.5px; line-height: 1.95; color: rgba(255,255,255,.88); word-break: keep-all; }
+.tm-big .tx p b { display: block; margin-bottom: 6px; font: 400 14px 'ChosunilboNM', 'Song Myung', serif; color: #fff; text-shadow: 0 0 10px var(--c); }
+.tm-big .bx-go { margin-top: 22px; }
+@media (max-width: 700px) { .tm-c img { height: 34vh; } .tm-big { flex-direction: column; } .tm-big img { height: 42vh; } .tm-big .tx { width: 100%; text-align: center; } .tm-big .tx i { margin: 0 auto 14px; } }
+
+/* 결계 수첩 · 지난 대사 */
+.bx-panel { position: fixed; inset: 0; z-index: 22; display: none; background: rgba(0,0,0,.86); }
+.bx-panel.on { display: block; animation: stIn .3s ease both; }
+@keyframes stIn { from { opacity: 0; } }
+.bx-panel-in { width: min(620px, calc(100% - 40px)); height: 100%; margin: 0 auto; overflow-y: auto; padding: 78px 0 60px; box-sizing: border-box; scrollbar-width: thin; }
+.bx-panel h2 { margin: 0 0 6px; text-align: center; font: 400 22px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .3em; text-indent: .3em; }
+.bx-panel h2 + p { margin: 0 0 24px; text-align: center; font-size: 12px; color: rgba(255,255,255,.5); }
+.bx-note { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 0 10px; padding: 14px 0 16px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.bx-note em { grid-row: span 2; font: 400 15px 'ChosunilboNM', 'Song Myung', serif; font-style: normal; color: rgba(255,255,255,.7); text-align: center; padding-top: 1px; }
+.bx-note b { font: 400 16px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .08em; }
+.bx-note p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.8; color: rgba(255,255,255,.75); white-space: pre-wrap; }
+.bx-note.lock b, .bx-note.lock p { opacity: .3; }
+.bx-log p { margin: 0 0 16px; font-size: 14.5px; line-height: 1.75; color: rgba(255,255,255,.85); white-space: pre-wrap; }
+.bx-log p b { display: block; font: 400 14px 'ChosunilboNM', 'Song Myung', serif; text-shadow: 0 0 10px var(--c); }
+.bx-log p.me { color: rgba(255,255,255,.5); }
+
+/* 부적 붙이기 */
+.bx-seal { position: fixed; z-index: 10; left: 50%; top: 44%; translate: -50% -50%; display: none; flex-direction: column; align-items: center; gap: 22px; border: 0; background: none; cursor: pointer; color: #fff; }
+.bx-seal.on { display: flex; animation: stIn .6s ease both; }
+.bx-seal .d { position: relative; width: 84px; height: 84px; }
+.bx-seal .d i { position: absolute; inset: 14px; rotate: 45deg; border: 1.5px solid #fff; background: rgba(255,255,255,.1); box-shadow: 0 0 18px #fff, 0 0 46px var(--c), inset 0 0 14px rgba(255,255,255,.5); }
+.bx-seal .d i::after { content: "符"; position: absolute; inset: 0; display: grid; place-items: center; rotate: -45deg; font: 400 22px 'Song Myung', serif; text-shadow: 0 0 10px #fff; }
+.bx-seal .d b { position: absolute; inset: 14px; rotate: 45deg; border: 1px solid #fff; animation: ring 2s ease-out infinite; }
+.bx-seal .d b + b { animation-delay: 1s; }
+.bx-seal > span { font: 400 16px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .4em; text-indent: .4em; text-shadow: 0 0 12px rgba(200,212,255,.8), 0 1px 4px #000; }
+.bx-seal:hover .d i { background: rgba(255,255,255,.35); }
+.bx-burst { position: fixed; z-index: 11; left: 50%; top: 44%; width: 0; height: 0; pointer-events: none; }
+.bx-burst i { position: absolute; left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px; rotate: 45deg; border: 2px solid #fff; box-shadow: 0 0 20px #fff, 0 0 40px var(--c); opacity: 0; animation: burst 1.6s cubic-bezier(.2,.7,.2,1) both; }
+.bx-burst i:nth-child(2) { animation-delay: .15s; } .bx-burst i:nth-child(3) { animation-delay: .3s; } .bx-burst i:nth-child(4) { animation-delay: .45s; }
+@keyframes burst { 0% { opacity: 1; scale: .3; } 100% { opacity: 0; scale: 14; } }
+
+/* 영전 */
+.bx-coin { position: fixed; z-index: 12; left: 50%; top: 40%; translate: -50% -50%; display: none; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+.bx-coin.on { display: flex; animation: coin 2.6s cubic-bezier(.16,1,.3,1) both; }
+.bx-coin i { width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #d9dff5 45%, #8d95b8); box-shadow: 0 0 24px rgba(255,255,255,.8); }
+.bx-coin b { font: 400 22px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .1em; text-shadow: 0 0 14px rgba(255,255,255,.8); }
+@keyframes coin { 0% { opacity: 0; transform: translateY(20px) scale(.8); } 20%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-20px); } }
+
+/* 끝 */
+.bx-end { position: fixed; inset: 0; z-index: 25; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; background: radial-gradient(ellipse at 50% 45%, rgba(10,12,28,.55), rgba(0,0,0,.9)); }
+.bx-end.on { display: flex; animation: stIn 1s ease both; }
+.bx-end small { font: 400 13px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .6em; text-indent: .6em; color: rgba(255,255,255,.7); }
+.bx-end h2 { margin: 0; font: 400 34px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .2em; text-indent: .2em; text-shadow: 0 0 8px var(--c), 0 0 26px color-mix(in srgb, var(--c) 60%, transparent); }
+.bx-end p { margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,.7); line-height: 1.8; }
+.bx-end .acts { display: flex; gap: 24px; margin-top: 16px; }
+.bx-go { position: relative; padding: 6px 14px 10px; border: 0; background: none; cursor: pointer; color: #fff; text-decoration: none; font: 400 15px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .3em; text-indent: .3em; text-shadow: 0 0 10px rgba(200,212,255,.5); }
+.bx-go::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 8px rgba(200,212,255,.9); transition: left .3s, right .3s; }
+.bx-go:hover::after { left: 0; right: 0; }
+
+.mock-tag { position: fixed; z-index: 50; left: 12px; bottom: 10px; font: 700 9px monospace; letter-spacing: .2em; color: rgba(255,255,255,.4); pointer-events: none; }
+@media (max-width: 700px) {
+  .bx-text { font-size: 15px; } .bx-name b { font-size: 20px; } .bx-acts { gap: 11px; }
+  .bx-ch { right: 20px; left: 20px; top: auto; bottom: 30vh; translate: none; max-height: 42vh; } .bx-ch button { width: 100%; }
+  .bx-hs { width: 38px; height: 38px; } .bx-hs i, .bx-hs b { inset: 13px; }
+  .bx-end h2 { font-size: 26px; } .bx-cap b { font-size: 22px; }
+}
+
+/* ═══ 대사창 (2026-11-26): 가운데로 · 미연시처럼 더 화려하게 ═══ */
+.bx-talk { align-items: center; text-align: center; padding-bottom: 64px;
+  background: radial-gradient(ellipse 55% 75% at 50% 105%, color-mix(in srgb, var(--c) 18%, transparent), transparent 70%), linear-gradient(180deg, transparent, rgba(4,5,14,.42) 28%, rgba(4,5,14,.8) 68%, rgba(4,5,14,.93)); }
+.bx-talk::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(circle, rgba(255,255,255,.2) 0 .7px, transparent 1.2px) 0 0 / 5px 5px; -webkit-mask-image: linear-gradient(180deg, transparent, #000 60%); mask-image: linear-gradient(180deg, transparent, #000 60%); }
+/* 아래 장식선: 가운데 마름모 + 양끝 작은 마름모 · 다음 표시가 가운데에서 숨 쉬어요 */
+.bx-talk::after { content: ""; position: absolute; left: 50%; bottom: 34px; width: min(760px, calc(100% - 48px)); height: 9px; translate: -50% 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55) 18%, rgba(255,255,255,.55) 45%, transparent 47.5%, transparent 52.5%, rgba(255,255,255,.55) 55%, rgba(255,255,255,.55) 82%, transparent) 50% 50% / 100% 1px no-repeat,
+    linear-gradient(45deg, transparent 35%, #fff 36% 64%, transparent 65%) 0 50% / 9px 9px no-repeat, linear-gradient(45deg, transparent 35%, #fff 36% 64%, transparent 65%) 100% 50% / 9px 9px no-repeat;
+  filter: drop-shadow(0 0 4px var(--c)); opacity: .8; }
+.bx-next { left: 50%; right: auto; bottom: 30px; margin-left: -4px; width: 9px; height: 9px; }
+.bx-name { margin-bottom: 16px; }
+.bx-name b { animation: nmGlow 3.2s ease-in-out infinite alternate; }
+@keyframes nmGlow { from { filter: brightness(1); } to { filter: brightness(1.25) drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent)); } }
+.bx-name i { width: 150px; }
+.bx-name i::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 3px; translate: 0 -50%; background: linear-gradient(45deg, transparent 30%, #fff 31% 69%, transparent 70%) 0 0 / 3px 3px no-repeat, linear-gradient(45deg, transparent 30%, #fff 31% 69%, transparent 70%) 100% 0 / 3px 3px no-repeat; }
+.bx-text { max-width: 760px; text-align: center; text-wrap: balance; text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(255,255,255,.38), 0 0 16px rgba(255,255,255,.16); }
+.bx-text span.v { animation: bxIn .5s ease-out both; }
+@keyframes bxIn { from { opacity: 0; filter: blur(5px); } }
+.bx-text.narr { text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 8px color-mix(in srgb, var(--c) 40%, transparent); }
+
+.bx-talk::after, .bx-name i::before { display: none; }   /* 아래 장식선 · 양끝 점은 뺐어요 · 다음 마름모만 둥둥 */
+
+/* 호감도 하락 */
+.tm-love { position: fixed; z-index: 30; left: 50%; top: 18vh; translate: -50% 0; display: flex; align-items: center; gap: 12px; padding: 12px 22px; pointer-events: none; color: #fff; background: linear-gradient(90deg, transparent, rgba(8,10,22,.82) 18%, rgba(8,10,22,.82) 82%, transparent); animation: tmLove 3s ease both; }
+.tm-love svg { width: 26px; height: 26px; filter: drop-shadow(0 0 6px var(--c)); animation: tmCrack .5s .25s ease both; }
+.tm-love span { font: 400 16px 'ChosunilboNM', 'Song Myung', serif; letter-spacing: .1em; text-shadow: 0 1px 3px #000; } .tm-love b { font-weight: 400; text-shadow: 0 0 10px var(--c); }
+.tm-love em { font-style: normal; font-size: 13px; color: #8fb4ff; animation: tmDown 1s ease-in-out infinite; }
+@keyframes tmLove { 0% { opacity: 0; translate: -50% -8px; } 12%, 80% { opacity: 1; translate: -50% 0; } 100% { opacity: 0; } }
+@keyframes tmCrack { 40% { transform: rotate(-12deg) scale(1.15); } 70% { transform: rotate(8deg); } }
+@keyframes tmDown { 50% { transform: translateY(3px); opacity: .5; } }
+</style>
+</head>
+<body class="bx" data-page="story" data-noheader data-nofooter>
+
+<div class="bx-stage" id="stage">
+  <div class="bx-box" id="box">
+    <i class="bx-bg" id="bg-a"></i><i class="bx-bg" id="bg-b"></i>
+    <svg class="bx-svg" id="svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div id="fx"></div>
+    <div class="bx-spots" id="spots"></div>
+  </div>
+  <i class="bx-shade"></i><i class="bx-fade"></i>
+</div>
+<i class="bx-flash" id="flash"></i><i class="bx-beam" id="beam"></i>
+<div class="bx-cap" id="cap"><small id="cap-no"></small><b id="cap-t"></b></div>
+
+<div class="bx-acts bx-ui" id="acts"><span>一</span><span>二</span><span>三</span><span>四</span></div>
+<div class="bx-tools bx-ui">
+  <button type="button" id="t-note" title="부적 수첩"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 2.5h8.5a1.5 1.5 0 0 1 1.5 1.5v9.5H4.5A1.5 1.5 0 0 1 3 12z"/><path d="M8 5.5l1.6 1.6L8 8.7 6.4 7.1z" fill="currentColor"/></svg></button>
+  <button type="button" id="t-log" title="지난 대사"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="2" width="10" height="12" rx="1.5"/><path d="M6 6h4M6 9h4M6 12h2"/></svg></button>
+  <a href="story.html" title="스토리로"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M2.5 7.5L8 3l5.5 4.5M4 6.5V13h8V6.5"/></svg></a>
+</div>
+<div class="bx-toast" id="toast">수첩에 적었어요 <b id="toast-t"></b></div>
+
+<div class="bx-talk bx-ui" id="talk">
+  <div class="bx-name narr" id="nm"><b id="nm-t"></b><i></i></div>
+  <div class="bx-text" id="txt"></div><i class="bx-next"></i>
+</div>
+<div class="bx-ch" id="choices"></div>
+<div class="tm-pop" id="tmpop"><small>또 다른 부적</small><div class="tm-row" id="tmrow"></div><button class="bx-go tm-done" type="button" id="tmdone">다 봤어</button></div>
+<div class="tm-big" id="tmbig"><img id="tmb-img" alt=""><div class="tx"><small>符 籍</small><h3 id="tmb-t"></h3><i></i><p id="tmb-p"></p><button class="bx-go" type="button" id="tmb-ok">확인</button></div></div>
+<div class="bx-quick bx-ui" id="quick"><button type="button" id="q-auto">자동</button><button type="button" id="q-log">기록</button><button type="button" id="q-hide">숨기기</button></div>
+
+<div class="bx-panel" id="note"><div class="bx-panel-in"><h2>부적 수첩</h2><p>배운 것들이 순서대로 적혀요</p><div id="note-in"></div></div>
+  <div class="bx-tools"><button type="button" data-close title="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div></div>
+<div class="bx-panel" id="log"><div class="bx-panel-in bx-log" id="log-in"></div>
+  <div class="bx-tools"><button type="button" data-close title="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div></div>
+
+<button class="bx-seal" type="button" id="seal"><span class="d"><i></i><b></b><b></b></span><span>부적 붙이기</span></button>
+<div class="bx-burst" id="burst"></div>
+<div class="bx-coin" id="coin"><i></i><b>영전 +1</b></div>
+
+<div class="bx-end" id="end">
+  <small>符 籍 修 練</small><h2>수련 완료</h2>
+  <p id="end-p"></p>
+  <div class="acts"><button class="bx-go" type="button" id="end-re">다시 하기</button><a class="bx-go" href="story.html">스토리로</a></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/char-editor.js"></script>
+<script>
+/* 부적 수련 그림 (사용자 그림 · imgur) · 1672 × 941 · 좌표는 그림 기준 픽셀 */
+const IMG = id => `https://i.imgur.com/${id}.png`, IW = 1672, IH = 941;
+const BG = { hands: IMG('zsDP0us'), seal: IMG('lKosOV3'), charms: IMG('wyer4SM') };
+
+/* 수첩: 배운 것 (사용자 대사 그대로 옮겨 적어요) */
+const NOTES = [
+  ['준비물', '술력을 쓸 수 있는 두 손만 있으면 돼'],
+  ['부적을 부르는 법', '손끝을 튕기거나 인을 맺어서 불러'],
+  ['술력의 방출', '술력이 숨마다 누수되면 체력이 안 좋아지겠지\n그렇기 때문에 저마다의 방출 방법이 따로 있어\n가장 대표적인 건 손을 튕기거나 인을 맺는 두 가지야'],
+  ['보호부', '결계를 만드는 보호부\n결계의 가장 기본적인 주춧돌은 술력이 담긴 부적이라 대체로 결계를 세울 때 부적을 이용해'],
+  ['추적부', '위치를 가늠하는 추적부\n특정 사물 및 사람에게 붙일 시 종이 새가 그 사람을 추적하거나 배회하면서 감시할 수 있어\n다만 그 시간 동안 니 술력도 누수되니 조심해야 돼'],
+  ['봉인부', '망량을 봉인하는 봉인부\n망량의 몸에 붙여 가볍게 봉인할 수 있어\n요즈음은 직접 퇴치 방식이 더 간편하기 때문에 사용하지 않아'],
+  ['일반 부적', '우리가 소지하고 다닐 수 있는 평범한 부적 형태야\n주변에 망량이 나오면 소멸하는 방식으로 알 수 있어'],
+  ['미끼 놀이', '부적으로 종이 인간들을 만들어서 망량의 눈을 잠시나마 돌릴 수 있어\n하지만 술력이 약하게 들어가는 만큼 높은 망량들은 불가능해'],
+  ['식운', '오늘의 운세를 부적에 태워서 없애는 거야\n망량 봉인도 이런 방식이야\n내 술력과 망량을 서로 등가로 치고 두 개를 다 없애는 방식이지......\n보통은 서문의 제사 때 사용돼'],
+  ['부적을 쓰는 이유','술력의 누수를 막고자\n부적은 필요한 양만 적당히 담아서 만들 수 있기 때문에 필요 이상의 술력을 요구하지 않거든\n추적 부적이 아닌 이상']
+];
+const KN = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+
+/* 또 다른 부적 세 장 (사용자 그림 · 세로로 긴 투명 그림) · n = 수첩 번호 */
+const MORE = [
+  { img: IMG('MFU7ZSn'), t: '일반 부적', n: 6, p: '우리가 소지하고 다닐 수 있는 평범한 부적 형태야 주변에 망량이 나오면 소멸하는 방식으로 알 수 있어' },
+  { img: IMG('mlaKWTQ'), t: '미끼 놀이', n: 7, p: '부적으로 종이 인간들을 만들어서 망량의 눈을 잠시나마 돌릴 수 있어 하지만 술력이 약하게 들어가는 만큼 높은 망량들은 불가능해' },
+  { img: IMG('WUEFGWj'), t: '식운', n: 8, p: '오늘의 운세를 부적에 태워서 없애는 거야 망량 봉인도 이런 방식이야 내 술력과 망량을 서로 등가로 치고 두 개를 다 없애는 방식이지...... 보통은 서문의 제사 때 사용돼' }
+];
+
+/* 一 두 손에 술력 모으기 (왼손 → 오른손) */
+const HANDS = [{ x: 470, y: 470 }, { x: 1150, y: 480 }];
+
+/* 三 부채처럼 펼친 부적 세 장 (아무 순서로 눌러 보기) */
+const CHARMS = [
+  { x: 690, y: 170, l: '보호부', ok: 1, n: 3, say: '결계의 가장 기본적인 주춧돌은 술력이 담긴 부적이라 대체로 결계를 세울 때 부적을 이용해' },
+  { x: 455, y: 205, l: '추적부', ok: 1, n: 4, say: '특정 사물 및 사람에게 붙일 시 종이 새가 그 사람을 추적하거나 배회하면서 감시할 수 있어 다만 그 시간 동안 니 술력도 누수되니 조심해야 돼' },
+  { x: 300, y: 300, l: '봉인부', ok: 1, n: 5, say: '망량의 몸에 붙여 가볍게 봉인할 수 있는 봉인부야 요즈음은 직접 퇴치 방식이 더 간편하기 때문에 사용하지 않아' }
+];
+(() => {
+  const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const P = (x, y) => `left:${x / IW * 100}%;top:${y / IH * 100}%`;
+  let ME = '', T = { name: '스승', color: '#9aa6ff' }, log = [], learned = new Set(), typing = null, onNext = null;
+
+  /* 그림 상자: 가로 화면은 꽉 채우고 · 세로 화면은 그림 전체를 가로 폭에 */
+  const fit = () => { const W = innerWidth, H = innerHeight, box = $('#box'), r = IW / IH; let w, h, top;
+    if (W / H >= 1.05) { w = Math.max(W, H * r); h = w / r; top = (H - h) / 2; } else { w = W; h = W / r; top = Math.max(70, H * .3 - h / 2); }
+    Object.assign(box.style, { width: w + 'px', height: h + 'px', left: (W - w) / 2 + 'px', top: top + 'px' }); box.style.setProperty('--u', w / 100 + 'px'); };
+  addEventListener('resize', fit); fit();
+
+  let which = 'a', wipeT = null;
+  const setBg = src => { const nx = which === 'a' ? 'b' : 'a', el = $('#bg-' + nx), old = $('#bg-' + which), first = !old.classList.contains('on');
+    clearTimeout(wipeT); el.style.backgroundImage = `url("${src}")`; el.style.zIndex = 2; old.style.zIndex = 1; el.classList.remove('wipe'); void el.offsetWidth;
+    el.classList.add('on'); if (!first) el.classList.add('wipe'); wipeT = setTimeout(() => { old.classList.remove('on'); el.classList.remove('wipe'); }, first ? 0 : 1550); which = nx; };
+  const clearFx = () => { $('#svg').innerHTML = ''; $('#fx').innerHTML = ''; $('#spots').innerHTML = ''; };
+  const caption = (no, t) => { $('#cap-no').textContent = no; $('#cap-t').textContent = t; const c = $('#cap'); c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); };
+  const flash = () => { const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); };
+  const act = n => $$('#acts span').forEach((s, i) => { s.classList.toggle('on', i === n); s.classList.toggle('bx-past', i < n); });
+  Object.values(BG).forEach(s => { new Image().src = s; }); MORE.forEach(m => { new Image().src = m.img; });
+
+  /* 빛줄기 그리기 */
+  function line(d, cls, dur) { const ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); if (cls) p.setAttribute('class', cls); $('#svg').appendChild(p);
+    const len = p.getTotalLength(); p.style.setProperty('--len', len); p.style.setProperty('--dur', (dur || 1) + 's'); p.classList.add('draw'); return wait((dur || 1) * 1000); }
+  const glow = (x, y) => { const g = document.createElement('i'); g.className = 'bx-glow'; g.setAttribute('style', P(x, y)); $('#fx').appendChild(g); };
+
+  /* 수첩에 적기 */
+  function learn(i) { if (learned.has(i)) return; learned.add(i); $('#toast-t').textContent = `${KN[i]} ${NOTES[i][0]}`; const t = $('#toast'); t.classList.remove('go'); void t.offsetWidth; t.classList.add('go'); }
+
+  /* 대사 */
+  function say(text, who) {
+    return new Promise(res => {
+      $('#stage').classList.add('talk'); $('#talk').classList.remove('bx-ready');
+      $('#nm').classList.toggle('narr', !who); $('#txt').className = 'bx-text' + (who ? '' : ' narr'); $('#talk').classList.toggle('mid', !who);
+      if (who) $('#nm-t').textContent = who.name;
+      text = text.replace(/\n/g, ' '); log.push({ n: who ? who.name : '', t: text });
+      $('#txt').innerHTML = [...text].map(ch => ch === '\n' ? '\n' : `<span>${esc(ch)}</span>`).join('');
+      const sp = $('#txt').querySelectorAll('span'); let i = 0; clearInterval(typing);
+      const fin = () => { clearInterval(typing); typing = null; sp.forEach(x => x.classList.add('v')); $('#talk').classList.add('bx-ready'); onNext = () => { onNext = null; clearTimeout(autoT); $('#stage').classList.remove('talk'); res(); }; if (auto) autoT = setTimeout(() => onNext && onNext(), 1700); };
+      typing = setInterval(() => { if (sp[i]) sp[i].classList.add('v'); i++; if (i >= sp.length) fin(); }, 30); finNow = fin;
+    });
+  }
+  const task = t => { $('#nm').classList.add('narr'); $('#talk').classList.remove('bx-ready'); $('#talk').classList.add('mid'); $('#txt').className = 'bx-text task'; $('#txt').textContent = t; };
+  let finNow = null, auto = false, autoT = null;   // 자동: 대사가 다 나오고 1.7초 뒤 넘어가요 (선택지 · 마름모에선 멈춰요)
+  $('#q-auto').onclick = () => { auto = !auto; $('#q-auto').classList.toggle('on', auto); if (auto && onNext && !typing) autoT = setTimeout(() => onNext && onNext(), 600); };
+  $('#q-log').onclick = () => $('#t-log').click();
+  $('#q-hide').onclick = () => document.body.classList.add('hideui');   // 타이핑 중에 누르면 한 번에 다 보여요
+  document.addEventListener('click', e => { if (document.body.classList.contains('hideui')) return document.body.classList.remove('hideui'); if (e.target.closest('.bx-tools, .bx-quick, .bx-ch, .bx-panel, .bx-seal, .bx-hs, .bx-end, .tm-pop, .tm-big')) return; if (typing) return finNow(); if (onNext) onNext(); });
+  addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !$('.bx-panel.on')) { e.preventDefault(); if (typing) finNow(); else if (onNext) onNext(); } });
+
+  function ask(opts, cls) {
+    return new Promise(res => {
+      const ch = $('#choices'); ch.className = 'bx-ch on' + (cls ? ' ' + cls : '');
+      ch.innerHTML = opts.map((o, i) => `<button type="button" data-i="${i}" style="--i:${i}"><span class="ic"></span><span>${esc(o)}</span></button>`).join('');
+      ch.onclick = e => { const b = e.target.closest('button'); if (!b) return; ch.className = 'bx-ch'; log.push({ me: 1, t: opts[+b.dataset.i] }); res(+b.dataset.i); };
+    });
+  }
+
+  /* 순서대로 누르는 마름모 (말뚝 · 획) · 틀린 순서면 흔들려요 · 한동안 안 누르면 다음 것이 반짝 */
+  function points(list, label, onHit) {
+    return new Promise(res => {
+      const sp = $('#spots'); let k = 0, idle;
+      const nudge = () => { clearTimeout(idle); sp.classList.remove('hint'); idle = setTimeout(() => sp.classList.add('hint'), 8000); };
+      sp.innerHTML = list.map((p, i) => `<button class="bx-hs" type="button" data-i="${i}" style="${P(p.x, p.y)};--i:${i}" aria-label="${i + 1}"><b></b><i></i><em>${KN[i]}</em></button>`).join('');
+      task(label); nudge();
+      const hit = async e => {
+        const b = e.target.closest('.bx-hs'); if (!b || b.classList.contains('got')) return; const i = +b.dataset.i;
+        if (i !== k) { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); return; }
+        clearTimeout(idle); sp.classList.remove('hint'); sp.onclick = null;   // 대사가 끝날 때까지 다음 마름모는 잠가요
+        b.classList.add('got'); k++;
+        await onHit(i);
+        if (k >= list.length) { await wait(200); sp.innerHTML = ''; return res(); }
+        task(label); nudge(); sp.onclick = hit;
+      };
+      sp.onclick = hit;
+    });
+  }
+
+  /* 결계의 힘이 느껴지는 곳 찾기: 순서 상관없이 · 진짜를 다 찾으면 끝 · 아닌 곳은 한마디 듣고 꺼져요 */
+  function findPlaces(list, label, onHit) {
+    return new Promise(res => {
+      const sp = $('#spots'), need = list.filter(p => p.ok).length; let got = 0, idle;
+      const nudge = () => { clearTimeout(idle); sp.classList.remove('hint'); idle = setTimeout(() => sp.classList.add('hint'), 9000); };
+      sp.innerHTML = list.map((p, i) => `<button class="bx-hs" type="button" data-i="${i}" style="${P(p.x, p.y)};--i:${i}" aria-label="${esc(p.l)}"><b></b><i></i><em>${esc(p.l)}</em></button>`).join('');
+      task(`${label} · ${got} / ${need}`); nudge();
+      const hit = async e => {
+        const b = e.target.closest('.bx-hs'); if (!b || b.classList.contains('got')) return; const p = list[+b.dataset.i];
+        clearTimeout(idle); sp.classList.remove('hint'); sp.onclick = null;
+        b.classList.add('got'); if (!p.ok) b.classList.add('off'); else got++;
+        await onHit(p);
+        if (got >= need) { await wait(200); sp.innerHTML = ''; return res(); }
+        task(`${label} · ${got} / ${need}`); nudge(); sp.onclick = hit;
+      };
+      sp.onclick = hit;
+    });
+  }
+
+  /* 망량의 공격: 붉은 빛이 가운데 위에서 아래로 내리꽂혀요 */
+  async function beam() {
+    const b = $('#beam'), f = $('#flash'); b.className = 'bx-beam'; void b.offsetWidth;
+    b.classList.add('shoot'); await wait(130);   // 번개처럼 순식간에
+    b.classList.add('hit'); f.classList.add('red'); flash(); await wait(120);
+    b.classList.add('out'); await wait(450); b.className = 'bx-beam'; f.classList.remove('red');
+  }
+
+  /* 부적 붙이기 */
+  const seal = () => new Promise(res => { task('가운데 부적을 눌러 결계에 붙이세요'); $('#seal').classList.add('on'); $('#stage').classList.add('dim');
+    $('#seal').onclick = async () => { $('#seal').classList.remove('on'); $('#stage').classList.remove('dim'); $('#burst').innerHTML = '<i></i><i></i><i></i><i></i>'; await wait(500); flash(); await wait(1200); $('#burst').innerHTML = ''; res(); }; });
+
+  /* 영전 1 · 한 사람당 한 번 (서버) */
+  async function coin() { let had = true; try { had = !!(await Store.story('coin')).had; } catch (e) {}   // 서버가 한 사람당 한 번만 영전 1
+    if (!had) { const c = $('#coin'); c.classList.remove('on'); void c.offsetWidth; c.classList.add('on'); } return had; }
+
+  /* 또 다른 부적 팝업: 세 장을 다 보면 '다 봤어' 가 나와요 */
+  function more() {
+    return new Promise(res => {
+      const seen = new Set(); task('부적을 눌러 살펴보세요');
+      $('#tmrow').innerHTML = MORE.map((m, i) => `<button class="tm-c" type="button" data-i="${i}" style="--i:${i}"><img src="${m.img}" alt="" referrerpolicy="no-referrer"><span>${esc(m.t)}</span></button>`).join('');
+      $('#tmdone').classList.remove('on'); $('#tmpop').classList.add('on');
+      $('#tmrow').onclick = e => { const b = e.target.closest('.tm-c'); if (!b) return; const m = MORE[+b.dataset.i];
+        $('#tmb-img').src = m.img; $('#tmb-t').textContent = m.t; $('#tmb-p').innerHTML = `<b>${esc(T.name)}</b>${esc(m.p)}`; $('#tmbig').classList.add('on');
+        $('#tmb-ok').onclick = () => { $('#tmbig').classList.remove('on'); b.classList.add('seen'); seen.add(m.t); learn(m.n); if (seen.size >= MORE.length) $('#tmdone').classList.add('on'); }; };
+      $('#tmdone').onclick = () => { $('#tmpop').classList.remove('on'); res(); };
+    });
+  }
+
+  /* ── 수업 대본 (사용자 시놉시스 그대로) ── */
+  /* 호감도 하락 (미연시처럼): 금 간 하트 + 문구가 위에 잠깐 */
+  function love() { const d = document.createElement('div'); d.className = 'tm-love'; d.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.2l-1.6 3.2 2.4 1.6-1.8 3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(T.name)}</b>의 호감도가 내려갔어요</span><em>▼</em>`; document.body.appendChild(d); setTimeout(() => d.remove(), 3000); }
+  async function run() {
+    log = []; learned = new Set(); $('#end').classList.remove('on'); clearFx();
+
+    // 一 두 손
+    act(0); setBg(BG.hands); caption('一', '두 손'); await wait(1500);
+    await say('부적에 대해서 가르쳐 줄게', T);
+    await say('일단 준비물은 간단해 술력을 쓸 수 있는 두 손만 있으면 돼', T); learn(0);
+    await points(HANDS, '두 손에 술력을 모으세요', async i => { glow(HANDS[i].x, HANDS[i].y); await wait(300); });
+    flash();
+    await say('부적을 부르는 건 보통 어떻게 하는지 알지?', T);
+    for (;;) {
+      const a = await ask(['손끝을 튕긴다', '인을 맺는다', '종이를 생성해 획을 쓴다', '눈을 감고 집중한다']);
+      if (a < 2) break;
+      if (a === 2) await say('그게 아니야', T);
+      else { await say('그게 아니잖아 정말......', T); love(); await wait(2600); }   // 미연시처럼 호감도 하락
+    }
+    learn(1);
+
+    // 二 인
+    clearFx(); flash(); act(1); setBg(BG.seal); caption('二', '술력의 방출'); await wait(1500);
+    await say('술력이 숨마다 누수되면 체력이 안 좋아지겠지?', T);
+    await say('그렇기 때문에 저마다의 방출 방법이 따로 있어 가장 대표적인 건 손을 튕기거나 인을 맺는 두 가지야', T); learn(2);
+    const QS = [['그러면 새로 만들 수도 있어?', '당연하지 니가 강해진다면 충분히'], ['술력이 강한 사람들은 눈만 마주쳐도 써?', '조부는 그렇다고 들었어']];
+    let left = QS.slice();
+    while (left.length) {
+      const opts = left.map(q => q[0]).concat(left.length < QS.length ? ['이제 알겠어'] : []);
+      const a = await ask(opts);
+      if (a >= left.length) break;
+      await say(left[a][1], T); left.splice(a, 1);
+    }
+
+    // 三 부적의 쓰임
+    clearFx(); act(2); setBg(BG.charms); caption('三', '부적의 쓰임'); await wait(1500);
+    await say('이제 생성한 부적을 붙여 보자', T);
+    await say('부적에는 다음 세 가지의 쓰임이 있어', T);
+    await findPlaces(CHARMS, '부적을 하나씩 눌러 보세요', async p => { glow(p.x, p.y); await say(p.say, T); learn(p.n); });
+    await say('혹시 다른 부적의 쓰임새가 있을까?', T);
+    await more();
+    await say('외에도 부적의 쓰임새는 무궁무진해', T);
+    await say('물론 술력으로도 할 수 있지만 부적을 이용하는 이유는 무엇일까?', T);
+    const WHY = [['예뻐서?', '니가?'], ['우리는 서문이니까', '조부가 하늘에서 들으면 기뻐할 말이야'], ['그게 간지라서', '엄......'],
+      ['술력의 누수를 막고자', '맞았어 부적은 필요한 양만 적당히 담아서 만들 수 있기 때문에 필요 이상의 술력을 요구하지 않거든 추적 부적이 아닌 이상']];
+    for (;;) {
+      const a = await ask(WHY.map(w => w[0]));
+      await say(WHY[a][1], T);
+      if (a === 3) break;
+    }
+    learn(9);
+
+    // 四 수업 끝
+    act(3); caption('四', '수업 끝'); $('#stage').classList.add('dim'); await wait(1600);
+    await say('오늘 수업은 여기에서 끝이야 또 필요한 게 있으면 연락해 줘', T);
+    const e = await ask(['번호 따도 돼?', '다음에 밥 한번 같이 먹자', '왜 이렇게 남처럼 말해', '서문단에 대해서도 가르쳐 줘', '재미있었어']);
+    if (e === 0) await say('음...... 우리 집이 엄해서 핸드폰이 없어 미안', T);
+    else if (e === 1) { await say('아 좋아 ㅎㅎ', T); await say('이후로 10 년이 지났다', null); await say('여전히 연락은 없다', null); }
+    else if (e === 2) await say('아까부터 김화진 님이 멀리서 지켜보고 있었거든', T);
+    else if (e === 3) await say('음 그거는 니가 에피소드에 잘 참여했다면 알 수 있어', T);
+    else await say('나도 너랑 같이 수업 들어서 좋았어', T);
+    $('#stage').classList.remove('dim');
+    act(4); $('#end-p').textContent = `${T.name} 師에게 부적을 배웠어요 · 수첩 ${learned.size} / ${NOTES.length}`; if (T.id) Store.story('study', { p_kind: 'talisman', p_teacher: T.id }).catch(() => {});   /* 애제자: 같은 스승에게 들었는지 서버에 기록 (끝날 때 한 번) */ $('#end').classList.add('on');
+  }
+  $('#end-re').onclick = () => run();
+
+  $('#t-note').onclick = () => { $('#note-in').innerHTML = NOTES.map((n, i) => learned.has(i) ? `<div class="bx-note"><em>${KN[i]}</em><b>${esc(n[0])}</b><p>${esc(n[1])}</p></div>` : `<div class="bx-note lock"><em>${KN[i]}</em><b>아직 배우지 않았어요</b><p>수련을 이어 가면 적혀요</p></div>`).join(''); $('#note').classList.add('on'); };
+  $('#t-log').onclick = () => { $('#log-in').innerHTML = log.map(x => x.me ? `<p class="me">▸ ${esc(x.t)}</p>` : `<p>${x.n ? `<b>${esc(x.n)}</b>` : ''}${esc(x.t)}</p>`).join('') || '<p>아직 대사가 없어요</p>'; $('#log').classList.add('on'); $('#log-in').scrollTop = 1e6; };
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.bx-panel').classList.remove('on'));
+
+  /* 스승: 스토리에서 고른 캐릭터 (?t=) · 이름과 색만 · 멤버란과 같은 캐시 */
+  App.ready.then(async () => {
+    try {   // 스토리에서 고른 스승 (주소 ?t= → 없으면 마지막으로 고른 스승 → 그것도 없으면 첫 캐릭터)
+      let id = new URLSearchParams(location.search).get('t'); try { id = id || localStorage.getItem('naru:storyT'); } catch (e) {}
+      const all = await Store.charCards(); const c = (id && all.find(x => x.id === id)) || all[0]; if (c) { const d = normChar(c.data); T = { id: c.id, name: d.name || '스승', color: d.color || '#9aa6ff' }; }
+      try { const u = await Store.user(); const mine = all.find(x => u && x.owner_id === u.id); ME = (mine && normChar(mine.data).name) || (u && u.nickname) || ''; } catch (e) {}   // {나}: 내 캐릭터 이름
+    } catch (e) {}
+    document.body.style.setProperty('--c', T.color);
+    run();
+  });
+})();
+</script>
+</body>
+</html>

@@ -184,6 +184,7 @@
     <a class="rb" href="theater.html" id="sb-theater" hidden><span class="ci" data-emb="theater"></span><b>상영관</b></a>
     <a class="rb" href="stock.html" id="sb-stock" hidden><span class="ci" data-emb="stock"></span><b>주식</b></a>
     <a class="rb" href="mal.html" id="sb-mal" hidden><span class="ci" data-emb="story"></span><b>말장난</b></a>
+    <a class="rb" href="story.html" id="sb-story" hidden><span class="ci" data-emb="story"></span><b>스토리</b></a>
   </nav>
 
   <!-- 왼쪽 버튼 옆: 후계자 수업 · 대국 (홀로그램 유리 두 장 · 폰에선 미니 게임 아래로 옮겨져요) -->
@@ -374,6 +375,7 @@ App.ready.then(async user => {
   try { [all, teles, s, wal, att, shop] = await Promise.all([Store.charCards(), Store.teles(), Store.settings(), Store.wallet(), Store.attendance(today), Store.shopItems()]); } catch (e) { console.error(e); }
   if (s && s.stock_on) $('#sb-stock').hidden = false;
       if (s && s.mj_on) $('#sb-mal').hidden = false;   // 말장난 테스트 (SQL 로 켜고 꺼요)
+  if ((s && s.story_on) || (user && user.grade === 'admin')) $('#sb-story').hidden = false;   // 스토리가 열려 있을 때만 (관리 화면에서 켜고 꺼요) · 메인 관리자는 늘 보여요
   if (s && s.theater_on) $('#sb-theater').hidden = false;   // 상영관이 열려 있을 때만 (관리자도 똑같이 · 관리 화면에서 끄면 메인 버튼도 사라져요)   // 빼빼로 증권이 열려 있을 때만
   const pub = all.filter(c => c.published_at);   // 게시된 캐릭터 (수정본을 심사받는 중이어도 게시된 상태)
   const mine = all.filter(c => c.owner_id === user.id);
