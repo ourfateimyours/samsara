@@ -147,20 +147,23 @@ App.ready.then(async user => {
   }
 
   // 애제자 칭호 (스토리): 프로필에 달지 않고 간직 · 출석한 뒤 딱 한 번 '달기'를 누르면 그 순간부터 48시간 동안 찍은 출석부에만 보여요
-  let D = null;
+  // 바람둥이 칭호: 이야기 · 결계 · 부적을 서로 다른 세 스승에게 들으면 · 애제자와 똑같이 한 번 달면 48시간
+  let D = null, FL = null;
   function renderDisc() {
-    const box = $('#dsc'); if (!D) { box.hidden = true; return; } box.hidden = false;
-    const t = `${esc(D.name)}의 애제자`;
-    const until = D.until ? new Date(D.until) : null, live = until && until > new Date();
-    const ut = until ? new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(until) : '';
-    if (D.used_on) box.innerHTML = live ? `<span>✦ ${t}</span><small>출석부에 보이는 중 · ${ut}까지</small>` : `<small>애제자 칭호는 이미 꺼내 썼어요</small>`;
-    else box.innerHTML = done() ? `<button type="button" class="btn sm" id="dsc-go">✦ ${t} 달기</button><small>딱 한 번 · 누른 순간부터 48시간 동안 출석부에만 보여요</small>` : `<span>✦ ${t}</span><small>도장을 찍은 뒤 딱 한 번 달 수 있어요</small>`;
-    const go = $('#dsc-go'); if (go) go.onclick = async () => { go.disabled = true;
-      try { const r = await Store.discipleUse(); D.used_on = r.used_on || today; D.until = r.until; await loadAll(); renderAll(); toast(`오늘 출석부에 '${r.title}' 칭호가 붙었어요`); } catch (e) { toast(e.message, 'err'); go.disabled = false; } };
+    const box = $('#dsc'), its = [];
+    if (D) its.push({ o: D, t: `${esc(D.name)}의 애제자`, use: () => Store.discipleUse() });
+    if (FL) its.push({ o: FL, t: '바람둥이', use: () => Store.story('flirt_use') });
+    if (!its.length) { box.hidden = true; return; } box.hidden = false;
+    const fmt = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+    box.innerHTML = its.map(({ o, t }, i) => { const until = o.until ? new Date(o.until) : null, live = until && until > new Date();
+      if (o.used_on) return live ? `<span>✦ ${t}</span><small>출석부에 보이는 중 · ${fmt.format(until)}까지</small>` : `<small>${t} 칭호는 이미 달았어요</small>`;
+      return done() ? `<button type="button" class="btn sm" data-dsc="${i}">✦ ${t} 달기</button><small>딱 한 번 · 누른 순간부터 48시간 동안 출석부에만 보여요</small>` : `<span>✦ ${t}</span><small>도장을 찍은 뒤 딱 한 번 달 수 있어요</small>`; }).join('');
+    box.querySelectorAll('[data-dsc]').forEach(go => go.onclick = async () => { const it = its[+go.dataset.dsc]; go.disabled = true;
+      try { const r = await it.use(); it.o.used_on = r.used_on || today; it.o.until = r.until; await loadAll(); renderAll(); toast(`오늘 출석부에 '${r.title}' 칭호가 붙었어요`); } catch (e) { toast(e.message, 'err'); go.disabled = false; } });
   }
   const renderAll = () => { renderWallet(); renderStamp(); renderTrack(); renderCal(); renderRoll(); renderDisc(); };
   try { await loadAll(); } catch (e) { toast(e.message, 'err'); wal = { coins: 0, items: [], equip: {}, snacks: 0 }; }
-  try { D = (await Store.story('mine')).disciple || null; } catch (e) { D = null; }   // 들어올 때 한 번
+  try { const m = await Store.story('mine'); D = m.disciple || null; FL = m.flirt || null; } catch (e) { D = FL = null; }   // 들어올 때 한 번
   renderAll();
 
   $('#stamp').onclick = async () => {
