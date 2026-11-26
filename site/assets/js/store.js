@@ -101,7 +101,7 @@
   const DEFAULT_SETTINGS = {
     bgm_url: '', bgm_title: '', bgm_on: false,
     signup_open: true, public_view: false,   // public_view: 비회원도 사이트를 둘러볼 수 있게
-    lesson_on: false, match_on: false, stock_on: false, theater_on: false, sms_on: false, mj_on: false, bj_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
+    lesson_on: false, match_on: false, stock_on: false, theater_on: false, story_on: false, sms_on: false, mj_on: false, bj_on: false,   // stock_on: 빼빼로 증권 (관리자 '빼빼로 주식' 탭에서 열고 닫아요)
       // 후계자 수업 · 대국 열기 (꺼 두면 메인에 창만 보이고 못 들어가요 · 관리자는 언제나 들어가요)
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
@@ -603,6 +603,8 @@
     mj(fn, args) { return B.mjRpc(fn, args); },
     mjSub(uid, h) { return B.mjSub(uid, h); },
     bj(fn, args) { return B.gameRpc('bj', fn, args); },
+    story(fn, args) { return B.gameRpc('story', fn, args); },   // 스토리 · 결계 · 부적 · 전시회 (서버 함수 story_*)
+    discipleUse() { return B.gameRpc('disciple', 'use', {}); },   // 출석: 애제자 칭호 한 번 꺼내 쓰기
     bjSub(uid, h) { return B.mjSub(uid, h, 'bj'); },
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
     async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
