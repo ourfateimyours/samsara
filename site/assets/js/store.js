@@ -106,6 +106,8 @@
     create_mode: 'open', create_start: '', create_end: '',   // open | closed | scheduled
     edit_mode: 'closed', edit_start: '', edit_end: '',
     lobby_banners: [],   // 메인 왼쪽 아래 배너 [{ tag, title, text, link, c1, c2, angle, ghost }]
+    jackpot: null,       // 복주머니 ×50 당첨 · 폭망 { win, name, head, at } · 메인에 1시간 팝업 (서버가 적어요)
+    bells: [], wish_pops: [],   // 사리의 소원: 골든벨 [{ id, name, at }] · 24시간 팝업 [{ id, from, to, msg, at }] (서버가 적어요)
     board_stickers: ['https://i.imgur.com/RwKWE0z.png', 'https://i.imgur.com/qdfAM60.png', 'https://i.imgur.com/XhFJYF1.png', 'https://i.imgur.com/Z2BN6L8.png', 'https://i.imgur.com/hYURJd0.png', 'https://i.imgur.com/CuCgPLq.png']   // 사건 보드 스티커 (관리자 사이트 탭)
   };
 
@@ -289,6 +291,7 @@
       async giveCoins(me, nick, to, amount, note) { return ok(await sb.rpc('admin_give_coins', { p_user: to, p_amount: parseInt(amount, 10) || 0, p_note: String(note || '').slice(0, 60) })); },
       async equip(me, kind, id) { return ok(await sb.rpc('equip_item', { p_kind: kind, p_id: id || null })); },
       async useSnack() { const r = ok(await sb.rpc('use_snack')); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },
+      async catWish(me, kind, to, msg) { const r = ok(await sb.rpc('cat_wish', { p_kind: kind, p_to: to || null, p_msg: String(msg || '').slice(0, 120) })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}) }); },
       async catPet(me, up) { const r = ok(await sb.rpc('cat_pet_x', { p_up: !!up })); return Object.assign({}, r, { wallet: Object.assign(emptyWallet(), r.wallet || {}), rewards: r.rewards || [] }); },      // 미니 게임: 배수 뽑기 · 정산 · 하루 한 판은 전부 서버에서
       async pangStatus() { return ok(await sb.rpc('pang_status')); },
       async pangStart(me, bet, level) { return ok(await sb.rpc('pang_start', { p_bet: parseInt(bet, 10) || 0, p_level: level })); },
@@ -632,6 +635,7 @@
     async equip(kind, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.equip(u.id, kind, id); },
     async useSnack() { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.useSnack(u.id); },
     /* 고양이 쓰다듬기: up=true 면 +1 (하루 +5까지) · false 면 삐짐 -2 (하루 한 번) → { wallet, gift, unlocked, changed } */
+    async catWish(kind, to, msg) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); drop('settings'); cachedSettings = null; return B.catWish(u.id, kind, to, msg); },
     async catPet(up) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); return B.catPet(u.id, up); },    CAT, affToday,
     /* 미니 게임: 오늘 했는지 { played, done, win, mult, delta } · 시작(영전 걸기) · 끝(점수 → 정산 결과) */
     PANG, PANG_LEVELS, pangLevel,
