@@ -612,7 +612,7 @@
     discipleUse() { return B.gameRpc('disciple', 'use', {}); },   // 출석: 애제자 칭호 한 번 꺼내 쓰기
     bjSub(uid, h) { return B.mjSub(uid, h, 'bj'); },
     async statAllocate(char, alloc) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.statAllocate(u.id, char, alloc); },
-    async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); return B.buy(u.id, u.nickname, id, opt || {}); },
+    async buy(id, opt) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); drop('shop', 'shop:all'); const r = await B.buy(u.id, u.nickname, id, opt || {}); if (r && r.pouch && Math.abs(r.pouch.mult) === 50) { drop('settings'); cachedSettings = null; } return r; },
     /* 모두의 칭호 · 스탯 보너스 · 보유 영전 { user_id: { equip, boosts, coins } } */
     async badges() { if (!(await this.user())) return {}; if (!cachedBadges) cachedBadges = await hold('badges', 18e4, () => B.badges()).catch(() => ({})); return cachedBadges; },
     async shopLog() { await this.requireAdmin(); return B.shopLog(); },
