@@ -38,7 +38,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js?v=1127"></script>
+<script src="assets/js/store.js?v=1127b"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/keyring.js"></script>
 <script src="assets/js/char-editor.js"></script>
@@ -326,9 +326,9 @@ App.ready.then(async user => {
     try { [items, logs] = await Promise.all([Store.shopItems(true), Store.shopLog()]); } catch (e) { toast(e.message, 'err'); }
     const KN = { title: '칭호', tag: '이름표', snack: '간식', ticket: '지정권', boost: '스탯 증가권', pick: '스탯 확정권' };
     const statTxt = it => Object.entries(it.stats || {}).filter(([, v]) => parseFloat(v)).map(([k, v]) => `${k} +${v}`).join(' · ');
-    pane.innerHTML = `<section class="adm-card"><header><b>🏮 상점 물건</b><span class="label">가격·판매는 바꾸면 바로 저장돼요 · 칭호는 스탯 보너스를 걸 수 있어요</span></header>
+    pane.innerHTML = `<section class="adm-card"><header><b>🏮 상점 물건</b><span class="label">설명·가격·판매는 바꾸면 바로 저장돼요 (설명은 칸 밖을 누르면 저장) · 칭호는 스탯 보너스를 걸 수 있어요</span></header>
       <table class="adm-table"><thead><tr><th>물건</th><th>종류</th><th>가격</th><th>수량 <small class="dim">0 = 무제한</small></th><th>판매</th><th>스탯 보너스</th><th>칭호 글씨체</th></tr></thead>
-      <tbody>${items.map(it => `<tr data-id="${esc(it.id)}"><td>${esc(it.name)}</td><td>${KN[it.kind] || esc(it.kind)}</td>
+      <tbody>${items.map(it => `<tr data-id="${esc(it.id)}"><td><b>${esc(it.name)}</b><textarea class="input" data-descr rows="2" maxlength="300" placeholder="상점 카드에 보이는 설명" style="display:block;width:100%;min-width:220px;margin-top:6px;resize:vertical;font-size:12px">${esc(it.descr || '')}</textarea></td><td>${KN[it.kind] || esc(it.kind)}</td>
         <td><input class="input" type="number" min="0" data-price value="${it.price}" style="width:90px"></td>
         <td>${it.kind === 'title' || it.kind === 'tag' ? `<input class="input" type="number" min="0" data-stock value="${it.stock || 0}" style="width:70px"> <span class="dim">${it.sold || 0}명 가짐${Store.soldOut(it) ? ' · 품절' : ''}</span>` : '<span class="dim">—</span>'}</td>
         <td>${sw('act-' + it.id, it.active !== false).replace('<input', '<input data-act')}</td>
@@ -342,6 +342,7 @@ App.ready.then(async user => {
     const save = async (id, patch, msg) => { try { const r = await Store.saveShopItem(Object.assign({ id }, patch)); Object.assign(items.find(i => i.id === id), r); toast(msg); } catch (e) { toast(e.message, 'err'); } };
     pane.onchange = e => {
       const tr = e.target.closest('tr[data-id]'); if (!tr) return; const id = tr.dataset.id;
+      if (e.target.matches('[data-descr]')) save(id, { descr: e.target.value.trim() }, '설명을 바꿨어요');
       if (e.target.matches('[data-price]')) save(id, { price: Math.max(0, parseInt(e.target.value, 10) || 0) }, '가격을 바꿨어요');
       if (e.target.matches('[data-stock]')) { const n = Math.max(0, parseInt(e.target.value, 10) || 0); save(id, { stock: n }, n ? `수량을 ${n}명으로 정했어요` : '수량 제한을 없앴어요'); }
       if (e.target.matches('[data-tfont]')) save(id, { font: e.target.value }, '칭호 글씨체를 바꿨어요');

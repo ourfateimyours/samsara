@@ -35,7 +35,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js?v=1127"></script>
+<script src="assets/js/store.js?v=1127b"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/char-editor.js"></script>
 <script>
@@ -130,7 +130,7 @@ App.ready.then(async user => {
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
         : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.kind === 'pick' ? '고른 스탯이 +2 올라요.' : it.id === 'k_rel' ? `${gift ? '받는 사람의' : '내'} 캐릭터 관계란이 1칸 늘어나요. 기본 5칸이에요.` : it.kind === 'ticket' ? '가방에 쌓여요'
-        : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
+        : it.kind === 'pouch' ? '반반 확률로 낸 값의 2 ~ 50배를 얻거나, 그만큼 더 잃어요. 잃으면 영전이 마이너스가 될 수도 있어요.' : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
       sel.innerHTML = cs.length ? cs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') : '<option value="">캐릭터가 없어요</option>'; };
@@ -155,8 +155,8 @@ App.ready.then(async user => {
 
   function pouchOpen(it, p) {
     const paid = p.price || it.price, back = Math.max(0, p.back), lost = p.mult < 0;
-    const t = lost ? ['앗…', '그만큼 더 잃었어요', 'bad'] : p.mult === 0 ? ['꽝', '아무것도 없었어요', 'bad'] : p.mult < 1 ? ['반', '절반만 돌아왔어요', 'meh']
-      : p.mult === 1 ? ['본전', '그대로 돌아왔어요', 'meh'] : p.mult >= 3 ? ['대박!', `×${p.mult} 터졌어요`, 'win'] : ['행운', `×${p.mult} 돌아왔어요`, 'win'];
+    const t = lost ? (p.mult <= -20 ? ['폭망…', `×${-p.mult} 만큼 더 잃었어요`, 'bad'] : ['앗…', `×${-p.mult} 만큼 더 잃었어요`, 'bad'])
+      : p.mult >= 20 ? ['대박!', `×${p.mult} 터졌어요`, 'win'] : ['행운', `×${p.mult} 돌아왔어요`, 'win'];
     const net = p.net > 0 ? `+${p.net.toLocaleString()}` : p.net === 0 ? '±0' : `−${(-p.net).toLocaleString()}`;
     const m = openModal(`<div class="buy-ask pouch-open ${t[2]}"><div class="pch shake">${POUCHSVG}</div>
       <div class="pch-res" hidden><small class="pch-k">복주머니 결과</small><b class="pch-t">${t[0]}</b><span class="pch-s">${t[1]}</span>
