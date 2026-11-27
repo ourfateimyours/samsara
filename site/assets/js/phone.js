@@ -42,7 +42,7 @@ window.Phone = (function () {
   }
 
   /* 달: 늘 표면이 잘 보이는 보름달 사진 (실제 달 모양을 따르면 초승달 · 그믐 때 거의 까맣게 나와요) */
-  const MOON_FULL = 'https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005587/frames/730x730_1x1_30p/moon.7157.jpg';   // 나사에서 볼 때만 받아요
+  const MOON_FULL = 'assets/img/moon.jpg';   // 나사 사진을 사이트에 직접 올려 둬요 (나사 주소를 막아서 바꿨어요)
 
   let ov = null;
   function open(row, all, opt = {}) {
