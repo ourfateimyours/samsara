@@ -207,7 +207,7 @@ App.ready.then(async user => {
             <div class="label" style="margin-bottom:8px">지갑</div>
             <div class="wal-box"><div><span>영전</span><b>${w.coins}</b></div><div><span>칭호</span><b>${tt ? esc(Store.titleText(tt, w.equip)) : '없음'}</b></div>
               <div><span>칭호 보유</span><b>${w.items.filter(id => (items.find(i => i.id === id) || {}).kind === 'title').length}개</b></div><div><span>츄르</span><b>${w.snacks}</b></div>
-              <div><span>심박권</span><b>${(w.tickets || {}).k_beat || 0}장</b></div><div><span>룸메이트 지정권</span><b>${(w.tickets || {}).k_room || 0}장</b></div><div><span>스탯 증가권</span><b>${w.boost_n || 0} / 10</b></div></div>
+              <div><span>심박권</span><b>${(w.tickets || {}).k_beat || 0}장</b></div><div><span>관계란</span><b>${5 + ((w.tickets || {}).k_rel || 0)}칸</b></div><div><span>스탯 증가권</span><b>${w.boost_n || 0} / 10</b></div></div>
             <div class="row3">
               <label class="field"><span>닉네임</span><input data-f="nickname" value="${esc(m.nickname)}" ${ADMIN ? '' : 'readonly'}></label>
               <label class="field"><span>칭호</span><input data-f="title" value="${esc(m.title)}" ${ADMIN ? '' : 'readonly'}></label>
