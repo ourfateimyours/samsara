@@ -130,7 +130,7 @@ App.ready.then(async user => {
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
         : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.kind === 'pick' ? '고른 스탯이 +2 올라요.' : it.id === 'k_rel' ? `${gift ? '받는 사람의' : '내'} 캐릭터 관계란이 1칸 늘어나요. 기본 5칸이에요.` : it.kind === 'ticket' ? '가방에 쌓여요'
-        : it.kind === 'pouch' ? '반반 확률로 낸 값의 ×2 · ×3 · ×5 · ×10 · ×20 · ×30 · ×50 중 하나를 얻거나, 그만큼 더 잃어요. 높은 배수일수록 드물어요. 잃으면 영전이 마이너스가 될 수도 있어요.' : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
+        : it.kind === 'pouch' ? `반반 확률로 낸 값의 ×2 · ×3 · ×5 · ×10 · ×20 · ×30 · ×50 중 하나를 얻거나, 그만큼 더 잃어요. 높은 배수일수록 드물어요. 잃으면 영전이 마이너스가 될 수도 있어요. 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
       sel.innerHTML = cs.length ? cs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') : '<option value="">캐릭터가 없어요</option>'; };
@@ -146,7 +146,7 @@ App.ready.then(async user => {
         if (it.kind === 'pouch' && amount < it.price) return toast(`복주머니는 ${it.price} 영전부터예요.`, 'err');
         const stat = m.querySelector('#bx-st') ? m.querySelector('#bx-st').value : null;
         const r = await Store.buy(it.id, { to, char: ch, msg, amount, stat });
-        if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); if (r.luck) setTimeout(() => luckShow(r.luck), 1500); return pouchOpen(it, r.pouch); }
+        if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); if (r.luck && window.luckShow) setTimeout(() => luckShow(r.luck), 1500); return pouchOpen(it, r.pouch); }
         wal = r.wallet; items = await Store.shopItems().catch(() => items); closeModal(); renderAll();   // 남은 수량 · 품절 다시 받아 오기
         toast(it.kind === 'cheer' ? (to ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : '모두에게 익명 응원 쪽지를 붙였어요 ✦') : it.kind === 'boost' || it.kind === 'pick' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
       } catch (err) { toast(err.message, 'err'); if (/품절/.test(err.message)) { items = await Store.shopItems().catch(() => items); closeModal(); renderAll(); } }
@@ -156,7 +156,8 @@ App.ready.then(async user => {
   function pouchOpen(it, p) {
     const paid = p.price || it.price, back = Math.max(0, p.back), lost = p.mult < 0;
     const t = lost ? (p.mult <= -20 ? ['폭망…', `×${-p.mult} 만큼 더 잃었어요`, 'bad'] : ['앗…', `×${-p.mult} 만큼 더 잃었어요`, 'bad'])
-      : p.mult >= 20 ? ['대박!', `×${p.mult} 터졌어요`, 'win'] : ['행운', `×${p.mult} 돌아왔어요`, 'win'];
+      : p.mult >= 20 ? ['대박!', `×${p.mult} 터졌어요`, 'win'] : ['당첨', `×${p.mult} 돌아왔어요`, 'win'];
+    if (p.fixed) t[1] = `×${-p.fixed} 손해를 사리가 ×4 로 줄여 줬어요`;
     const net = p.net > 0 ? `+${p.net.toLocaleString()}` : p.net === 0 ? '±0' : `−${(-p.net).toLocaleString()}`;
     const m = openModal(`<div class="buy-ask pouch-open ${t[2]}"><div class="pch shake">${POUCHSVG}</div>
       <div class="pch-res" hidden><small class="pch-k">복주머니 결과</small><b class="pch-t">${t[0]}</b><span class="pch-s">${t[1]}</span>
