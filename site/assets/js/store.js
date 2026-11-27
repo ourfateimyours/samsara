@@ -224,7 +224,9 @@
           const s = ok(await sb.rpc('shop_special', { p_id: id, p_to: opt.to || null, p_msg: String(opt.msg || '').slice(0, 40), p_amount: Math.floor(Number(opt.amount) || 0) }));
           return { wallet: Object.assign(emptyWallet(), s.wallet || {}), detail: s.detail || '', pouch: s.pouch || null, luck: s.luck || null };
         }
-        const r = ok(await sb.rpc('buy_item', { p_id: id, p_to: opt.to || null, p_char: opt.char || null }));
+        const r = /^q_/.test(id)   // 스탯 확정권: 고른 스탯 +2
+          ? ok(await sb.rpc('shop_pick', { p_id: id, p_char: opt.char || null, p_stat: opt.stat || null, p_to: opt.to || null }))
+          : ok(await sb.rpc('buy_item', { p_id: id, p_to: opt.to || null, p_char: opt.char || null }));
         return { wallet: Object.assign(emptyWallet(), r.wallet || {}), detail: r.detail || '' };
       },
       async badges() {
