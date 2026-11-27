@@ -109,7 +109,7 @@
     const KEY = 'naru:bells:seen', seen = lsGet(KEY, []);
     const list = ((s && s.bells) || []).filter(b => b && b.id && Date.now() - Date.parse(b.at) < 7 * 864e5 && !seen.includes(b.id)).slice(-3);
     if (list.length) lsSet(KEY, seen.concat(list.map(b => b.id)).slice(-50));
-    return list.map(b => `${b.name} 님이 골든벨을 울렸다냥! 모두에게 300 영전이다냥`);
+    return list.map(b => `${b.name} 님이 골든벨을 울렸다냥! 모두에게 ${b.amt || 300} 영전이다냥`);
   };
   window.bellSeen = function (bells) { const KEY = 'naru:bells:seen'; lsSet(KEY, lsGet(KEY, []).concat((bells || []).map(b => b.id)).slice(-50)); };
 
@@ -117,7 +117,7 @@
   window.wishAsk = function (o) {
     css();
     const m = openModal(`<div class="wa"><div class="eyebrow">Sari's Wish</div><h3>플레이어들한테 뭐 해 주고 싶냐앙?</h3>
-      <div class="wa-o"><button type="button" data-k="bell"><b>골든벨 울리기</b><small>모든 플레이어에게 내 이름으로 300 영전을 넣어 줘요</small></button>
+      <div class="wa-o"><button type="button" data-k="bell"><b>골든벨 울리기</b><small>모든 플레이어에게 내 이름으로 1000 영전을 넣어 줘요</small></button>
         <button type="button" data-k="pop"><b>24시간 팝업</b><small>모두의 메인 오른쪽 위에 하루 동안 떠요</small></button></div>
       <div class="wa-p" hidden>
         <label class="field"><span>받는 캐릭터</span><select class="input" id="wa-to">${(o.chars || []).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
@@ -135,7 +135,7 @@
       if (k === 'pop' && !msg) return toast('하고 싶은 말을 적어 주세요.', 'err');
       try {
         const r = await Store.catWish(k, to, msg); closeModal();
-        if (k === 'bell') { window.bellSeen(r.bells); o.speak && o.speak('골든벨이 울렸다냥! 모두에게 300 영전이다냥'); }
+        if (k === 'bell') { window.bellSeen(r.bells); o.speak && o.speak('골든벨이 울렸다냥! 모두에게 1000 영전이다냥'); }
         else { window.wishPops({ wish_pops: r.wish_pops }); o.speak && o.speak('하루 동안 모두가 보게 붙여 두었다냥'); }
         o.onDone && o.onDone(r);
       } catch (e) { toast(e.message, 'err'); }
