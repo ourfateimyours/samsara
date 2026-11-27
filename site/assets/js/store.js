@@ -54,7 +54,7 @@
     { id: 'extreme', name: '극악',        han: 'LV.4', target: 5000, secs: 25, glass: true, mx: '×6 ~ ×30' }
   ];
   const pangLevel = id => PANG_LEVELS.find(l => l.id === id) || PANG_LEVELS[0];
-  const PANG = { min: 50, max: 1000, ext: 30, grace: 300 };   // ext: 모래시계로 늘릴 수 있는 최대 시간(초)
+  const PANG = { min: 50, max: 1000, big: 5000, bigLv: ['hell', 'extreme'], ext: 30, grace: 300 };   // 지옥 · 극악은 5,000 까지   // ext: 모래시계로 늘릴 수 있는 최대 시간(초)
   const LESSONS = {
     // n: 하루 문제 수 · pts: 한 문제 점수 배수 (문제 수가 줄어든 만큼) · 하루 두 과목까지 · ⚠ 수업-문제수.sql lesson_cfg 와 같게
     // max: 만점 · 등급은 모든 과목 만점 대비 % (80 甲 · 60 乙 · 30 丙)
