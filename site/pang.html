@@ -95,6 +95,7 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
   .chip { padding: 7px 14px; border: 1.5px solid #dcd6ff; border-radius: 999px; background: #fff; color: var(--pur-d); font: 700 13px 'Noto Sans KR', sans-serif; cursor: pointer; transition: .15s; }
   .chip:hover { background: #f4f1ff; }
+  .chip:disabled { opacity: .35; cursor: not-allowed; background: #fff; }
   .chip.on { color: #fff; border-color: transparent; background: var(--spark) 0 0 / 46px 30px, var(--lav); box-shadow: 0 3px 10px rgba(110, 95, 216, .35); }
   .bet-in { display: flex; gap: 8px; }
   .bet-in input { flex: 1; min-width: 0; border: 0; border-radius: 12px; background: var(--grey); color: #3f4350; font: 800 22px 'Noto Sans KR', sans-serif; text-align: right; padding: 10px 14px; }
@@ -233,7 +234,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/pang-engine.js"></script>
-<script src="assets/js/store.js"></script>
+<script src="assets/js/store.js?v=1127d"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/char-editor.js"></script>
 <script>
@@ -305,8 +306,9 @@ App.ready.then(async user => {
   heads.forEach(h => { h.css = `url('${String(h.img).replace(/["'\\\n\r()<>]/g, '')}')`; const im = new Image(); im.src = h.img; });
 
   /* 1) 난이도 · 영전 고르기 — 고르는 대로 난이도 칸이 바로 바뀌어요 (난이도마다 목표 점수 · 시간 · 배율 범위가 달라요) */
-  const LVS = Store.PANG_LEVELS, CHIPS = [50, 100, 300, 500, 1000], LC = [1, 3, 5, 7];   // LC: 난이도 칸 색 (연두 → 빨강)
+  const LVS = Store.PANG_LEVELS, CHIPS = [50, 300, 1000, 3000, 5000], LC = [1, 3, 5, 7];   // LC: 난이도 칸 색 (연두 → 빨강)
   let lvId = LVS[0].id;
+  const pMax = () => (P.bigLv || []).includes(lvId) ? P.big : P.max;   // 지옥 · 극악은 더 많이 걸 수 있어요
   main.innerHTML = `<section class="tk">
       <div class="tk-band"></div>
       <div class="tk-body tk-head">
@@ -315,7 +317,7 @@ App.ready.then(async user => {
           <div class="lv-pips" id="t-pips">${'<i></i>'.repeat(LVS.length)}</div>
           <span class="lv-goal"><span>🎯 <em id="t-tg">—</em>점</span><span>⏱ <em id="t-sc">—</em>초</span></span><small id="t-gl"></small></div>
       </div>
-      <div class="tk-band mid"><div class="tk-tags"><span>이틀에 한 번의 기회! <em>최대 ×30</em></span><span>걸 수 있는 영전 <em>${P.min} ~ ${P.max}</em></span></div></div>
+      <div class="tk-band mid"><div class="tk-tags"><span>이틀에 한 번의 기회! <em>최대 ×30</em></span><span>걸 수 있는 영전 <em>${P.min} ~ ${P.max.toLocaleString()}</em> · 지옥 · 극악 <em>${(P.big || P.max).toLocaleString()}</em>까지</span></div></div>
       <div class="tk-perf"></div>
       <div class="tk-body low">
         <div class="sec">
@@ -340,6 +342,8 @@ App.ready.then(async user => {
       <div class="tk-foot"><i></i><p>같은 캐릭터 셋을 한 줄로 맞춰 터뜨려요. 배율은 몰래 정해지고, 이기면 건 영전 × 배율을 받고 지면 따로 정해진 배율(최대 ×10)만큼 잃어요 (마이너스가 될 수도 있어요). 이틀에 한 판, 도중에 나가면 패배예요.</p></div>    </section>`;
   const betIn = $('#bet');
   const showTier = () => {
+    const mx = pMax(); betIn.max = mx; if ((parseInt(betIn.value, 10) || 0) > mx) betIn.value = mx;
+    $$('.chip').forEach(c => c.disabled = +c.dataset.v > mx);
     const bet = parseInt(betIn.value, 10) || 0, t = Store.pangLevel(lvId), lv = LVS.indexOf(t) + 1;
     $('#t-lv').textContent = t.han; $('#t-nm').textContent = t.name; $('#t-tg').textContent = t.target; $('#t-sc').textContent = t.secs;
     $$('#t-pips i').forEach((i, k) => i.classList.toggle('on', k < lv));
@@ -352,7 +356,7 @@ App.ready.then(async user => {
   betIn.oninput = showTier;
   $('#lvs').onclick = e => { const b = e.target.closest('[data-id]'); if (b) { lvId = b.dataset.id; showTier(); SND.beep(); } };
   main.querySelector('.chips').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { betIn.value = b.dataset.v; showTier(); SND.beep(); } };
-  main.querySelector('[data-max]').onclick = () => { betIn.value = Math.max(P.min, Math.min(P.max, wal.coins)); showTier(); };
+  main.querySelector('[data-max]').onclick = () => { betIn.value = Math.max(P.min, Math.min(pMax(), wal.coins)); showTier(); };
   // 도전 버튼을 누르면 누른 자리에서 별이 톡톡 튀어나와요
   $('#go').addEventListener('pointerdown', e => {
     const C = ['#b7a8ff', '#f3a6cf', '#a6dfe6', '#ffd56b', '#9fd9b4'];
@@ -364,7 +368,7 @@ App.ready.then(async user => {
     }
   });  $('#go').onclick = () => {
     const bet = parseInt(betIn.value, 10), t = Store.pangLevel(lvId);
-    if (!(bet >= P.min && bet <= P.max)) return toast(`영전은 ${P.min} ~ ${P.max} 사이로 걸어 주세요.`, 'err');
+    if (!(bet >= P.min && bet <= pMax())) return toast(`이 난이도는 ${P.min} ~ ${pMax().toLocaleString()} 영전 사이로 걸어 주세요.`, 'err');
     if (bet > wal.coins) return toast('영전이 모자라요.', 'err');
     // 확인 창은 사이트 창으로 (브라우저 기본 confirm 은 막혀 있는 곳이 있어요)
     const m = openModal(`<div class="buy-ask"><div class="eyebrow">미니 게임 · ${esc(t.name)}</div><h3>${bet} 영전을 걸까요?</h3>
