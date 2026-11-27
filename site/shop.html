@@ -35,13 +35,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js?v=1124a"></script>
+<script src="assets/js/store.js?v=1127"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/char-editor.js"></script>
 <script>
 App.ready.then(async user => {
   if (!user) { location.replace('login.html?next=shop.html'); return; }
-  const KIND = { title: ['칭호', 'TITLE', '號'], tag: ['이름표', 'NAME TAG', '色'], snack: ['간식', 'SNACK', '食'], ticket: ['이용권', 'TICKET', '券'], boost: ['이용권', 'STAT UP', '力'], curse: ['이용권', 'BANKRUPT', '破'], pouch: ['복주머니', 'LUCKY POUCH', '福'], cheer: ['응원 쪽지', 'CHEER', '援'] };
+  const KIND = { title: ['칭호', 'TITLE', '號'], tag: ['이름표', 'NAME TAG', '色'], snack: ['간식', 'SNACK', '食'], ticket: ['이용권', 'TICKET', '券'], boost: ['이용권', 'STAT UP', '力'], pick: ['이용권', 'STAT PICK', '定'], curse: ['이용권', 'BANKRUPT', '破'], pouch: ['복주머니', 'LUCKY POUCH', '福'], cheer: ['응원 쪽지', 'CHEER', '援'] };
   const CURSE = `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="12" y="22" width="56" height="36" rx="3" fill="#1a1420" stroke="#ff9fb8" stroke-width="1.4"/><path d="M50 22v36" stroke="#ff9fb8" stroke-width="1.4" stroke-dasharray="3 3"/>
     <path d="M24 34l14 14M38 34L24 48" stroke="#ff9fb8" stroke-width="3" stroke-linecap="round"/><text x="59" y="45" font-size="11" text-anchor="middle" fill="#ff9fb8" font-family="serif">破</text></svg>`;
   const CHURU = `<svg viewBox="0 0 80 80" aria-hidden="true"><g transform="rotate(-28 40 40)"><rect x="30" y="6" width="20" height="68" rx="6" fill="#f1efe9"/><rect x="30" y="6" width="20" height="12" rx="4" fill="#c4b6ff"/>
@@ -50,6 +50,7 @@ App.ready.then(async user => {
     <path d="M22 50v-10l8-6 8 6v10zM27 50v-6h6v6" fill="#0c0e14"/><text x="59" y="44" font-size="10" text-anchor="middle" fill="#0c0e14" font-family="serif">房</text></svg>`;
   const BOOST = `<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="12" y="22" width="56" height="36" rx="3" fill="#f1efe9"/><path d="M50 22v36" stroke="#0c0e14" stroke-width="1.4" stroke-dasharray="3 3"/>
     <path d="M31 50V36l-6 6M31 36l6 6" fill="none" stroke="#0c0e14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="59" y="45" font-size="11" text-anchor="middle" fill="#0c0e14" font-family="monospace" font-weight="700">+5</text></svg>`;
+  const PICK = BOOST.replace('>+5<', '>+2<');
   const POUCHSVG = `<svg viewBox="0 0 80 80" aria-hidden="true" fill="none" stroke="#f1efe9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M30 28c-10 6-17 16-16 27 1 10 11 17 26 17s25-7 26-17c1-11-6-21-16-27"/>
     <path d="M28 28c2-7 6-11 12-11s10 4 12 11"/><path d="M33 27l1-7M40 27v-9M47 27l-1-7" stroke-width="1.1" opacity=".6"/>
@@ -68,16 +69,16 @@ App.ready.then(async user => {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
       <div class="w-i">칭호 <b style="color:${t ? esc(myColor()) : 'inherit'};${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div>
-      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div><div class="w-i">룸메이트 변경권 <b>${(wal.tickets || {}).k_rswap || 0}</b>장</div><div class="w-i">룸메이트 방어권 <b>${(wal.tickets || {}).k_rguard || 0}</b>장</div><div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
+      <div class="w-i">츄르 <b>${wal.snacks}</b>개</div><div class="w-i">심박권 <b>${(wal.tickets || {}).k_beat || 0}</b>장</div><div class="w-i">룸메이트 지정권 <b>${(wal.tickets || {}).k_room || 0}</b>장</div><div class="w-i">스탯 증가권 <b>${wal.boost_n || 0}</b>/10</div>
       <a class="btn ghost sm w-go" href="attendance.html">출석하고 영전 받기 →</a>`;
   }
   /* 칭호 미리보기: 가진 칭호는 내 글자 그대로, 선물 전용 칭호는 "내가 선물하면" 들어갈 내 닉네임으로 */
   const ttlPv = it => Store.titleText(it, wal.items.includes(it.id) ? wal.equip : { from: { [it.id]: user.nickname } });
   const preview = it => it.kind === 'title' ? `<span class="ttl-chip big" style="--tc:${esc(myColor())};${Store.titleFont(it)}">${esc(ttlPv(it))}</span>`
     : it.kind === 'tag' ? `<span class="tagpv" style="color:${esc(it.value)}">${esc(user.nickname)}</span><span class="sw" style="background:${esc(it.value)}"></span>`
-    : it.kind === 'snack' ? CHURU : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : BOOST;
+    : it.kind === 'snack' ? CHURU : it.kind === 'ticket' ? ROOM : it.kind === 'curse' ? CURSE : it.kind === 'pouch' ? POUCHSVG : it.kind === 'cheer' ? (CHEERSVG[it.value] || CHEERSVG.pencil) : it.kind === 'pick' ? PICK : BOOST;
   function renderGoods() {
-    const list = items.filter(i => !kind || i.kind === kind || (kind === 'ticket' && ['boost', 'curse', 'pouch', 'cheer'].includes(i.kind)));
+    const list = items.filter(i => !kind || i.kind === kind || (kind === 'ticket' && ['boost', 'pick', 'curse', 'pouch', 'cheer'].includes(i.kind)));
     $('#goods').innerHTML = list.map(it => {
       const wear = it.kind === 'title' || it.kind === 'tag';
       const owned = wear && wal.items.includes(it.id), eq = owned && wal.equip[it.kind] === it.id, k = KIND[it.kind] || ['', '', ''];
@@ -122,17 +123,18 @@ App.ready.then(async user => {
     const charsOf = uid => (uid === user.id ? mine : allChars.filter(c => c.owner_id === uid)).map(c => ({ id: c.id, name: normChar(c.data || c.draft).name || '이름 없음' }));
     const m = openModal(`<div class="buy-ask"><div class="eyebrow">${gift ? 'Gift' : 'Purchase'}</div><h3>${esc(it.name)}</h3>
       ${gift ? `<label class="field"><span>받을 사람</span><select class="input" id="bx-to">${it.kind === 'cheer' ? '<option value="">✦ 전체 · 받는 사람 이름 없이</option>' : ''}${others.map(o => `<option value="${esc(o.id)}">${esc(o.nickname)}</option>`).join('')}</select></label>` : ''}
-      ${it.kind === 'boost' ? `<label class="field"><span>스탯을 올릴 캐릭터</span><select class="input" id="bx-ch"></select></label>` : ''}
+      ${it.kind === 'boost' || it.kind === 'pick' ? `<label class="field"><span>스탯을 올릴 캐릭터</span><select class="input" id="bx-ch"></select></label>` : ''}
+      ${it.kind === 'pick' ? `<label class="field"><span>올릴 스탯</span><select class="input" id="bx-st">${['근력', '지력', '이성', '술력', '외모', '재력'].map(s => `<option>${s}</option>`).join('')}</select></label>` : ''}
       ${it.kind === 'pouch' ? `<label class="field"><span>얼마짜리 복주머니? <small>${it.price} 영전부터 · 끝 없음</small></span><input class="input" id="bx-amt" type="number" min="${it.price}" step="100" value="${it.price}" inputmode="numeric"></label>` : ''}
       ${it.kind === 'cheer' ? `<label class="field"><span>응원 한마디 <small>40자 · 보낸 사람은 안 알려 줘요</small></span><input class="input" id="bx-msg" maxlength="40" placeholder="예) 오늘 수업 甲 받자!"></label>` : ''}
       <p>${it.kind === 'pouch' ? '' : `<span class="coin-s"></span>${it.price} 영전을 써요 · 남는 영전 ${wal.coins - it.price}<br>`}${
         it.kind === 'title' || it.kind === 'tag' ? (gift ? '받는 사람에게 바로 달려요.' : '사면 바로 달려요.')
-        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : ['k_rswap', 'k_rguard'].includes(it.id) ? '사용할 때 관리자에게 알려 주세요.' : it.id === 'k_room' ? '지정권은 사용할 때 관리자에게 알려 주세요.' : it.kind === 'ticket' ? '가방에 쌓여요'
+        : it.kind === 'boost' ? '스탯 7개 중 하나가 무작위로 +5 올라요.' : it.kind === 'pick' ? '고른 스탯이 +2 올라요.' : it.id === 'k_room' ? '지정권은 사용할 때 관리자에게 알려 주세요.' : it.kind === 'ticket' ? '가방에 쌓여요'
         : it.kind === 'pouch' ? `열면 ×3 · ×2 · ×1.5 · 본전 · 반 · 꽝 · 값만큼 더 잃기 중 하나! 하루 ${Store.POUCH_DAY}번까지.` : it.kind === 'cheer' ? '오늘 수업 페이지에 하루 동안 붙어 있다가, 자정이 지나면 사라져요. 전체로 보내면 받는 사람 이름 없이 붙어요.' : ''}</p>
       <div class="acts"><button class="btn ghost" data-no>그만두기</button><button class="btn" data-yes>${gift ? '선물하기' : '사기'}</button></div></div>`);
     const fillChars = () => { const sel = m.querySelector('#bx-ch'); if (!sel) return; const to = gift ? m.querySelector('#bx-to').value : user.id; const cs = charsOf(to);
       sel.innerHTML = cs.length ? cs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') : '<option value="">캐릭터가 없어요</option>'; };
-    fillChars(); if (gift && it.kind === 'boost') m.querySelector('#bx-to').onchange = fillChars;
+    fillChars(); if (gift && (it.kind === 'boost' || it.kind === 'pick')) m.querySelector('#bx-to').onchange = fillChars;
     m.querySelector('[data-no]').onclick = closeModal;
     m.querySelector('[data-yes]').onclick = async () => {
       const to = gift ? m.querySelector('#bx-to').value : null, ch = m.querySelector('#bx-ch') ? m.querySelector('#bx-ch').value : null;
@@ -142,10 +144,11 @@ App.ready.then(async user => {
         if (it.kind === 'cheer' && !msg) return toast('응원 한마디를 적어 주세요.', 'err');
         const amount = m.querySelector('#bx-amt') ? Math.floor(Number(m.querySelector('#bx-amt').value) || 0) : 0;
         if (it.kind === 'pouch' && amount < it.price) return toast(`복주머니는 ${it.price} 영전부터예요.`, 'err');
-        const r = await Store.buy(it.id, { to, char: ch, msg, amount });
+        const stat = m.querySelector('#bx-st') ? m.querySelector('#bx-st').value : null;
+        const r = await Store.buy(it.id, { to, char: ch, msg, amount, stat });
         if (r.pouch) { wal = r.wallet; closeModal(); renderAll(); if (r.luck) setTimeout(() => luckShow(r.luck), 1500); return pouchOpen(it, r.pouch); }
         wal = r.wallet; items = await Store.shopItems().catch(() => items); closeModal(); renderAll();   // 남은 수량 · 품절 다시 받아 오기
-        toast(it.kind === 'cheer' ? (to ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : '모두에게 익명 응원 쪽지를 붙였어요 ✦') : it.kind === 'boost' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
+        toast(it.kind === 'cheer' ? (to ? `${toName} 님에게 익명 응원 쪽지를 보냈어요 ✦` : '모두에게 익명 응원 쪽지를 붙였어요 ✦') : it.kind === 'boost' || it.kind === 'pick' ? `스탯 증가! ${r.detail}${gift ? ` (→ ${toName})` : ''}` : it.kind === 'curse' ? `${toName} 님에게 파산권을 보냈어요 — ${r.detail}` : gift ? `${toName} 님에게 ${it.name}을(를) 선물했어요.` : it.kind === 'snack' ? '츄르를 샀어요. 사리에게 줘 보세요!' : it.kind === 'ticket' ? `${it.name}을(를) 샀어요.` : `${it.name} — 샀고, 바로 달았어요.`);
       } catch (err) { toast(err.message, 'err'); if (/품절/.test(err.message)) { items = await Store.shopItems().catch(() => items); closeModal(); renderAll(); } }
     };
   }

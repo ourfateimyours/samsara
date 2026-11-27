@@ -38,7 +38,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/config.js"></script>
-<script src="assets/js/store.js?v=1126"></script>
+<script src="assets/js/store.js?v=1127"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/keyring.js"></script>
 <script src="assets/js/char-editor.js"></script>
@@ -207,7 +207,7 @@ App.ready.then(async user => {
             <div class="label" style="margin-bottom:8px">지갑</div>
             <div class="wal-box"><div><span>영전</span><b>${w.coins}</b></div><div><span>칭호</span><b>${tt ? esc(Store.titleText(tt, w.equip)) : '없음'}</b></div>
               <div><span>칭호 보유</span><b>${w.items.filter(id => (items.find(i => i.id === id) || {}).kind === 'title').length}개</b></div><div><span>츄르</span><b>${w.snacks}</b></div>
-              <div><span>심박권</span><b>${(w.tickets || {}).k_beat || 0}장</b></div><div><span>룸메이트 지정권</span><b>${(w.tickets || {}).k_room || 0}장</b></div><div><span>룸메이트 변경권</span><b>${(w.tickets || {}).k_rswap || 0}장</b></div><div><span>룸메이트 방어권</span><b>${(w.tickets || {}).k_rguard || 0}장</b></div><div><span>스탯 증가권</span><b>${w.boost_n || 0} / 10</b></div></div>
+              <div><span>심박권</span><b>${(w.tickets || {}).k_beat || 0}장</b></div><div><span>룸메이트 지정권</span><b>${(w.tickets || {}).k_room || 0}장</b></div><div><span>스탯 증가권</span><b>${w.boost_n || 0} / 10</b></div></div>
             <div class="row3">
               <label class="field"><span>닉네임</span><input data-f="nickname" value="${esc(m.nickname)}" ${ADMIN ? '' : 'readonly'}></label>
               <label class="field"><span>칭호</span><input data-f="title" value="${esc(m.title)}" ${ADMIN ? '' : 'readonly'}></label>
@@ -324,7 +324,7 @@ App.ready.then(async user => {
     const pane = curPane;
     let items = [], logs = [];
     try { [items, logs] = await Promise.all([Store.shopItems(true), Store.shopLog()]); } catch (e) { toast(e.message, 'err'); }
-    const KN = { title: '칭호', tag: '이름표', snack: '간식', ticket: '지정권', boost: '스탯 증가권' };
+    const KN = { title: '칭호', tag: '이름표', snack: '간식', ticket: '지정권', boost: '스탯 증가권', pick: '스탯 확정권' };
     const statTxt = it => Object.entries(it.stats || {}).filter(([, v]) => parseFloat(v)).map(([k, v]) => `${k} +${v}`).join(' · ');
     pane.innerHTML = `<section class="adm-card"><header><b>🏮 상점 물건</b><span class="label">가격·판매는 바꾸면 바로 저장돼요 · 칭호는 스탯 보너스를 걸 수 있어요</span></header>
       <table class="adm-table"><thead><tr><th>물건</th><th>종류</th><th>가격</th><th>수량 <small class="dim">0 = 무제한</small></th><th>판매</th><th>스탯 보너스</th><th>칭호 글씨체</th></tr></thead>
@@ -332,7 +332,7 @@ App.ready.then(async user => {
         <td><input class="input" type="number" min="0" data-price value="${it.price}" style="width:90px"></td>
         <td>${it.kind === 'title' || it.kind === 'tag' ? `<input class="input" type="number" min="0" data-stock value="${it.stock || 0}" style="width:70px"> <span class="dim">${it.sold || 0}명 가짐${Store.soldOut(it) ? ' · 품절' : ''}</span>` : '<span class="dim">—</span>'}</td>
         <td>${sw('act-' + it.id, it.active !== false).replace('<input', '<input data-act')}</td>
-        <td>${it.kind === 'title' ? `<span class="dim" data-st-txt>${esc(statTxt(it) || '없음')}</span> <button class="btn ghost sm" data-stat>정하기</button>` : it.kind === 'boost' ? `<span class="dim">무작위 +5 · 한 사람당 ${it.max_per || '∞'}번</span>` : '<span class="dim">—</span>'}</td>
+        <td>${it.kind === 'title' ? `<span class="dim" data-st-txt>${esc(statTxt(it) || '없음')}</span> <button class="btn ghost sm" data-stat>정하기</button>` : it.kind === 'pick' ? '<span class="dim">고른 스탯 +2 · 행운 제외 · 제한 없음</span>' : it.kind === 'boost' ? `<span class="dim">무작위 +5 · 한 사람당 ${it.max_per || '∞'}번</span>` : '<span class="dim">—</span>'}</td>
         <td>${it.kind === 'title' ? `<select class="input" data-tfont><option value="">현재 글꼴</option><option value="chosun" ${it.font === 'chosun' ? 'selected' : ''}>조선일보체</option></select>` : '<span class="dim">—</span>'}</td></tr>`).join('')}</tbody></table></section>
       <section class="adm-card"><header><b>🎁 구매 · 선물 기록</b><span class="label">최근 ${Store.LOG_DAYS}일 · ${logs.length}건 (지난 기록은 저절로 지워져요)</span></header>
       <table class="adm-table"><thead><tr><th>시각</th><th>종류</th><th>산 사람</th><th>받은 사람</th><th>물건</th><th>영전</th><th>내용</th></tr></thead>
