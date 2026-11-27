@@ -180,6 +180,9 @@ window.CharEditor = {
     const d = normChar(row && (row.draft || row.data));
     let others = [];
     try { others = (await Store.charCards()).filter(c => !row || c.id !== row.id); } catch (e) {}
+    // 관계란: 기본 5칸 + 관계 추가권 장수 (관리자는 제한 없음)
+    let relMax = 0;
+    if (!isAdmin) { relMax = 5; try { relMax += +(((await Store.wallet()) || {}).tickets || {}).k_rel || 0; } catch (e) {} }
     // 스탯은 처음 한 번 적고 나면 관리자만 고칠 수 있어요 (게시된 기록에 스탯이 있으면 잠김)
     const pub = row && row.data ? normChar(row.data) : null;
     // 한 번 게시된 적이 있으면 (작성 중으로 돌아가도) 회원 수정 창엔 스탯 탭이 아예 안 보여요 · 관리자만 고쳐요
@@ -268,7 +271,7 @@ window.CharEditor = {
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
         <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 8개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
-        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.</p><div id="e-rel"></div></div>
+        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.${relMax ? ` 관계는 <b>${relMax}칸</b>까지 넣을 수 있어요 · 상점의 관계 추가권으로 늘릴 수 있어요.` : ''}</p><div id="e-rel"></div></div>
 
 
         ${row && row.status === 'submitted' ? (isAdmin ? '<p class="hint-text" style="color:#ffcf6b">⏳ 심사 대기 중이에요. 관리자가 고쳐 저장해도 심사 대기 그대로예요.</p>' : '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>') : ''}
@@ -309,7 +312,7 @@ window.CharEditor = {
       { k: 'msg', type: 'textarea', ph: '상대 잠금 화면에 뜰 메시지', rows: 2, full: true, show: isMsg },
       { k: 'time', ph: '표시 시각 (예: 오전 2:14)', row: 'p', max: 12, show: isCall },
       { k: 'missed', ph: '부재중 횟수', row: 'p', max: 2, show: isCall },
-      { k: 'pv', type: 'action', label: '📱 미리보기', row: 'a', onClick: v => previewRel(v) }], '관계 추가');
+      { k: 'pv', type: 'action', label: '📱 미리보기', row: 'a', onClick: v => previewRel(v) }], '관계 추가', false, relMax ? Math.max(relMax, d.related.length) : 0);
     // 미리보기: 상대 캐릭터의 휴대폰을 열어서, 지금 적는 알림이 잠금 화면에 어떻게 뜨는지 보여 줘요 (저장 전 값 그대로)
     async function previewRel(v) {
       const target = others.find(c => c.id === v.id); if (!target) return toast('먼저 캐릭터를 골라 주세요.', 'err');
