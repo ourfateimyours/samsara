@@ -182,6 +182,7 @@ window.CharEditor = {
     try { others = (await Store.charCards()).filter(c => !row || c.id !== row.id); } catch (e) {}
     // 관계란: 기본 5칸 + 관계 추가권 장수 (관리자는 제한 없음)
     let relMax = 0;
+    const relPeople0 = new Set((d.related || []).map(r => r.id).filter(Boolean)).size;   // 이미 넘게 쓴 사람은 그대로 둬요
     if (!isAdmin) { relMax = 5; try { relMax += +(((await Store.wallet()) || {}).tickets || {}).k_rel || 0; } catch (e) {} }
     // 스탯은 처음 한 번 적고 나면 관리자만 고칠 수 있어요 (게시된 기록에 스탯이 있으면 잠김)
     const pub = row && row.data ? normChar(row.data) : null;
@@ -271,7 +272,7 @@ window.CharEditor = {
           <div class="stat-grid">${STAT_KEYS.map(k => `<label class="field"><span>${k}</span><input type="number" inputmode="numeric" name="st_${k}" value="${esc(statMap[k] || '')}" ${statLocked ? 'disabled' : ''}></label>`).join('')}</div>
         </div>
         <div class="epane" data-p="items"><p class="hint-text">아카이브의 <b>소지품</b> 칸에 카드로 보여요. 최대 8개까지 넣을 수 있어요. 캐릭터를 고르면 카드에 <b>♥ (캐릭터)의 선물</b>로 표시돼요.</p><div class="fmt-guide" data-fg="item"></div><div id="e-items"></div></div>
-        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.${relMax ? ` 관계는 <b>${relMax}칸</b>까지 넣을 수 있어요 · 상점의 관계 추가권으로 늘릴 수 있어요.` : ''}</p><div id="e-rel"></div></div>
+        <div class="epane" data-p="rel"><p class="hint-text">캐릭터를 고르고 알림을 골라요. 메시지는 내용을, 부재중 전화는 시각 · 횟수를 적으면 <b>상대 캐릭터 휴대폰 잠금 화면</b>에 떠요 · <b>📱 미리보기</b>로 어떻게 보일지 확인할 수 있어요.${relMax ? ` 관계는 <b>${relMax}명</b>까지 넣을 수 있고 한 사람에게 <b>3개</b>까지 보낼 수 있어요 · 상점의 관계 추가권으로 늘릴 수 있어요.` : ''}</p><div id="e-rel"></div></div>
 
 
         ${row && row.status === 'submitted' ? (isAdmin ? '<p class="hint-text" style="color:#ffcf6b">⏳ 심사 대기 중이에요. 관리자가 고쳐 저장해도 심사 대기 그대로예요.</p>' : '<p class="hint-text" style="color:#ffcf6b">⏳ 지금 심사 대기 중이에요. 저장하면 제출이 취소되고 "작성 중"으로 돌아가요.</p>') : ''}
@@ -312,7 +313,7 @@ window.CharEditor = {
       { k: 'msg', type: 'textarea', ph: '상대 잠금 화면에 뜰 메시지', rows: 2, full: true, show: isMsg },
       { k: 'time', ph: '표시 시각 (예: 오전 2:14)', row: 'p', max: 12, show: isCall },
       { k: 'missed', ph: '부재중 횟수', row: 'p', max: 2, show: isCall },
-      { k: 'pv', type: 'action', label: '📱 미리보기', row: 'a', onClick: v => previewRel(v) }], '관계 추가', false, relMax ? Math.max(relMax, d.related.length) : 0);
+      { k: 'pv', type: 'action', label: '📱 미리보기', row: 'a', onClick: v => previewRel(v) }], '관계 추가', false, relMax ? Math.max(relMax * 3, d.related.length) : 0);
     // 미리보기: 상대 캐릭터의 휴대폰을 열어서, 지금 적는 알림이 잠금 화면에 어떻게 뜨는지 보여 줘요 (저장 전 값 그대로)
     async function previewRel(v) {
       const target = others.find(c => c.id === v.id); if (!target) return toast('먼저 캐릭터를 골라 주세요.', 'err');
@@ -413,6 +414,10 @@ window.CharEditor = {
       const krT = (f.querySelector('[name=kr_type]:checked') || {}).value;
       if (krT === 'letters' && !v('kr_text').replace(/[^0-9a-z]/gi, '')) { $('.etabs [data-t="basic"]', m).click(); return err('영어 스트랩에 넣을 영문 글자를 적어 주세요.'); }
       if (krT === 'acrylic' && !/^https?:\/\//i.test(v('kr_img'))) { $('.etabs [data-t="basic"]', m).click(); return err('아크릴 키링에 넣을 이미지 링크(https://)를 넣어 주세요.'); }
+      // 관계란은 사람 수로 세요 · 한 사람에게 3개까지
+      const relCnt = {}; getRel().filter(r => r.id).forEach(r => { relCnt[r.id] = (relCnt[r.id] || 0) + 1; });
+      if (!isAdmin && Object.values(relCnt).some(n => n > 3)) { $('.etabs [data-t="rel"]', m).click(); return err('한 사람에게는 3개까지 넣을 수 있어요.'); }
+      if (relMax && Object.keys(relCnt).length > Math.max(relMax, relPeople0)) { $('.etabs [data-t="rel"]', m).click(); return err(`관계는 ${relMax}명까지 넣을 수 있어요 · 상점의 관계 추가권으로 늘릴 수 있어요.`); }
       const list = s => s.split(/[,，]/).map(x => x.trim()).filter(Boolean).slice(0, 16);
       const data = {
         name: v('name'), name_en: v('name_en'), org: v('org'), team: f.team.value, rank: f.rank.value, quote: v('quote'),
