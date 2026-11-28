@@ -189,3 +189,7 @@
 .pouch-open .pch-rows { display: flex; align-items: center; gap: 12px; font: 500 12px 'IBM Plex Sans KR', var(--sans); color: rgba(255, 255, 255, .5); }
 .pouch-open .pch-rows b { font: 700 12.5px var(--mono); color: rgba(255, 255, 255, .85); } .pouch-open .pch-rows i { width: 1px; height: 12px; background: rgba(255, 255, 255, .25); }
 .pouch-open .pch-r, .pouch-open .pch-n { display: none; }
+
+/* 출석부 칭호 체크 */
+.att-ck { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--lav); cursor: pointer; white-space: nowrap; }
+.att-ck input { accent-color: var(--lav); width: 15px; height: 15px; margin: 0; }
