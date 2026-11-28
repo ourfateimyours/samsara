@@ -17,6 +17,8 @@
 .dsc { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 12px; text-align: center; }
 .dsc span { font: 400 15px 'Song Myung', serif; letter-spacing: .08em; color: #fff; text-shadow: 0 0 10px rgba(200,212,255,.6); }
 .dsc small { font-size: 11.5px; color: rgba(255,255,255,.55); }
+/* 관리자가 주는 칭호: 파스텔 무지개 */
+.roll .who .ttl-chip.ttl-rb { color: transparent; background: linear-gradient(90deg, #ffb3ba, #ffdfba, #fff6b0, #baffc9, #bae1ff, #d4c1ff); -webkit-background-clip: text; background-clip: text; border-image: linear-gradient(90deg, #ffb3ba, #ffdfba, #fff6b0, #baffc9, #bae1ff, #d4c1ff) 1; font-weight: 600; }
 </style>
 </head>
 <body data-page="attend" data-embers>
@@ -141,8 +143,10 @@ App.ready.then(async user => {
     const list = rows.filter(r => r.day === today).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     $('#roll-n').textContent = `${list.length}명`;
     const hm = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+    const rb = new Set(shop.filter(i => i.kind === 'title' && i.needs === 'secret').map(i => i.value));   // 관리자가 주는 칭호는 무지개
+    const tc = t => `ttl-chip${rb.has(t) ? ' ttl-rb' : ''}`;
     $('#roll').innerHTML = list.length ? list.map(r => `<li><time>${hm(r.created_at)}</time>
-      <span class="who" style="color:${r.tag ? esc(r.tag) : '#fff'}">${r.title && FRONT(r.title) ? `<span class="ttl-chip" style="margin:0 6px 0 0">${esc(r.title)}</span>` : ''}${esc(r.nick)}${r.title && !FRONT(r.title) ? `<span class="ttl-chip">${esc(r.title)}</span>` : ''}</span>
+      <span class="who" style="color:${r.tag ? esc(r.tag) : '#fff'}">${r.title && FRONT(r.title) ? `<span class="${tc(r.title)}" style="margin:0 6px 0 0">${esc(r.title)}</span>` : ''}${esc(r.nick)}${r.title && !FRONT(r.title) ? `<span class="${tc(r.title)}">${esc(r.title)}</span>` : ''}</span>
       ${r.comment ? `<span class="cm" style="${bubbleOf(r.user_id)}">${esc(r.comment)}</span>` : ''}</li>`).join('') : '<li class="empty" style="display:block;border:0">아직 아무도 도장을 찍지 않았어요. 첫 번째가 되어 보세요.</li>';
   }
 

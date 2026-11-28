@@ -56,7 +56,7 @@ App.ready.then(async user => {
   const rankTab = 'all';   // 랭킹은 전체(오늘 점수 합계) 하나만 · 과목별 탭은 없앴어요 (요청도 한 번)
 
   const statsOf = c => {
-    const base = Object.fromEntries(parseKV(c.data.stats)), b = Store.statBonus(badges[user.id], items, c.id);
+    const base = Object.fromEntries(parseKV(c.data.stats)), b = Store.statBonus(badges[user.id], items, c.id, base);
     return Store.STATS.map(k => [k, (parseFloat(base[k]) || 0) + (b[k] || 0)]);
   };
 
