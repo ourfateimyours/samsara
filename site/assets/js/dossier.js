@@ -59,7 +59,7 @@ App.ready.then(async user => {
   const [badges, shopIt] = await Promise.all([Store.badges(), Store.shopItems(true)]).catch(() => [{}, []]);
   const badge = badges[row.owner_id];
   const ownerTitle = badge && badge.equip && badge.equip.title && shopIt.find(i => i.id === badge.equip.title && i.kind === 'title');
-  const bonus = Store.statBonus(badge, shopIt, row.id);
+  const bonus = Store.statBonus(badge, shopIt, row.id, Object.fromEntries(parseKV(d.stats || '')));
 
   // 시드 고정 난수 (같은 캐릭터는 늘 같은 모양)
   let seed = [...String(row.id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);

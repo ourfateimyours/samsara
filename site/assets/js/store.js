@@ -233,7 +233,7 @@
       },
       async badges() {
         const rows = ok(await sb.from('wallet_public').select('*')), out = {};
-        rows.forEach(r => out[r.user_id] = { equip: r.equip || {}, boosts: r.boosts || {}, coins: r.coins || 0 });
+        rows.forEach(r => out[r.user_id] = { equip: r.equip || {}, boosts: r.boosts || {}, coins: r.coins || 0, items: r.items || [] });
         return out;
       },
       async shopLog() {
@@ -625,11 +625,18 @@
     async coinNotesSeen() { const u = await this.user(); if (u) return B.coinNotesSeen(u.id); },
     async giveCoins(to, amount, note) { await this.requireStaff(); const u = await this.user(); dropBadges(); return B.giveCoins(u.id, u.nickname, to, amount, note); },
     /* 칭호 + 스탯 보너스 계산: 칭호에 걸린 스탯 + 그 캐릭터에 쓴 스탯 증가권 */
-    statBonus(badge, items, charId) {
+    // base: 캐릭터 원래 스탯 { 행운: 30 } · '행운%' 처럼 % 가 붙은 칭호는 가지고만 있어도 (원래 + 증가권) 의 % 만큼 더해요
+    statBonus(badge, items, charId, base) {
       const out = {}; if (!badge) return out;
       const t = badge.equip && badge.equip.title && items.find(i => i.id === badge.equip.title);
-      const add = o => Object.entries(o || {}).forEach(([k, v]) => { const n = parseFloat(v); if (n) out[k] = (out[k] || 0) + n; });
+      const add = o => Object.entries(o || {}).forEach(([k, v]) => { const n = parseFloat(v); if (n && !k.endsWith('%')) out[k] = (out[k] || 0) + n; });
       if (t) add(t.stats); add((badge.boosts || {})[charId]);
+      const own = new Set((badge.items || []).concat(t ? [t.id] : [])), pct = {};
+      items.forEach(i => { if (own.has(i.id)) Object.entries(i.stats || {}).forEach(([k, v]) => { const n = parseFloat(v); if (n && k.endsWith('%')) pct[k.slice(0, -1)] = (pct[k.slice(0, -1)] || 0) + n; }); });
+      Object.entries(pct).forEach(([k, p]) => {
+        const b = (parseFloat((base || {})[k]) || 0) + (parseFloat(((badge.boosts || {})[charId] || {})[k]) || 0);
+        const n = Math.round(b * p / 100); if (n) out[k] = (out[k] || 0) + n;
+      });
       return out;
     },
     async equip(kind, id) { const u = await this.user(); if (!u) throw new Error('로그인이 필요해요.'); dropBadges(); return B.equip(u.id, kind, id); },
