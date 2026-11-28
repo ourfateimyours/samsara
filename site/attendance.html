@@ -85,7 +85,7 @@ App.ready.then(async user => {
   function renderWallet() {
     const t = wal.equip.title && item(wal.equip.title), g = wal.equip.tag && item(wal.equip.tag);
     $('#wallet').innerHTML = `<div class="w-c"><span class="coin"></span><b>${wal.coins}</b><small>靈錢</small></div>
-      <div class="w-i">칭호 <b style="${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div><div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div><div class="w-i">츄르 <b>${wal.snacks}</b>개</div>
+      <div class="w-i">칭호 <b style="${Store.titleFont(t)}">${t ? esc(Store.titleText(t, wal.equip)) : '없음'}</b></div>${wal.equip.att && item(wal.equip.att) ? `<div class="w-i">출석부 칭호 <b>${esc(item(wal.equip.att).value)}</b></div>` : ''}<div class="w-i">이름표 <b style="color:${g ? esc(g.value) : 'inherit'}">${g ? esc(g.name) : '기본'}</b></div><div class="w-i">츄르 <b>${wal.snacks}</b>개</div>
       <a class="btn ghost sm w-go" href="shop.html">상점 가기 →</a>`;
   }
 
